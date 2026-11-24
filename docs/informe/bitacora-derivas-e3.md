@@ -15,6 +15,7 @@ Registro de lo que cambió respecto al diseño del E2 mientras se implementaba e
 | E3-9 | 23-nov | Log de auditoría JSON por comando y por evento (logger `auditoria`) | Evidencia y métricas de las pruebas con usuarios (§3.2–3.3) | `scripts/resumen_auditoria.py` | — |
 | E3-10 | 23-nov | Rama inalcanzable en `BuscadorCombinaciones:184` (`ternasQuedan == 0` siempre verdadero si `resto == 0`) | Consecuencia aritmética: sueltas = n − 3·ternas | JaCoCo `domain.rules.evaluacion` 129/130 = 99,2 % | FF-10 se cumple |
 | E3-11 | 24-nov | La publicación de eventos sale del `SessionGatewayComponent` a `PublicadorEventosStomp` | Al arrancar Spring detectó el ciclo `turnos → sessionGateway → turnos`: el gateway era a la vez entrada (usa `ITurno`) y salida (`IEventosPartida`). Ninguna prueba unitaria lo veía porque el dominio se cablea a mano | Arranque con `docker compose up`; diagrama de clases §1.3 | ADR-06; separa entrada y salida, y deja la costura para un broker externo (escenario de 100.000 jugadores) |
+| E3-12 | 24-nov | Despliegue movido de Render (PaaS) a AWS: EC2 con Docker Compose + Caddy y RDS PostgreSQL 16 | Consolidar la infraestructura en la cuenta de AWS del equipo; App Runner se descartó porque no soporta WebSocket | `deploy/aws/`, job *Desplegar en AWS EC2* | ADR-09b; 1.ª ley: control vs. operación |
 
 **Lección para el §5 (2.ª ley y gobernanza):** una fitness function también puede tener defectos. FF-01c pasaba en el E2 sin
 haberse ejecutado contra un orquestador real; al ejecutarla, era más amplia de lo que declaraba su comentario. Se

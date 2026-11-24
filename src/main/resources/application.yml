@@ -26,5 +26,5 @@ apuntado:
   cors:
     origenes: ${CORS_ORIGENES:http://localhost:5173,http://localhost:8080}
   jwt:
-    # Solo para desarrollo local. En Render se define JWT_SECRET (generado, >= 32 bytes).
+    # Solo para desarrollo local. En produccion JWT_SECRET llega por .env (>= 32 bytes).
     secreto: ${JWT_SECRET:solo-desarrollo-local-cambiar-en-produccion-32b}

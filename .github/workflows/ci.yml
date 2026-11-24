@@ -56,12 +56,24 @@ jobs:
       - uses: docker/login-action@v3
         with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
       - uses: docker/build-push-action@v6
-        with: { context: ., push: true, tags: "${{ steps.img.outputs.nombre }}:${{ github.sha }}" }
-      # ADR-09: Render solo despliega cuando todas las fitness functions pasaron (autoDeploy: false en render.yaml)
-      - name: Desplegar en Render
-        env: { DEPLOY_HOOK_URL: "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" }
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ steps.img.outputs.nombre }}:${{ github.sha }}
+            ${{ steps.img.outputs.nombre }}:latest
+      # ADR-09b: solo una imagen que paso todas las fitness functions llega a EC2 (este job depende de ellas)
+      - name: Desplegar en AWS EC2
+        env:
+          EC2_HOST: ${{ secrets.EC2_HOST }}
+          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
+          IMAGEN: ${{ steps.img.outputs.nombre }}:${{ github.sha }}
         run: |
-          if [ -n "$DEPLOY_HOOK_URL" ]; then curl -fsS -X POST "$DEPLOY_HOOK_URL"; else echo "Sin RENDER_DEPLOY_HOOK_URL: despliegue omitido"; fi
+          if [ -z "$EC2_HOST" ]; then echo "Sin EC2_HOST: despliegue omitido"; exit 0; fi
+          mkdir -p ~/.ssh && printf '%s\n' "$EC2_SSH_KEY" > ~/.ssh/mesa101.pem && chmod 600 ~/.ssh/mesa101.pem
+          OPC="-i $HOME/.ssh/mesa101.pem -o StrictHostKeyChecking=accept-new"
+          scp $OPC deploy/aws/docker-compose.yml deploy/aws/Caddyfile ubuntu@"$EC2_HOST":/opt/mesa101/
+          ssh $OPC ubuntu@"$EC2_HOST" "cd /opt/mesa101 && sed -i 's|^IMAGEN=.*|IMAGEN=$IMAGEN|' .env && docker compose pull app && docker compose up -d && docker image prune -f"
   fitness-nocturnas:
     if: github.event_name == 'schedule'
     runs-on: ubuntu-latest
