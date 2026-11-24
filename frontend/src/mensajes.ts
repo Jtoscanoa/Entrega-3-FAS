@@ -18,6 +18,15 @@ const MOTIVOS: Record<string, string> = {
   HTTP_401: 'Tu sesión venció. Vuelve a entrar con tu apodo.',
 };
 
+/** Retro E2 2.3: tras un reinicio el servidor anula la ronda en curso; la SPA vuelve al vestibulo con este aviso. */
+export const PARTIDA_INTERRUMPIDA = 'La partida se interrumpió por un reinicio del servidor. La ronda en curso se anuló; '
+  + 'los puntos de las rondas ya liquidadas quedaron guardados.';
+
+/** D9: la ronda anterior quedo liquidada, pero la siguiente no se pudo abrir todavia. */
+export function rondaPendiente(numeroRonda: number): string {
+  return `No se pudo abrir la ronda ${numeroRonda}. Los puntos ya quedaron guardados; se reintentará en unos segundos.`;
+}
+
 export function mensajeDe(motivo: string): string {
   return MOTIVOS[motivo] ?? motivo;
 }

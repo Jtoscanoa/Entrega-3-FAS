@@ -93,6 +93,8 @@ export interface VistaInicio {
 export interface VistaVestibulo {
   apodo: string; codigo: string; setCodigo: (v: string) => void; puedeUnirse: boolean;
   crear: () => void; unirse: () => void; cambiarApodo: () => void; error: string;
+  /** Aviso informativo al llegar (p. ej. la partida se interrumpio por un reinicio); '' si no hay. */
+  aviso: string;
 }
 
 /** Sala de espera: quien llego y, para el anfitrion, la eleccion de modalidad. */

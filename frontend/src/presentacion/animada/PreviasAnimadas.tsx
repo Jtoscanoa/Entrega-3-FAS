@@ -90,6 +90,7 @@ function Vestibulo({ v, abrirTutorial }: { v: VistaVestibulo; abrirTutorial: () 
     <motion.main className="a-pantalla" {...PANTALLA}>
       <p className="a-sobretitulo">Mesa 101</p>
       <h1 className="a-titulo pequeno">Hola, {v.apodo}</h1>
+      {v.aviso && <p className="a-nota" role="status">{v.aviso}</p>}
       <div className="a-tarjeta">
         <motion.button type="button" className="a-boton principal ancho" onClick={v.crear} whileTap={{ scale: 0.97 }}>
           Crear una sala

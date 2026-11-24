@@ -54,5 +54,8 @@ public sealed interface EventoDominio {
                           Map<String, Integer> puntosRonda, Map<String, Integer> marcador,
                           Set<String> eliminados, RevelacionReparto revelacion) implements EventoDominio { }
 
+    /** D9: la ronda {@code numeroRonda} no se pudo abrir tras una liquidacion confirmada; se reintenta al reanudar. */
+    record RondaPendiente(long partidaId, int numeroRonda, String causa) implements EventoDominio { }
+
     record PartidaFinalizada(long partidaId, String ganadorId, String motivo) implements EventoDominio { }
 }

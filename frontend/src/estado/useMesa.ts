@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, conectarMesa, ConexionMesa, ManejadoresMesa } from '../api';
 import { infoCarta, ordenarPorPinta, ordenarPorValor, reconciliar } from '../cartas';
-import { mensajeDe } from '../mensajes';
+import { mensajeDe, PARTIDA_INTERRUMPIDA, rondaPendiente } from '../mensajes';
 import type {
   Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, OrigenRobo, Sesion, VistaMesa,
 } from './tipos';
@@ -22,7 +22,11 @@ export const conectorServidor: ConectorMesa = {
   },
 };
 
-export interface ParametrosMesa { sesion: Sesion; codigo: string; partidaId: number; alSalir: () => void }
+/** {@code alSalir} recibe un aviso opcional para mostrar en el vestibulo. */
+export interface ParametrosMesa { sesion: Sesion; codigo: string; partidaId: number; alSalir: (aviso?: string) => void }
+
+/** Espera antes de pedir de nuevo la ronda que el servidor no pudo abrir (D9). */
+const REINTENTO_RONDA_MS = 3000;
 
 const INICIAL: EstadoMesa = {
   ronda: 0, orden: [], cima: null, marcador: {}, turnoDe: null, numeroTurno: 0, fase: '', modalidad: '',
@@ -56,6 +60,11 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const ultimoRoboPropio = useRef<OrigenRobo | null>(null);
   const ausentesRef = useRef<string[]>([]);
   ausentesRef.current = e.ausentes;
+  const finalizadaRef = useRef(false);
+  finalizadaRef.current = e.finalizada;
+  const alSalirRef = useRef(alSalir);
+  alSalirRef.current = alSalir;
+  const reintento = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const nombre = useCallback((sub: string | null) =>
     !sub ? '—' : sub === sesion.sub ? 'Tú' : nombresRef.current[sub] ?? 'Jugador', [sesion.sub]);
@@ -139,6 +148,14 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         registrar({ tipo: 'liquidacion', ronda: d.numeroRonda });
         break;
       }
+      case 'RondaPendiente':
+        // D9: la liquidacion ya quedo guardada; reanudar es idempotente y un solo reintento por cliente basta.
+        setAviso({ texto: rondaPendiente(d.numeroRonda), tipo: 'info', cierre: false });
+        if (!reintento.current) {
+          reintento.current = setTimeout(() => { reintento.current = null; conexion.current?.reanudar(); },
+            REINTENTO_RONDA_MS);
+        }
+        break;
       case 'PartidaFinalizada':
         setFin({ ganador: d.ganadorId, motivo: d.motivo });
         setE((s) => ({ ...s, finalizada: true, turnoDe: null }));
@@ -153,12 +170,24 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
     conector.nombres(sesion.token, codigo).then(setNombres).catch(() => undefined);
     const c = conector.conectar(sesion.token, partidaId, {
       alMensaje,
-      alError: (motivo) => setAviso({ texto: mensajeDe(motivo), tipo: 'error', cierre: false }),
+      alError: (motivo) => {
+        // Retro E2 2.3: tras un reinicio la partida ya no esta en memoria; se vuelve al vestibulo explicando que paso.
+        if (motivo === 'PARTIDA_INEXISTENTE' && !finalizadaRef.current) {
+          c.cerrarConexion();
+          alSalirRef.current(PARTIDA_INTERRUMPIDA);
+          return;
+        }
+        setAviso({ texto: mensajeDe(motivo), tipo: 'error', cierre: false });
+      },
       alConectar: () => { setConectado(true); c.reanudar(); },
       alDesconectar: () => setConectado(false),
     });
     conexion.current = c;
-    return () => c.cerrarConexion();
+    return () => {
+      c.cerrarConexion();
+      if (reintento.current) clearTimeout(reintento.current);
+      reintento.current = null;
+    };
   }, [sesion.token, codigo, partidaId, alMensaje, conector]);
 
   useEffect(() => { const t = setInterval(() => setAhora(Date.now()), 500); return () => clearInterval(t); }, []);

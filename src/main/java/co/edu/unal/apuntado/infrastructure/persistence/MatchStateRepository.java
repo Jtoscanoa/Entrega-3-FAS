@@ -96,6 +96,19 @@ public class MatchStateRepository implements IMatchState {
                 l.finPartida(), l.finPartida(), l.partidaId());
     }
 
+    @Override
+    @Transactional(isolation = Isolation.READ_COMMITTED, rollbackFor = Exception.class)
+    public Recuperacion anularPartidasEnCurso() {
+        List<RondaAnulada> rondas = jdbc.query("""
+                UPDATE ronda SET estado = 'ANULADA', anulada_en = now()
+                 WHERE estado = 'EN_CURSO' RETURNING partida_id, id, numero""",
+                (rs, i) -> new RondaAnulada(rs.getLong("partida_id"), rs.getLong("id"), rs.getInt("numero")));
+        List<Long> partidas = jdbc.queryForList("""
+                UPDATE partida SET estado = 'INTERRUMPIDA', finalizada_en = now(), version = version + 1
+                 WHERE estado = 'EN_CURSO' RETURNING id""", Long.class);
+        return new Recuperacion(rondas, partidas);
+    }
+
     private Map<String, Long> participantesPorSub(long partidaId) {
         Map<String, Long> r = new HashMap<>();
         jdbc.query("""

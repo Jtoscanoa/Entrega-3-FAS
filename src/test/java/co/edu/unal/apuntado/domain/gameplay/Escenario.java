@@ -101,6 +101,8 @@ final class Escenario {
         final AtomicInteger intentos = new AtomicInteger();
         final List<LiquidacionRonda> guardadas = new CopyOnWriteArrayList<>();
         volatile boolean fallar;
+        /** D9: el registro del inicio de ronda falla mientras sea true (BD caida tras una liquidacion). */
+        volatile boolean fallarInicioRonda;
         private final AtomicInteger rondas = new AtomicInteger();
         private final Set<Long> liquidadas = ConcurrentHashMap.newKeySet();
 
@@ -111,6 +113,9 @@ final class Escenario {
 
         @Override
         public long registrarInicioRonda(long partidaId, int numero, String huellaSha256, String abridorSub) {
+            if (fallarInicioRonda) {
+                throw new IllegalStateException("fallo inyectado al registrar la ronda " + numero);
+            }
             return rondas.incrementAndGet();
         }
 
@@ -125,6 +130,11 @@ final class Escenario {
             }
             liquidaciones.incrementAndGet();
             guardadas.add(l);
+        }
+
+        @Override
+        public Recuperacion anularPartidasEnCurso() {
+            return new Recuperacion(List.of(), List.of());
         }
     }
 

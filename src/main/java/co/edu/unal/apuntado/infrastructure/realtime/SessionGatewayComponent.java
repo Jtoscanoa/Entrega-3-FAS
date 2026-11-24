@@ -56,8 +56,10 @@ public class SessionGatewayComponent {
                 () -> turnos.cerrar(id, usuario.getName(), comando.carta(), comando.numeroTurno()));
     }
 
+    /** Reanudar es idempotente: reabre la ronda pendiente si la hay (D9) y devuelve la vista del jugador. */
     @MessageMapping("/partidas/{id}/reanudar")
     public void reanudar(@DestinationVariable long id, Principal usuario) {
+        turnos.reanudarRonda(id, usuario.getName());
         plantilla.convertAndSendToUser(usuario.getName(), "/queue/partida",
                 PublicadorEventosStomp.sobre("VistaPartida", turnos.vistaDe(id, usuario.getName())));
     }

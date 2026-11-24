@@ -22,4 +22,10 @@ public interface ITurno {
      * cierra la ultima. Solo ajusta el temporizador del turno; no cambia las reglas de juego.
      */
     void marcarConexion(long partidaId, String jugadorId, boolean conectado);
+
+    /**
+     * D9: si la ronda anterior quedo liquidada pero la siguiente no se pudo registrar, la abre. Es idempotente: en
+     * cualquier otro estado (o para quien no juega la partida) no hace nada.
+     */
+    void reanudarRonda(long partidaId, String jugadorId);
 }
