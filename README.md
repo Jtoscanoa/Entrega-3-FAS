@@ -3,7 +3,7 @@
 MVP del **Entregable 3** de *Fundamentos de Arquitectura de Software* (UNAL Medellín, 2026-02).
 Equipo **"4 menos 1"**: Juan Pablo Mazo Berrío · Jose Mauricio Toscano Aguas · Duvan Steven Calderón Taborda.
 
-- **Aplicación desplegada:** `[URL de AWS (sslip.io) — completar tras el despliegue]`
+- **Aplicación desplegada:** https://3-233-175-115.sslip.io (AWS EC2 + RDS, ADR-09b)
 - **Estilo:** monolito modular de un solo cuanto; el motor de reglas es un microkernel de compilación (`ReglaJuego` + `RegistroReglas` con ServiceLoader). Ver `docs/adrs/`.
 - **Stack:** Java 21, Spring Boot 3.3, PostgreSQL 16 + Flyway, STOMP 1.2 sobre WebSocket; SPA en React + TypeScript (Vite).
 
