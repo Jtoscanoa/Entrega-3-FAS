@@ -1,8 +1,11 @@
-// Piezas compartidas de la version animada: cartas dibujadas con CSS (sin imagenes con derechos), avatares
+// Piezas compartidas de la version animada: cartas vectoriales propias (sin imagenes con derechos), avatares
 // con iniciales y utilidades de movimiento. Solo se anima transform y opacity.
 import { motion, useReducedMotion } from 'motion/react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { infoCarta } from '../../cartas';
+import { CaraCarta, DorsoCarta } from './CartasSvg';
+
+export { CaraCarta, DorsoCarta };
 
 const NOMBRE_PINTA: Record<string, string> = { C: 'corazones', D: 'diamantes', T: 'tréboles', P: 'picas' };
 const NOMBRE_VALOR: Record<string, string> = { A: 'As', J: 'Jota', Q: 'Reina', K: 'Rey' };
@@ -14,36 +17,40 @@ export function nombreCarta(codigo: string): string {
   return `${NOMBRE_VALOR[c.valor] ?? c.valor} de ${NOMBRE_PINTA[c.pinta] ?? c.pinta}, ${c.puntos} puntos`;
 }
 
-export function CaraCarta({ codigo }: { codigo: string }) {
-  const c = infoCarta(codigo);
-  const figura = ['J', 'Q', 'K'].includes(c.valor);
-  const comodin = codigo === '*';
-  return (
-    <div className={['a-cara', c.roja ? 'roja' : '', figura ? 'figura' : ''].join(' ')}>
-      <span className="a-esquina arriba"><b>{c.valor}</b><i>{c.simbolo}</i></span>
-      <span className="a-centro" aria-hidden="true">
-        {comodin ? '★' : figura ? <><em>{c.valor}</em><small>{c.simbolo}</small></> : c.simbolo}
-      </span>
-      <span className="a-esquina abajo"><b>{c.valor}</b><i>{c.simbolo}</i></span>
-    </div>
-  );
-}
-
-export function DorsoCarta() {
-  return <div className="a-dorso" aria-hidden="true"><span>101</span></div>;
-}
-
-/** Carta con dos caras: gira en 3D cuando pasa de boca abajo a boca arriba. */
-export function Carta({ codigo, bocaAbajo = false, girar = false, retraso = 0 }:
-  { codigo: string | null; bocaAbajo?: boolean; girar?: boolean; retraso?: number }) {
+/** Carta con dos caras: gira en 3D cuando pasa de boca abajo a boca arriba o completa una vuelta al robar. */
+export function Carta({
+  codigo,
+  bocaAbajo = false,
+  girar = false,
+  retraso = 0,
+  giroInicialY,
+  giroFinalY,
+  duracionGiro,
+}: {
+  codigo: string | null;
+  bocaAbajo?: boolean;
+  girar?: boolean;
+  retraso?: number;
+  giroInicialY?: number;
+  giroFinalY?: number;
+  duracionGiro?: number;
+}) {
   const reducido = useReducedMotion();
   const oculta = bocaAbajo || !codigo;
+  const destinoY = !reducido && giroFinalY !== undefined ? giroFinalY : oculta ? 180 : 0;
+  const inicioY = !reducido
+    ? (giroInicialY !== undefined ? giroInicialY : girar ? 180 : false)
+    : false;
   return (
     <div className="a-carta">
       <motion.div className="a-carta-interior"
-        initial={girar && !reducido ? { rotateY: 180 } : false}
-        animate={{ rotateY: oculta ? 180 : 0 }}
-        transition={{ duration: 0.5, delay: retraso, ease: [0.3, 0.7, 0.2, 1] }}>
+        initial={inicioY === false ? false : { rotateY: inicioY }}
+        animate={{ rotateY: destinoY }}
+        transition={{
+          duration: duracionGiro ?? 0.5,
+          delay: retraso,
+          ease: giroInicialY !== undefined ? [0.22, 1, 0.36, 1] : [0.3, 0.7, 0.2, 1],
+        }}>
         <div className="a-frente">{codigo && <CaraCarta codigo={codigo} />}</div>
         <div className="a-reverso"><DorsoCarta /></div>
       </motion.div>
@@ -97,6 +104,51 @@ export function useAnclas() {
   const rect = useCallback((nombre: string): DOMRect | null =>
     elementos.current.get(nombre)?.getBoundingClientRect() ?? null, []);
   return { anclar, rect };
+}
+
+/** Píldora numérica que late brevemente cuando cambia su valor. */
+export function ContadorVivo({ valor, texto }: { valor: number; texto?: string }) {
+  const reducido = useReducedMotion();
+  const previo = useRef(valor);
+  const [pulso, setPulso] = useState(0);
+  useEffect(() => {
+    if (previo.current !== valor) {
+      previo.current = valor;
+      if (!reducido) setPulso((p) => p + 1);
+    }
+  }, [valor, reducido]);
+  return (
+    <motion.span key={pulso} className="a-contador"
+      initial={pulso > 0 && !reducido ? { scale: 1 } : false}
+      animate={pulso > 0 && !reducido ? { scale: [1, 1.26, 0.96, 1] } : { scale: 1 }}
+      transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}>
+      {pulso > 0 && !reducido && (
+        <motion.span className="a-contador-brillo" aria-hidden="true"
+          initial={{ opacity: 0.7 }} animate={{ opacity: 0 }} transition={{ duration: 0.38 }} />
+      )}
+      {texto ?? valor}
+    </motion.span>
+  );
+}
+
+export type PanoMesa = 'esmeralda' | 'burdeos' | 'medianoche';
+const CLAVE_PANO = 'mesa101.pano';
+
+/** Preferencia visual del color del paño de mesa, guardada localmente. */
+export function usePanoMesa(): [PanoMesa, (p: PanoMesa) => void] {
+  const [pano, setPano] = useState<PanoMesa>(() => {
+    try {
+      const v = localStorage.getItem(CLAVE_PANO);
+      return v === 'esmeralda' || v === 'burdeos' || v === 'medianoche' ? v : 'esmeralda';
+    } catch {
+      return 'esmeralda';
+    }
+  });
+  const cambiar = useCallback((p: PanoMesa) => {
+    setPano(p);
+    try { localStorage.setItem(CLAVE_PANO, p); } catch { /* almacenamiento no disponible */ }
+  }, []);
+  return [pano, cambiar];
 }
 
 /** Transicion de resorte sobria (sin rebote exagerado). */

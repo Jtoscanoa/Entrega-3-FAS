@@ -4,12 +4,15 @@ import { AnimatePresence, motion, MotionConfig, useAnimate, useReducedMotion } f
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ayudaCierre, NOMBRE_MODALIDAD } from '../../mensajes';
 import type { EventoMesa, VistaMesa } from '../../estado/tipos';
-import { Avatar, Carta, DorsoCarta, nombreCarta, useAnclas } from './comun';
+import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, PanoMesa, useAnclas, usePanoMesa } from './comun';
 import { ItemMano, itemsDe, Mano } from './Mano';
 import { PanelFin, PanelLiquidacion } from './Paneles';
 import { RelojTurno } from './RelojTurno';
 import { CapaVuelos, Vuelo } from './Vuelos';
 import { FranjaRed, useEstadoRed } from './EstadoRed';
+import { useMotorParticulas } from './Particulas';
+import { agruparManoVisual, detectarGruposContiguos } from './agrupacionVisual';
+import { GuiaTutorial, usePartidaTutorial } from './Tutorial';
 import './tema';
 
 export default function MesaAnimada({ mesa }: { mesa: VistaMesa }) {
@@ -20,10 +23,36 @@ export default function MesaAnimada({ mesa }: { mesa: VistaMesa }) {
   );
 }
 
+export function PartidaTutorial({ alCerrar }: { alCerrar: () => void }) {
+  const contenedorRef = useRef<HTMLDivElement>(null);
+  const tut = usePartidaTutorial(alCerrar);
+  return (
+    <MotionConfig reducedMotion="user">
+      <div className="a-tutorial-pantalla" ref={contenedorRef} role="dialog" aria-modal="true" aria-label="Tutorial interactivo de Mesa 101">
+        <Mesa key={tut.revision} mesa={tut.vista} esTutorial alAgrupar={tut.notificarAgrupado} />
+        <GuiaTutorial tut={tut} contenedorRef={contenedorRef} />
+      </div>
+    </MotionConfig>
+  );
+}
+
 type Anclar = (nombre: string) => (el: HTMLElement | null) => void;
 
-function Asiento({ mesa, sub, k, total, anclar, propio = false }:
-  { mesa: VistaMesa; sub: string; k: number; total: number; anclar: Anclar; propio?: boolean }) {
+interface PosturaCarta { rot: number; dx: number; dy: number }
+interface CartaPozo extends PosturaCarta { id: string; codigo: string }
+
+function posturaPozo(codigo: string, paso: number): PosturaCarta {
+  let h = paso * 37 + 11;
+  for (let i = 0; i < codigo.length; i++) h = (h * 31 + codigo.charCodeAt(i)) >>> 0;
+  const rotRaw = (h % 22) - 11;
+  const rot = rotRaw === 0 ? (paso % 2 === 0 ? 4 : -4) : rotRaw;
+  const dx = ((h >> 4) % 9) - 4;
+  const dy = ((h >> 8) % 8) - 3;
+  return { rot, dx, dy };
+}
+
+function Asiento({ mesa, sub, k, total, anclar, propio = false, reducido = false }:
+  { mesa: VistaMesa; sub: string; k: number; total: number; anclar: Anclar; propio?: boolean; reducido?: boolean }) {
   const { e } = mesa;
   const enTurno = e.turnoDe === sub && !e.finalizada;
   const eliminado = e.eliminados.includes(sub);
@@ -34,7 +63,15 @@ function Asiento({ mesa, sub, k, total, anclar, propio = false }:
       className={['a-asiento', propio ? 'propio' : '', enTurno ? 'en-turno' : '', eliminado ? 'eliminado' : ''].join(' ')}
       initial={{ opacity: 0, y: -10 }} animate={{ opacity: eliminado ? 0.42 : 1, y: propio ? 0 : d * d * 16 }}
       transition={{ duration: 0.4 }}>
-      <Avatar sub={sub} nombre={mesa.alias(sub)} enTurno={enTurno} tam={propio ? 44 : 48} />
+      <span className="a-asiento-avatar">
+        <Avatar sub={sub} nombre={mesa.alias(sub)} enTurno={enTurno} tam={propio ? 44 : 48} />
+        {eliminado && (
+          <motion.span className="a-marca-eliminado" aria-hidden="true"
+            initial={reducido ? { opacity: 1 } : { opacity: 0, scaleX: 0 }}
+            animate={{ opacity: 1, scaleX: 1 }}
+            transition={{ duration: 0.35 }} />
+        )}
+      </span>
       <span className="a-asiento-texto">
         <span className="a-asiento-nombre">{mesa.nombre(sub)}</span>
         <span className="a-asiento-puntos">
@@ -52,9 +89,10 @@ function Asiento({ mesa, sub, k, total, anclar, propio = false }:
   );
 }
 
-function Mesa({ mesa }: { mesa: VistaMesa }) {
+function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTutorial?: boolean; alAgrupar?: () => void }) {
   const { e, seleccion, cartaSel, aviso } = mesa;
   const reducido = !!useReducedMotion();
+  const { motor, lienzo } = useMotorParticulas(reducido);
   const { anclar, rect } = useAnclas();
   const manoRef = useRef<HTMLUListElement>(null);
   const [marcoMano, animarMano] = useAnimate<HTMLDivElement>();
@@ -62,19 +100,37 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
   const [ocultas, setOcultas] = useState<ReadonlySet<string>>(new Set());
   const [cimaRetenida, setCimaRetenida] = useState<string | null | undefined>(undefined);
   const [avisoTurno, setAvisoTurno] = useState(false);
+  const [golpePozo, setGolpePozo] = useState(0);
+  const [pilaPozo, setPilaPozo] = useState<CartaPozo[]>([]);
+  const [posturaCima, setPosturaCima] = useState<PosturaCarta>({ rot: -2, dx: 0, dy: 0 });
+  const [barajando, setBarajando] = useState(false);
+  const [cartelRonda, setCartelRonda] = useState<number | null>(null);
+  const [destelloCierre, setDestelloCierre] = useState(0);
+  const [dosFilas, setDosFilas] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 560);
+  const [pano, setPano] = usePanoMesa();
+  const [tutorialAbierto, setTutorialAbierto] = useState(false);
   const siguienteVuelo = useRef(1);
   const visto = useRef(mesa.eventos.length ? mesa.eventos[mesa.eventos.length - 1].id : 0);
   const cimaAnterior = useRef(e.cima);
+  const posturaCimaRef = useRef<PosturaCarta>({ rot: -2, dx: 0, dy: 0 });
+  const pasoPozo = useRef(0);
   const rectDescarte = useRef<DOMRect | null>(null);
+  const eliminadosPrevios = useRef<string[]>(e.eliminados);
+  const barajadoTimer = useRef<number | null>(null);
+  const rondaTimer = useRef<number | null>(null);
 
   const red = useEstadoRed(mesa.conectado);
   const items = useMemo(() => itemsDe(e.orden), [e.orden]);
+  const gruposMano = useMemo(() => detectarGruposContiguos(e.orden), [e.orden]);
   const rivales = mesa.jugadores.filter((s) => s !== mesa.yo);
   const total = e.venceEn && e.turnoDesde ? Math.max(1, Math.round((new Date(e.venceEn).getTime() - e.turnoDesde) / 1000)) : 0;
   const cimaMostrada = cimaRetenida !== undefined ? cimaRetenida : e.cima;
+  const urgenteHud = mesa.miTurno && mesa.segundos !== null && mesa.segundos > 0 && mesa.segundos <= 5 && !e.finalizada;
 
   const rectDeItem = (id: string) =>
     manoRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.getBoundingClientRect() ?? null;
+
+  const centro = (r: DOMRect) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
 
   // Los eventos nuevos se animan antes de pintar (useLayoutEffect): asi la carta que llega no parpadea en la mano.
   useLayoutEffect(() => {
@@ -93,42 +149,139 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         }
         return;
       }
-      if (reducido) return;
-      const mazo = rect('mazo');
-      const pozo = rect('pozo');
-      if (ev.tipo === 'reparto' && mazo) {
+      if (ev.tipo === 'liquidacion') {
+        const nuevosEliminados = e.eliminados.filter((s) => !eliminadosPrevios.current.includes(s));
+        eliminadosPrevios.current = e.eliminados;
+        if (reducido) return;
+        setDestelloCierre((d) => d + 1);
+        const zona = rect('fieltro') ?? rect('pozo') ?? rect('mazo');
+        if (zona) {
+          const cz = centro(zona);
+          motor.emitir(cz.x, cz.y, 'cierre');
+        }
+        nuevosEliminados.forEach((s) => {
+          const ra = rect(`asiento:${s}`);
+          if (ra) {
+            const ca = centro(ra);
+            motor.emitir(ca.x, ca.y, 'eliminacion');
+          }
+        });
+        return;
+      }
+      if (ev.tipo === 'reparto') {
+        setPilaPozo([]);
+        posturaCimaRef.current = { rot: -2, dx: 0, dy: 0 };
+        setPosturaCima(posturaCimaRef.current);
+        if (reducido) return;
+        const mazo = rect('mazo');
+        if (!mazo) return;
+        const cm = centro(mazo);
+        if (barajadoTimer.current) window.clearTimeout(barajadoTimer.current);
+        if (rondaTimer.current) window.clearTimeout(rondaTimer.current);
+        setBarajando(true);
+        setCartelRonda(e.ronda || 1);
+        motor.emitir(cm.x, cm.y, 'barajado');
+        barajadoTimer.current = window.setTimeout(() => setBarajando(false), 460);
+        rondaTimer.current = window.setTimeout(() => setCartelRonda(null), 1150);
+
         items.forEach((it, i) => {
           const r = rectDeItem(it.id);
           if (!r) return;
           aOcultar.add(it.id);
-          lanzar({ desde: mazo, hasta: r, carta: it.codigo, voltear: true, retraso: 0.15 + i * 0.07, alAterrizar: () => mostrar(it.id) });
+          const retraso = 0.40 + i * 0.065;
+          lanzar({ desde: mazo, hasta: r, carta: it.codigo, voltear: true, retraso, modo: 'reparto', alAterrizar: () => mostrar(it.id) });
+          if (i % 2 === 0) {
+            const ch = centro(r);
+            motor.seguirVuelo({ desdeX: cm.x, desdeY: cm.y, hastaX: ch.x, hastaY: ch.y, arcoY: -34, retrasoMs: retraso * 1000, duracionMs: 550 });
+          }
         });
         rivales.forEach((s, k) => {
           const r = rect(`asiento:${s}`);
-          for (let j = 0; r && j < 2; j++) lanzar({ desde: mazo, hasta: r, carta: null, voltear: false, retraso: 0.1 + (k * 2 + j) * 0.08 });
+          for (let j = 0; r && j < 2; j++) {
+            lanzar({ desde: mazo, hasta: r, carta: null, voltear: false, retraso: 0.36 + (k * 2 + j) * 0.075, modo: 'roboRival' });
+          }
         });
-      } else if (ev.tipo === 'robo' && ev.jugadorId !== mesa.yo) {
+        return;
+      }
+      if (ev.tipo === 'robo') {
+        if (ev.origen === 'DESCARTE') setPilaPozo((p) => p.slice(0, -1));
+        if (reducido || ev.jugadorId === mesa.yo) return;
+        const mazo = rect('mazo');
+        const pozo = rect('pozo');
         const desde = ev.origen === 'DESCARTE' ? pozo : mazo;
         const hasta = rect(`asiento:${ev.jugadorId}`);
         if (desde && hasta) {
-          lanzar({ desde, hasta, carta: ev.origen === 'DESCARTE' ? cimaAnterior.current : null, voltear: false, retraso: 0 });
+          const cd = centro(desde);
+          const ch = centro(hasta);
+          motor.emitir(cd.x, cd.y, 'robo');
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: -34, retrasoMs: 0, duracionMs: 550 });
+          lanzar({ desde, hasta, carta: ev.origen === 'DESCARTE' ? cimaAnterior.current : null, voltear: false, retraso: 0, modo: 'roboRival' });
         }
-      } else if (ev.tipo === 'recibida') {
+        return;
+      }
+      if (ev.tipo === 'descarte') {
+        const previa = cimaAnterior.current;
+        const posturaNueva = posturaPozo(ev.carta, ++pasoPozo.current);
+        const pozo = rect('pozo');
+        const desde = !reducido && pozo
+          ? (ev.jugadorId === mesa.yo
+            ? rectDescarte.current ?? manoRef.current?.getBoundingClientRect() ?? null
+            : rect(`asiento:${ev.jugadorId}`))
+          : null;
+        rectDescarte.current = null;
+        if (!reducido && pozo && desde) {
+          const cd = centro(desde);
+          const ch = centro(pozo);
+          if (ev.jugadorId === mesa.yo) motor.emitir(cd.x, cd.y, 'seleccion');
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: -26, retrasoMs: 0, duracionMs: 480 });
+          setCimaRetenida(previa);
+          const idApilada = `pozo-${pasoPozo.current}-${previa ?? ''}`;
+          lanzar({
+            desde,
+            hasta: pozo,
+            carta: ev.carta,
+            voltear: false,
+            retraso: 0,
+            modo: 'descarte',
+            rotacionFinal: posturaNueva.rot,
+            alAterrizar: () => {
+              if (previa) {
+                const pPrev = posturaCimaRef.current;
+                setPilaPozo((p) => [...p, { id: idApilada, codigo: previa, ...pPrev }].slice(-3));
+              }
+              posturaCimaRef.current = posturaNueva;
+              setPosturaCima(posturaNueva);
+              setCimaRetenida(undefined);
+              setGolpePozo((g) => g + 1);
+              const cp = centro(rect('pozo') ?? pozo);
+              motor.emitir(cp.x, cp.y, 'pozo');
+            },
+          });
+        } else {
+          if (previa) {
+            const pPrev = posturaCimaRef.current;
+            setPilaPozo((p) => [...p, { id: `pozo-${pasoPozo.current}-${previa}`, codigo: previa, ...pPrev }].slice(-3));
+          }
+          posturaCimaRef.current = posturaNueva;
+          setPosturaCima(posturaNueva);
+        }
+        return;
+      }
+      if (reducido) return;
+      const mazo = rect('mazo');
+      const pozo = rect('pozo');
+      if (ev.tipo === 'recibida') {
         const it = [...items].reverse().find((x) => x.codigo === ev.carta);
         const desde = ev.origen === 'DESCARTE' ? pozo : mazo;
         const hasta = it ? rectDeItem(it.id) : null;
         if (it && desde && hasta) {
+          const cd = centro(desde);
+          const ch = centro(hasta);
+          const modo = ev.origen === 'DESCARTE' ? 'roboPozo' : 'roboMazo';
+          motor.emitir(cd.x, cd.y, 'robo');
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: -34, retrasoMs: 0, duracionMs: 660 });
           aOcultar.add(it.id);
-          lanzar({ desde, hasta, carta: ev.carta, voltear: ev.origen !== 'DESCARTE', retraso: 0, alAterrizar: () => mostrar(it.id) });
-        }
-      } else if (ev.tipo === 'descarte' && pozo) {
-        const desde = ev.jugadorId === mesa.yo
-          ? rectDescarte.current ?? manoRef.current?.getBoundingClientRect() ?? null
-          : rect(`asiento:${ev.jugadorId}`);
-        rectDescarte.current = null;
-        if (desde) {
-          setCimaRetenida(cimaAnterior.current);
-          lanzar({ desde, hasta: pozo, carta: ev.carta, voltear: false, retraso: 0, alAterrizar: () => setCimaRetenida(undefined) });
+          lanzar({ desde, hasta, carta: ev.carta, voltear: ev.origen !== 'DESCARTE', retraso: 0, modo, alAterrizar: () => mostrar(it.id) });
         }
       }
     };
@@ -138,6 +291,11 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
   });
 
   useLayoutEffect(() => { cimaAnterior.current = e.cima; }, [e.cima]);
+  useEffect(() => { eliminadosPrevios.current = e.eliminados; }, [e.eliminados]);
+  useEffect(() => () => {
+    if (barajadoTimer.current) window.clearTimeout(barajadoTimer.current);
+    if (rondaTimer.current) window.clearTimeout(rondaTimer.current);
+  }, []);
 
   useEffect(() => {
     if (!mesa.miTurno) { setAvisoTurno(false); return undefined; }
@@ -146,10 +304,43 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
     return () => clearTimeout(t);
   }, [mesa.miTurno, e.numeroTurno]);
 
+  // Partículas continuas alrededor del contorno mientras una carta está seleccionada.
+  useEffect(() => {
+    if (seleccion === null || reducido) return undefined;
+    const it = items[seleccion];
+    if (!it) return undefined;
+    const t = window.setInterval(() => {
+      const r = rectDeItem(it.id);
+      if (r) motor.emitirBordeCarta(r);
+    }, 125);
+    return () => window.clearInterval(t);
+  }, [seleccion, items, reducido, motor]);
+
+  // Polvitos rojizos en los bordes de la mesa y la mano cuando quedan 5 s o menos de turno.
+  useEffect(() => {
+    if (!urgenteHud || reducido) return undefined;
+    const emitir = () => motor.emitirUrgenciaHud([rect('fieltro'), rect('mano')]);
+    emitir();
+    const t = window.setInterval(emitir, 115);
+    return () => window.clearInterval(t);
+  }, [urgenteHud, reducido, motor, rect]);
+
   const alReordenar = (nuevos: ItemMano[]) => {
     const elegida = seleccion !== null ? items[seleccion]?.id : null;
     mesa.reordenar(nuevos.map((x) => x.codigo));
     if (elegida) mesa.seleccionar(nuevos.findIndex((x) => x.id === elegida));
+  };
+  const agruparJuegos = () => {
+    const elegida = seleccion !== null ? items[seleccion]?.id : null;
+    const { orden } = agruparManoVisual(e.orden);
+    mesa.reordenar(orden);
+    if (elegida) {
+      const nuevosItems = itemsDe(orden);
+      mesa.seleccionar(nuevosItems.findIndex((x) => x.id === elegida));
+    }
+    const r = manoRef.current?.getBoundingClientRect();
+    if (r) motor.emitir(r.left + r.width / 2, r.top + r.height / 2, 'seleccion');
+    alAgrupar?.();
   };
   const moverElegida = (delta: number) => {
     if (seleccion === null) return;
@@ -165,17 +356,31 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
     mesa.descartar();
   };
 
+  const PANOS: Array<{ id: PanoMesa; nombre: string }> = [
+    { id: 'esmeralda', nombre: 'Esmeralda' },
+    { id: 'burdeos', nombre: 'Burdeos' },
+    { id: 'medianoche', nombre: 'Medianoche' },
+  ];
+
   return (
-    <div className="a-raiz a-mesa">
+    <div className="a-raiz a-mesa" data-pano={pano}>
       <header className="a-encabezado">
         <span className="a-marca">Mesa 101</span>
         <span className="a-info">{NOMBRE_MODALIDAD[e.modalidad] ?? 'Partida'} · Ronda {e.ronda} · Sala <b>{mesa.codigo}</b></span>
+        <div className="a-panos" role="group" aria-label="Ambiente de la mesa">
+          {PANOS.map((p) => (
+            <button key={p.id} type="button" className={['a-pano-btn', p.id, pano === p.id ? 'activo' : ''].join(' ')}
+              aria-label={`Paño ${p.nombre}`} aria-pressed={pano === p.id} title={`Paño ${p.nombre}`}
+              onClick={() => setPano(p.id)} />
+          ))}
+        </div>
+        {!esTutorial && <button type="button" className="a-boton suave" onClick={() => setTutorialAbierto(true)}>Tutorial</button>}
         <span className={['a-conexion', mesa.conectado ? 'ok' : 'caida'].join(' ')} role="status">
           <motion.i aria-hidden="true" animate={mesa.conectado ? { opacity: 1 } : { opacity: [1, 0.25, 1] }}
             transition={mesa.conectado ? { duration: 0.3 } : { duration: 1.1, repeat: Infinity }} />
           {mesa.conectado ? 'Conectado' : 'Reconectando…'}
         </span>
-        <button type="button" className="a-boton fantasma" onClick={mesa.salir}>Salir</button>
+        <button type="button" className="a-boton fantasma" onClick={mesa.salir}>{esTutorial ? 'Salir del tutorial' : 'Salir'}</button>
       </header>
 
       <FranjaRed red={red} />
@@ -183,23 +388,56 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
       <motion.div className="a-cuerpo" animate={{ opacity: red === 'caida' ? 0.45 : 1 }} transition={{ duration: 0.4 }}
         aria-busy={red === 'caida'}>
         <div className="a-juego">
-          <section className="a-fieltro" aria-label="Mesa de juego">
+          <section ref={anclar('fieltro')} className="a-fieltro" aria-label="Mesa de juego">
             <span className="a-brillo-capa" aria-hidden="true"><span className="a-brillo" /></span>
-            <div className="a-rivales">
-              {rivales.map((s, k) => <Asiento key={s} mesa={mesa} sub={s} k={k} total={rivales.length} anclar={anclar} />)}
+            <AnimatePresence>
+              {urgenteHud && (
+                <motion.span key="fieltro-urgente" className="a-borde-urgente a-borde-urgente-mesa" aria-hidden="true"
+                  initial={{ opacity: 0 }}
+                  animate={reducido ? { opacity: 0.45 } : { opacity: [0.22, 0.95, 0.22] }}
+                  exit={{ opacity: 0 }}
+                  transition={reducido ? { duration: 0.2 } : { duration: 0.58, repeat: Infinity, ease: 'easeInOut' }} />
+              )}
+            </AnimatePresence>
+            <svg className="a-filigrana" viewBox="0 0 320 180" aria-hidden="true">
+              <rect x="16" y="14" width="288" height="152" rx="76" fill="none" stroke="currentColor" strokeWidth="1" />
+              <rect x="24" y="22" width="272" height="136" rx="68" fill="none" stroke="currentColor" strokeWidth="0.6" strokeDasharray="4 4" />
+              <polygon points="160,32 167,40 160,48 153,40" fill="none" stroke="currentColor" strokeWidth="0.8" />
+              <polygon points="160,132 167,140 160,148 153,140" fill="none" stroke="currentColor" strokeWidth="0.8" />
+            </svg>
+            {destelloCierre > 0 && !reducido && (
+              <motion.span key={`cierre-${destelloCierre}`} className="a-destello-cierre" aria-hidden="true"
+                initial={{ opacity: 0, scale: 0.85 }}
+                animate={{ opacity: [0, 0.65, 0], scale: [0.85, 1.15] }}
+                transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }} />
+            )}
+            <div className="a-rivales" ref={anclar('rivales')}>
+              {rivales.map((s, k) => <Asiento key={s} mesa={mesa} sub={s} k={k} total={rivales.length} anclar={anclar} reducido={reducido} />)}
             </div>
 
-            <div className="a-centro">
-              <motion.button type="button" className={['a-monton a-mazo', mesa.debeRobar ? 'activo' : ''].join(' ')}
+            <div className="a-centro" ref={anclar('centro')}>
+              <motion.button type="button" data-tut="mazo" className={['a-monton a-mazo', mesa.debeRobar ? 'activo' : ''].join(' ')}
                 ref={anclar('mazo')} disabled={!mesa.debeRobar} onClick={() => mesa.robar(false)}
                 whileHover={mesa.debeRobar ? { y: -4 } : undefined} whileTap={mesa.debeRobar ? { scale: 0.96 } : undefined}>
                 <span className="a-pila" aria-hidden="true">
-                  {[0, 1, 2].map((i) => <span key={i} style={{ transform: `translate(${i * -2}px, ${i * -2}px)` }}><DorsoCarta /></span>)}
+                  {[0, 1, 2, 3].map((i) => {
+                    const dir = i % 2 === 0 ? -1 : 1;
+                    const base = i * -1.6;
+                    return (
+                      <motion.span key={i} initial={false}
+                        animate={barajando && !reducido
+                          ? { x: [base, base + dir * 16, base, base - dir * 12, base], y: base, rotate: [0, dir * 6, 0, -dir * 4, 0] }
+                          : { x: base, y: base, rotate: 0 }}
+                        transition={barajando && !reducido ? { duration: 0.42, ease: 'easeInOut' } : { duration: 0.2 }}>
+                        <DorsoCarta />
+                      </motion.span>
+                    );
+                  })}
                 </span>
                 <span className="a-rotulo">{mesa.debeRobar ? 'Robar del mazo' : 'Mazo'}</span>
               </motion.button>
 
-              <div className="a-reloj-hueco">
+              <div className="a-reloj-hueco" ref={anclar('reloj')}>
                 <AnimatePresence>
                   {mesa.segundos !== null && total > 0 && !e.finalizada && (
                     <motion.div key="reloj" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
@@ -209,26 +447,69 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                 </AnimatePresence>
               </div>
 
-              <motion.button type="button" className={['a-monton a-pozo', mesa.debeRobar && e.robarDelDescarte && cimaMostrada ? 'activo' : ''].join(' ')}
+              <motion.button type="button" data-tut="pozo" className={['a-monton a-pozo', mesa.debeRobar && e.robarDelDescarte && cimaMostrada ? 'activo' : ''].join(' ')}
                 ref={anclar('pozo')} disabled={!mesa.debeRobar || !e.robarDelDescarte || !cimaMostrada}
                 onClick={() => mesa.robar(true)} aria-label={cimaMostrada ? `Pozo: ${nombreCarta(cimaMostrada)}` : 'Pozo vacío'}
                 whileHover={mesa.debeRobar && e.robarDelDescarte ? { y: -4 } : undefined}>
                 <span className="a-pila-pozo" aria-hidden="true">
-                  <span className="a-borde-pozo b1" /><span className="a-borde-pozo b2" />
+                  {cimaMostrada && (pilaPozo.length > 0 ? (
+                    pilaPozo.map((p) => (
+                      <span key={p.id} className="a-carta-apilada"
+                        style={{ transform: `translate(${p.dx}px, ${p.dy}px) rotate(${p.rot}deg)` }}>
+                        <Carta codigo={p.codigo} />
+                        <span className="a-veladura-pozo" />
+                      </span>
+                    ))
+                  ) : (
+                    <span className="a-borde-pozo b1" />
+                  ))}
+                  {golpePozo > 0 && !reducido && (
+                    <motion.span key={`onda-${golpePozo}`} className="a-onda-pozo"
+                      initial={{ scale: 0.84, opacity: 0.78 }} animate={{ scale: 1.52, opacity: 0 }}
+                      transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }} />
+                  )}
                   {cimaMostrada
-                    ? <motion.span key={cimaMostrada} className="a-cima" initial={{ opacity: 0.6 }} animate={{ opacity: 1 }}><Carta codigo={cimaMostrada} /></motion.span>
+                    ? <motion.span key={`${cimaMostrada}-${posturaCima.rot}`} className="a-cima"
+                        initial={{ opacity: 0.6, rotate: posturaCima.rot, x: posturaCima.dx, y: posturaCima.dy }}
+                        animate={!reducido && golpePozo > 0
+                          ? { opacity: 1, rotate: posturaCima.rot, x: posturaCima.dx, y: posturaCima.dy, scale: [1.07, 0.985, 1] }
+                          : { opacity: 1, rotate: posturaCima.rot, x: posturaCima.dx, y: posturaCima.dy, scale: 1 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}>
+                        <Carta codigo={cimaMostrada} />
+                      </motion.span>
                     : <span className="a-vacio">Vacío</span>}
                 </span>
                 <span className="a-rotulo">{mesa.debeRobar && e.robarDelDescarte ? 'Robar del pozo' : 'Pozo'}</span>
               </motion.button>
             </div>
 
+            {mesa.miTurno && !e.finalizada && (
+              <div className="a-pasos-turno" aria-hidden="true">
+                <span className={mesa.debeRobar ? 'activo' : 'listo'}>1. Robar</span>
+                <i>›</i>
+                <span className={mesa.debeDescartar && !cartaSel ? 'activo' : ''}>2. Ordenar</span>
+                <i>›</i>
+                <span className={mesa.debeDescartar && !!cartaSel ? 'activo' : ''}>3. Descartar / Cerrar</span>
+              </div>
+            )}
             <motion.p key={mesa.instruccion} className={['a-instruccion', mesa.miTurno ? 'mia' : ''].join(' ')}
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>{mesa.instruccion}</motion.p>
 
             <div className="a-yo">
-              <Asiento mesa={mesa} sub={mesa.yo} k={0} total={1} anclar={anclar} propio />
+              <Asiento mesa={mesa} sub={mesa.yo} k={0} total={1} anclar={anclar} propio reducido={reducido} />
             </div>
+
+            <AnimatePresence>
+              {cartelRonda !== null && !reducido && (
+                <motion.div key={`ronda-${cartelRonda}`} className="a-cartel-ronda" aria-hidden="true"
+                  initial={{ opacity: 0, scale: 0.88, y: 6 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 1.04, y: -6 }}
+                  transition={{ duration: 0.28, ease: [0.2, 0.8, 0.2, 1] }}>
+                  <span>Ronda {cartelRonda}</span>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <AnimatePresence>
               {avisoTurno && (
@@ -248,17 +529,33 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
             )}
           </AnimatePresence>
 
-          <section className="a-zona-mano" aria-label="Tu mano">
+          <section className="a-zona-mano" ref={anclar('mano')} aria-label="Tu mano">
+            <AnimatePresence>
+              {urgenteHud && (
+                <motion.span key="zona-urgente" className="a-borde-urgente a-borde-urgente-mano" aria-hidden="true"
+                  initial={{ opacity: 0 }}
+                  animate={reducido ? { opacity: 0.45 } : { opacity: [0.22, 0.95, 0.22] }}
+                  exit={{ opacity: 0 }}
+                  transition={reducido ? { duration: 0.2 } : { duration: 0.58, repeat: Infinity, ease: 'easeInOut' }} />
+              )}
+            </AnimatePresence>
             <div className="a-mano-cabecera">
-              <h2>Tu mano <span className="a-contador">{e.orden.length}</span></h2>
+              <h2>Tu mano <ContadorVivo valor={e.orden.length} /></h2>
               <div className="a-fila">
-                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorPinta}>Ordenar por pinta</button>
-                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorValor}>Ordenar por número</button>
+                <button type="button" data-tut="agrupar" className="a-boton suave" onClick={agruparJuegos}>Agrupar juegos</button>
+                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorPinta}>Por pinta</button>
+                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorValor}>Por número</button>
+                <button type="button" className={['a-boton suave a-conmutador', dosFilas ? 'activo' : ''].join(' ')}
+                  aria-pressed={dosFilas} onClick={() => setDosFilas((v) => !v)}>
+                  Vista 2 filas
+                </button>
               </div>
             </div>
             <div className="a-mano-marco" ref={marcoMano}>
               <Mano ref={manoRef} items={items} seleccion={seleccion} ocultas={ocultas} nueva={e.nueva}
-                alSeleccionar={mesa.seleccionar} alReordenar={alReordenar} />
+                enTurno={mesa.miTurno} dosFilas={dosFilas} grupos={gruposMano}
+                alSeleccionar={mesa.seleccionar} alReordenar={alReordenar}
+                alChispearCarta={(x, y) => motor.emitir(x, y, 'seleccion')} />
             </div>
             <div className="a-mover" aria-live="polite">
               {cartaSel ? (
@@ -267,12 +564,18 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                   <span>{nombreCarta(cartaSel)}</span>
                   <button type="button" className="a-boton suave" onClick={() => moverElegida(1)} disabled={seleccion === e.orden.length - 1}>Mover →</button>
                 </>
-              ) : <span className="a-tenue">Arrastra para agrupar ternas y cuartas; toca una carta para elegirla.</span>}
+              ) : (
+                <span className="a-tenue">
+                  {dosFilas
+                    ? 'En 2 filas ves todas tus cartas; usa Agrupar juegos o ← Mover para ordenarlas.'
+                    : 'Arrastra o pulsa Agrupar juegos para separar ternas y cuartas; toca una carta para elegirla.'}
+                </span>
+              )}
             </div>
-            <div className="a-acciones">
-              <motion.button type="button" className="a-boton principal" disabled={!mesa.debeDescartar || !cartaSel}
+            <div className="a-acciones" ref={anclar('acciones')}>
+              <motion.button type="button" data-tut="descartar" className="a-boton principal" disabled={!mesa.debeDescartar || !cartaSel}
                 onClick={descartar} whileTap={{ scale: 0.97 }}>Descartar carta</motion.button>
-              <motion.button type="button" className="a-boton cerrar" disabled={!mesa.debeDescartar || !cartaSel}
+              <motion.button type="button" data-tut="cerrar" className="a-boton cerrar" disabled={!mesa.debeDescartar || !cartaSel}
                 onClick={mesa.cerrar} whileTap={{ scale: 0.97 }}>Cerrar ronda con esta carta</motion.button>
             </div>
             {e.modalidad && <p className="a-tenue a-pequeno">{ayudaCierre(e.modalidad)}</p>}
@@ -297,8 +600,8 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
               <summary>Historial de rondas</summary>
               <table>
                 <thead><tr><th>Ronda</th>{mesa.jugadores.map((s) => <th key={s}>{mesa.nombre(s)}</th>)}</tr></thead>
-                <tbody>{mesa.historial.map((h) => (
-                  <tr key={h.ronda}><td>{h.ronda}</td>{mesa.jugadores.map((s) => (
+                <tbody>{mesa.historial.map((h, i) => (
+                  <tr key={`${h.ronda}-${i}`}><td>{h.ronda}</td>{mesa.jugadores.map((s) => (
                     <td key={s}>{s === h.cerrador ? `${h.puntosRonda[s] ?? 0} ✓` : h.puntosRonda[s] ?? '—'}</td>))}</tr>
                 ))}</tbody>
               </table>
@@ -308,10 +611,12 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
       </motion.div>
 
       <CapaVuelos vuelos={vuelos} alTerminar={(id) => setVuelos((v) => v.filter((x) => x.id !== id))} />
+      {lienzo}
       <AnimatePresence>
         {mesa.liquidacion && !mesa.fin && <PanelLiquidacion key={`liq-${mesa.liquidacion.ronda}`} mesa={mesa} l={mesa.liquidacion} />}
       </AnimatePresence>
       <AnimatePresence>{mesa.fin && <PanelFin key="fin" mesa={mesa} fin={mesa.fin} />}</AnimatePresence>
+      {!esTutorial && tutorialAbierto && <PartidaTutorial alCerrar={() => setTutorialAbierto(false)} />}
       <div className="a-sr" aria-live="polite">{mesa.miTurno ? `Es tu turno. ${mesa.instruccion}` : ''}</div>
     </div>
   );
