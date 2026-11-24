@@ -1,0 +1,22 @@
+# Maven / Java
+target/
+*.class
+# Node / SPA
+frontend/node_modules/
+frontend/dist/
+src/main/resources/static/
+# IDE
+.idea/
+*.iml
+.vscode/
+# Entorno y secretos
+.env
+*.env
+# Sistema
+.DS_Store
+Thumbs.db
+tsconfig.tsbuildinfo
+
+# Archivos locales de trabajo (no se versionan)
+CLAUDE.md
+.claude/

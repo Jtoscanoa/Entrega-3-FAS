@@ -1,0 +1,70 @@
+name: ci
+on:
+  push:
+  pull_request:
+  schedule:
+    - cron: "0 8 * * *"   # 03:00 Colombia: fitness dinamicas holisticas contra staging
+jobs:
+  fitness-estaticas-y-atomicas:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: "21", cache: maven }
+      # mvn verify ejecuta: ArchUnit FF-01..FF-08b, JUnit FF-11/12/15/16/17/18 (Testcontainers),
+      # PMD FF-09 (CC <= 10) y JaCoCo FF-10 (ramas >= 95 % en domain.rules)
+      - run: mvn -B verify
+      - name: git diff de variantes (FF-13)
+        if: contains(github.event.pull_request.labels.*.name, 'variante')
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          fuera=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -v 'domain/rules' | grep -v 'src/test' | grep -v 'META-INF/services' || true)
+          test -z "$fuera" || { echo "Archivos fuera de domain.rules: $fuera"; exit 1; }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reportes
+          path: |
+            target/site/jacoco
+            target/pmd.xml
+            target/surefire-reports
+            target/metricas-acoplamiento.csv
+  spa:
+    if: github.event_name != 'schedule'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
+      - run: npm ci
+      - run: npm run build     # tsc estricto + bundle de produccion
+  publicar-imagen:
+    needs: [fitness-estaticas-y-atomicas, spa]
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    permissions: { contents: read, packages: write }
+    steps:
+      - uses: actions/checkout@v4
+      - id: img   # ghcr.io exige minusculas en el nombre de la imagen
+        run: echo "nombre=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_OUTPUT"
+      - uses: docker/login-action@v3
+        with: { registry: ghcr.io, username: "${{ github.actor }}", password: "${{ secrets.GITHUB_TOKEN }}" }
+      - uses: docker/build-push-action@v6
+        with: { context: ., push: true, tags: "${{ steps.img.outputs.nombre }}:${{ github.sha }}" }
+      # ADR-09: Render solo despliega cuando todas las fitness functions pasaron (autoDeploy: false en render.yaml)
+      - name: Desplegar en Render
+        env: { DEPLOY_HOOK_URL: "${{ secrets.RENDER_DEPLOY_HOOK_URL }}" }
+        run: |
+          if [ -n "$DEPLOY_HOOK_URL" ]; then curl -fsS -X POST "$DEPLOY_HOOK_URL"; else echo "Sin RENDER_DEPLOY_HOOK_URL: despliegue omitido"; fi
+  fitness-nocturnas:
+    if: github.event_name == 'schedule'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: grafana/setup-k6-action@v1
+      - run: k6 run tests/fitness/k6/latencia.js     # FF-14 (p95 < 300 ms, 50 salas) y FF-15 (reconexion <= 5 s)
+        env: { STAGING_URL: "${{ secrets.STAGING_URL }}", STAGING_TOKEN: "${{ secrets.STAGING_TOKEN }}" }
