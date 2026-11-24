@@ -1,0 +1,53 @@
+## COMPLEJIDAD
+metodos=215  CC_max=6  CC_media=1.81  metodos_con_CC>10=0
+  6  TurnOrchestratorComponent.vencerTurno
+  6  DeckManagementComponent.nuevaBaraja
+  6  RoundScoringComponent.determinarFin
+  6  BuscadorCombinaciones.explorar
+  6  ValidadorCombinacion.clasificar
+  5  TurnOrchestratorComponent.validarTurno
+  5  TurnOrchestratorComponent.liquidarCierre
+  5  BuscadorCombinaciones.particionExacta
+  5  BuscadorCombinaciones.particionar
+  5  ConfiguracionReglas.<init>
+
+## ACOPLAMIENTO POR PAQUETE (Martin, 2003)
+paquete,tipos,Ca,Ce,I,A,D
+(raiz),1,0,0,0.00,0.00,1.00
+config,2,0,6,1.00,0.00,0.00
+domain.gameplay,11,3,5,0.63,0.36,0.01
+domain.gameplay.auditoria,4,3,0,0.00,0.25,0.75
+domain.gameplay.mazo,4,2,2,0.50,0.25,0.25
+domain.lobby,4,2,3,0.60,0.25,0.15
+domain.rules,8,4,1,0.20,0.50,0.30
+domain.rules.evaluacion,5,0,2,1.00,0.00,0.00
+domain.rules.modelo,13,5,0,0.00,0.00,1.00
+infrastructure.persistence,3,2,0,0.00,0.33,0.67
+infrastructure.realtime,6,0,2,1.00,0.00,0.00
+
+## DEPENDENCIAS ENTRE PAQUETES
+(raiz) -> []
+config -> [domain.gameplay, domain.gameplay.auditoria, domain.gameplay.mazo, domain.lobby, domain.rules, infrastructure.persistence]
+domain.gameplay -> [domain.gameplay.auditoria, domain.gameplay.mazo, domain.rules, domain.rules.modelo, infrastructure.persistence]
+domain.gameplay.auditoria -> []
+domain.gameplay.mazo -> [domain.gameplay.auditoria, domain.rules.modelo]
+domain.lobby -> [domain.gameplay, domain.rules, domain.rules.modelo]
+domain.rules -> [domain.rules.modelo]
+domain.rules.evaluacion -> [domain.rules, domain.rules.modelo]
+domain.rules.modelo -> []
+infrastructure.persistence -> []
+infrastructure.realtime -> [domain.gameplay, domain.lobby]
+
+## CICLOS ENTRE PAQUETES
+ninguno
+
+## Ce(TurnOrchestratorComponent) a nivel de tipo
+17 tipos: [EventoDominio, PartidaEnMemoria, IAuditoriaReparto, RevelacionReparto, IMazo, Robo, IConfiguracion, IEvaluadorMano, ILiquidacion, Agrupacion, Carta, ConfiguracionReglas, ResultadoLiquidacion, ResultadoValidacion, SolicitudLiquidacion, IMatchState, LiquidacionDuplicadaException]
+
+## VERIFICACION DE REGLAS SOBRE IMPORTS
+OK     FF-01 domain.rules sin infraestructura/gameplay/lobby/spring
+OK     FF-05 OrdenMazo solo en mazo/auditoria
+OK     FF-06 gateway sin evaluacion/modelo
+OK     FF-07 realtime sin persistence
+OK     FF-08b persistence sin dominio
+OK     FF-01b modelo sin evaluacion/gameplay/infra

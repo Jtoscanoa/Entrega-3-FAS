@@ -1,0 +1,6 @@
+package co.edu.unal.apuntado.domain.gameplay;
+
+public enum MotivoComando {
+    PARTIDA_INEXISTENTE, PARTIDA_FINALIZADA, FUERA_DE_TURNO, TURNO_OBSOLETO, FASE_INCORRECTA,
+    CARTA_NO_EN_MANO, DESCARTE_NO_PERMITIDO, PILA_VACIA
+}
