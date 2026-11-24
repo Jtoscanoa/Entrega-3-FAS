@@ -184,7 +184,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         aria-busy={red === 'caida'}>
         <div className="a-juego">
           <section className="a-fieltro" aria-label="Mesa de juego">
-            <span className="a-brillo" aria-hidden="true" />
+            <span className="a-brillo-capa" aria-hidden="true"><span className="a-brillo" /></span>
             <div className="a-rivales">
               {rivales.map((s, k) => <Asiento key={s} mesa={mesa} sub={s} k={k} total={rivales.length} anclar={anclar} />)}
             </div>

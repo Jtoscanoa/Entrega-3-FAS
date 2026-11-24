@@ -7,6 +7,7 @@ import MesaLigera from './ligera/MesaLigera';
 import PreviasLigeras from './ligera/PreviasLigeras';
 
 const MesaAnimada = lazy(() => import('./animada/MesaAnimada'));
+const PreviasAnimadas = lazy(() => import('./animada/PreviasAnimadas'));
 
 export function PielMesa({ version, mesa }: { version: Version; mesa: VistaMesa }) {
   if (version === 'ligera') return <MesaLigera mesa={mesa} />;
@@ -17,6 +18,11 @@ export function PielMesa({ version, mesa }: { version: Version; mesa: VistaMesa 
   );
 }
 
-export function PielPrevias({ vista }: { version: Version; vista: VistaPrevia }) {
-  return <PreviasLigeras vista={vista} />;
+export function PielPrevias({ version, vista }: { version: Version; vista: VistaPrevia }) {
+  if (version === 'ligera') return <PreviasLigeras vista={vista} />;
+  return (
+    <Suspense fallback={<PreviasLigeras vista={vista} />}>
+      <PreviasAnimadas vista={vista} />
+    </Suspense>
+  );
 }
