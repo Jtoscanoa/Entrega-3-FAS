@@ -173,6 +173,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   return {
     yo: sesion.sub, codigo, e, conectado, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar,
     segundos, instruccion, aviso, bitacora, liquidacion, historial, fin, eventos,
+    alias: (sub) => nombresRef.current[sub] ?? (sub === sesion.sub ? 'Tú' : 'Jugador'),
     seleccionar: setSeleccion,
     robar: (delDescarte) => conexion.current?.robar(delDescarte, e.numeroTurno),
     descartar: () => { if (cartaSel) conexion.current?.descartar(cartaSel, e.numeroTurno); },

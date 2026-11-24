@@ -54,6 +54,8 @@ export interface VistaMesa {
   e: EstadoMesa;
   conectado: boolean;
   nombre: (sub: string | null) => string;
+  /** Apodo tal cual (tambien el propio), para avatares e iniciales. */
+  alias: (sub: string) => string;
   jugadores: string[];
   seleccion: number | null;
   cartaSel: string | null;

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { useMesa, ParametrosMesa } from './estado/useMesa';
 import { useInicio, useNavegacion, useSala, useVestibulo } from './estado/usePrevias';
 import type { VistaPrevia } from './estado/tipos';
@@ -8,12 +8,24 @@ import SelectorVersion from './presentacion/SelectorVersion';
 
 type Navegacion = ReturnType<typeof useNavegacion>;
 
+// Modo demostracion (solo `npm run dev` con ?demo): en produccion import.meta.env.DEV es false y Vite lo elimina.
+const DemoMesa = import.meta.env.DEV ? lazy(() => import('./demo/DemoMesa')) : null;
+const enDemo = DemoMesa !== null && new URLSearchParams(location.search).has('demo');
+
 export default function App() {
   const nav = useNavegacion();
   const [version, setVersion] = useState<Version>(versionInicial);
   const cambiarVersion = (v: Version) => { guardarVersion(v); setVersion(v); };
   const { sesion, lugar } = nav;
 
+  if (DemoMesa && enDemo) {
+    return (
+      <>
+        <Suspense fallback={null}><DemoMesa version={version} /></Suspense>
+        <SelectorVersion version={version} alCambiar={cambiarVersion} />
+      </>
+    );
+  }
   return (
     <>
       {sesion && lugar && lugar.partidaId !== null
