@@ -85,6 +85,19 @@
         </configuration>
         <executions>
           <execution><id>cc</id><phase>verify</phase><goals><goal>check</goal></goals></execution>
+          <!-- Ley de Demeter sobre el dominio: se reporta (target/pmd-demeter/pmd.xml) sin romper el build.
+               Goal pmd y no check: check bifurca un pmd:pmd con la configuracion por defecto del plugin, que
+               ignora la de esta ejecucion y nunca escribe en target/pmd-demeter. -->
+          <execution>
+            <id>demeter</id>
+            <phase>verify</phase>
+            <goals><goal>pmd</goal></goals>
+            <configuration>
+              <rulesets><ruleset>config/pmd/demeter.xml</ruleset></rulesets>
+              <includes><include>co/edu/unal/apuntado/domain/**/*.java</include></includes>
+              <targetDirectory>${project.build.directory}/pmd-demeter</targetDirectory>
+            </configuration>
+          </execution>
         </executions>
       </plugin>
     </plugins>
