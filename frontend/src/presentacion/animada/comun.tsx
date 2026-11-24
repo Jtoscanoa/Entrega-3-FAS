@@ -1,7 +1,7 @@
 // Piezas compartidas de la version animada: cartas dibujadas con CSS (sin imagenes con derechos), avatares
 // con iniciales y utilidades de movimiento. Solo se anima transform y opacity.
 import { motion, useReducedMotion } from 'motion/react';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { infoCarta } from '../../cartas';
 
 const NOMBRE_PINTA: Record<string, string> = { C: 'corazones', D: 'diamantes', T: 'tréboles', P: 'picas' };
@@ -120,6 +120,31 @@ export function useAnclas() {
   const rect = useCallback((nombre: string): DOMRect | null =>
     elementos.current.get(nombre)?.getBoundingClientRect() ?? null, []);
   return { anclar, rect };
+}
+
+/** Píldora numérica que late brevemente cuando cambia su valor. */
+export function ContadorVivo({ valor, texto }: { valor: number; texto?: string }) {
+  const reducido = useReducedMotion();
+  const previo = useRef(valor);
+  const [pulso, setPulso] = useState(0);
+  useEffect(() => {
+    if (previo.current !== valor) {
+      previo.current = valor;
+      if (!reducido) setPulso((p) => p + 1);
+    }
+  }, [valor, reducido]);
+  return (
+    <motion.span key={pulso} className="a-contador"
+      initial={pulso > 0 && !reducido ? { scale: 1 } : false}
+      animate={pulso > 0 && !reducido ? { scale: [1, 1.26, 0.96, 1] } : { scale: 1 }}
+      transition={{ duration: 0.38, ease: [0.22, 1, 0.36, 1] }}>
+      {pulso > 0 && !reducido && (
+        <motion.span className="a-contador-brillo" aria-hidden="true"
+          initial={{ opacity: 0.7 }} animate={{ opacity: 0 }} transition={{ duration: 0.38 }} />
+      )}
+      {texto ?? valor}
+    </motion.span>
+  );
 }
 
 /** Transicion de resorte sobria (sin rebote exagerado). */

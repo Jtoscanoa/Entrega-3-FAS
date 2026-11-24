@@ -37,6 +37,7 @@ export function CapaVuelos({ vuelos, alTerminar }: { vuelos: Vuelo[]; alTerminar
         const giro = b.x - a.x >= 0 ? 8 : -8;
         const arco = modo === 'descarte' ? -26 : -34;
         const yMedio = (a.y + b.y) / 2 + arco;
+        const ySombraMedio = (a.y + b.y) / 2 + 18;
 
         const esRoboPropio = modo === 'roboMazo' || modo === 'roboPozo';
         const esDescarte = modo === 'descarte';
@@ -47,28 +48,44 @@ export function CapaVuelos({ vuelos, alTerminar }: { vuelos: Vuelo[]; alTerminar
             ? [0, giro * 1.6, v.rotacionFinal ?? -2]
             : [0, giro, 0];
         const picoEscala = Math.max(a.scale, b.scale) * (esDescarte ? 1.08 : esRoboPropio ? 1.07 : 1.04);
+        const sombraPico = Math.max(a.scale, b.scale) * 1.28;
 
         return (
-          <motion.div key={v.id} className="a-vuelo" style={{ width: ANCHO, height: ALTO }}
-            initial={{ x: a.x, y: a.y, scale: a.scale, rotate: 0, opacity: 0 }}
-            animate={{ x: b.x, y: [a.y, yMedio, b.y], scale: [a.scale, picoEscala, b.scale], rotate: rotacion, opacity: 1 }}
-            transition={{
-              default: { duration: duracion, delay: v.retraso, ease: [0.25, 0.8, 0.25, 1] },
-              opacity: { duration: 0.08, delay: v.retraso },
-            }}
-            onAnimationComplete={() => { v.alAterrizar?.(); alTerminar(v.id); }}>
-            {esRoboPropio && v.carta ? (
-              <Carta
-                codigo={v.carta}
-                retraso={v.retraso + 0.03}
-                giroInicialY={modo === 'roboMazo' ? -180 : 0}
-                giroFinalY={360}
-                duracionGiro={0.62}
-              />
-            ) : (
-              <Carta codigo={v.carta} bocaAbajo={!v.carta} girar={v.voltear && !!v.carta} retraso={v.retraso + 0.05} />
-            )}
-          </motion.div>
+          <div key={v.id} className="a-vuelo-grupo">
+            <motion.div className="a-vuelo-sombra" style={{ width: ANCHO, height: ALTO }}
+              initial={{ x: a.x, y: a.y + 6, scale: a.scale * 0.94, rotate: 0, opacity: 0 }}
+              animate={{
+                x: b.x,
+                y: [a.y + 6, ySombraMedio, b.y + 6],
+                scale: [a.scale * 0.94, sombraPico, b.scale * 0.94],
+                rotate: rotacion,
+                opacity: [0, 0.46, 0.18, 0.46],
+              }}
+              transition={{
+                default: { duration: duracion, delay: v.retraso, ease: [0.25, 0.8, 0.25, 1] },
+                opacity: { duration: duracion, delay: v.retraso, times: [0, 0.12, 0.5, 1] },
+              }} />
+            <motion.div className="a-vuelo" style={{ width: ANCHO, height: ALTO }}
+              initial={{ x: a.x, y: a.y, scale: a.scale, rotate: 0, opacity: 0 }}
+              animate={{ x: b.x, y: [a.y, yMedio, b.y], scale: [a.scale, picoEscala, b.scale], rotate: rotacion, opacity: 1 }}
+              transition={{
+                default: { duration: duracion, delay: v.retraso, ease: [0.25, 0.8, 0.25, 1] },
+                opacity: { duration: 0.08, delay: v.retraso },
+              }}
+              onAnimationComplete={() => { v.alAterrizar?.(); alTerminar(v.id); }}>
+              {esRoboPropio && v.carta ? (
+                <Carta
+                  codigo={v.carta}
+                  retraso={v.retraso + 0.03}
+                  giroInicialY={modo === 'roboMazo' ? -180 : 0}
+                  giroFinalY={360}
+                  duracionGiro={0.62}
+                />
+              ) : (
+                <Carta codigo={v.carta} bocaAbajo={!v.carta} girar={v.voltear && !!v.carta} retraso={v.retraso + 0.05} />
+              )}
+            </motion.div>
+          </div>
         );
       })}
     </div>

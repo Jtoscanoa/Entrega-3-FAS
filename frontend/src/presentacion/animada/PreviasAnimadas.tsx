@@ -2,7 +2,7 @@
 // Las transiciones entre pantallas van con AnimatePresence; solo transform y opacity.
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react';
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
-import { Avatar, Carta } from './comun';
+import { Avatar, Carta, ContadorVivo } from './comun';
 import './tema';
 
 const PANTALLA = {
@@ -123,7 +123,7 @@ function Sala({ v }: { v: VistaSala }) {
       <p className="a-tenue a-centrado">Comparte este código con los demás jugadores</p>
 
       <div className="a-tarjeta">
-        <h2 className="a-subtitulo">Jugadores <span className="a-contador">{jugadores.length}/6</span></h2>
+        <h2 className="a-subtitulo">Jugadores <ContadorVivo valor={jugadores.length} texto={`${jugadores.length}/6`} /></h2>
         <ul className="a-jugadores">
           <AnimatePresence initial={false}>
             {jugadores.map((j) => (

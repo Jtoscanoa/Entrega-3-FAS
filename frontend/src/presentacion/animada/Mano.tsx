@@ -21,6 +21,7 @@ interface Props {
   seleccion: number | null;
   ocultas: ReadonlySet<string>;
   nueva: string | null;
+  enTurno?: boolean;
   alSeleccionar: (indice: number | null) => void;
   alReordenar: (items: ItemMano[]) => void;
   alChispearCarta?: (x: number, y: number) => void;
@@ -39,6 +40,7 @@ interface CartaManoProps {
   i: number;
   elegida: boolean;
   nueva: boolean;
+  enTurno: boolean;
   reducido: boolean;
   rotate: number;
   y: number;
@@ -49,7 +51,7 @@ interface CartaManoProps {
 }
 
 function CartaMano({
-  it, i, elegida, nueva, reducido, rotate, y, oculta, arrastrando, alSeleccionar, alChispear,
+  it, i, elegida, nueva, enTurno, reducido, rotate, y, oculta, arrastrando, alSeleccionar, alChispear,
 }: CartaManoProps) {
   const rotX = useMotionValue(0);
   const rotY = useMotionValue(0);
@@ -115,6 +117,7 @@ function CartaMano({
           <Carta codigo={it.codigo} />
           {!reducido && (
             <span className="a-lustre-marco" aria-hidden="true">
+              {enTurno && <span className="a-barrido-turno" style={{ ['--i' as string]: i }} />}
               <motion.span className="a-lustre-puntero" style={{ opacity: lustreOpacidadSpring, x: lustreXSpring }} />
             </span>
           )}
@@ -126,7 +129,7 @@ function CartaMano({
 }
 
 export const Mano = forwardRef<HTMLUListElement, Props>(function Mano(
-  { items, seleccion, ocultas, nueva, alSeleccionar, alReordenar, alChispearCarta }, ref) {
+  { items, seleccion, ocultas, nueva, enTurno = false, alSeleccionar, alReordenar, alChispearCarta }, ref) {
   const reducido = !!useReducedMotion();
   const arrastrando = useRef(false);
   const n = items.length;
@@ -138,7 +141,7 @@ export const Mano = forwardRef<HTMLUListElement, Props>(function Mano(
         const { rotate, y } = abanico(i, n);
         return (
           <CartaMano key={it.id} it={it} i={i} elegida={elegida} nueva={it.codigo === nueva}
-            reducido={reducido} rotate={rotate} y={y} oculta={ocultas.has(it.id)}
+            enTurno={enTurno} reducido={reducido} rotate={rotate} y={y} oculta={ocultas.has(it.id)}
             arrastrando={arrastrando} alSeleccionar={() => alSeleccionar(elegida ? null : i)}
             alChispear={alChispearCarta} />
         );
