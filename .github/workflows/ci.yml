@@ -43,6 +43,7 @@ jobs:
       - uses: actions/setup-node@v4
         with: { node-version: "20", cache: npm, cache-dependency-path: frontend/package-lock.json }
       - run: npm ci
+      - run: npm run fitness   # FF-19 (dependency-cruiser): src/presentacion/** no importa src/api.ts
       - run: npm run build     # tsc estricto + bundle de produccion
   publicar-imagen:
     needs: [fitness-estaticas-y-atomicas, spa]

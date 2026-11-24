@@ -1,19 +1,8 @@
 // Cliente REST y STOMP. La SPA no valida reglas: el servidor es la fuente de verdad (RD4).
 import { Client, IMessage } from '@stomp/stompjs';
+import type { EstadoSala, Mensaje, OpcionesPartida, Sesion } from './estado/tipos';
 
-export interface Sesion { token: string; sub: string; apodo: string; venceEn: string }
-export interface Participante { sub: string; alias: string }
-export interface EstadoSala { codigo: string; anfitrion: string; jugadores: Participante[]; partidaId: number | null }
-export interface OpcionesPartida {
-  modalidad: 'APUNTADO_101' | 'CLASICA_433';
-  robarDelDescarte: boolean;
-  umbral: number | null;
-  segundosPorTurno: number;
-  comodines: boolean;
-  cierreAPintas: boolean;
-  segundoMazo: boolean;
-}
-export interface Mensaje { tipo: string; datos: any }
+export type { EstadoSala, Mensaje, OpcionesPartida, Participante, Sesion } from './estado/tipos';
 
 export class ErrorApi extends Error {
   constructor(public motivo: string) { super(motivo); }
