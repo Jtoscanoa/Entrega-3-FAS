@@ -14,8 +14,17 @@ export interface TramoEstela {
   duracionMs: number;
 }
 
+export interface RectArea {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
 export interface MotorParticulas {
   emitir: (x: number, y: number, clase: ClaseParticula) => void;
+  emitirBordeCarta: (rect: RectArea) => void;
+  emitirUrgenciaHud: (reloj?: RectArea | null) => void;
   seguirVuelo: (tramo: TramoEstela) => void;
 }
 
@@ -64,9 +73,13 @@ const ORO_VIEJO: ColorRGB = [201, 164, 92];
 const MARFIL: ColorRGB = [248, 241, 224];
 const AMBAR: ColorRGB = [184, 137, 61];
 const CARMESI: ColorRGB = [208, 86, 78];
+const ROJO_HUD: ColorRGB = [224, 88, 78];
+const CORAL_HUD: ColorRGB = [244, 146, 120];
+const AMBAR_HUD: ColorRGB = [214, 140, 72];
 
 const PALETA_DORADA: readonly ColorRGB[] = [LATON_CLARO, ORO_VIEJO, MARFIL, AMBAR];
 const PALETA_ELIMINACION: readonly ColorRGB[] = [CARMESI, CARMESI, ORO_VIEJO, LATON_CLARO];
+const PALETA_URGENCIA: readonly ColorRGB[] = [ROJO_HUD, ROJO_HUD, CORAL_HUD, AMBAR_HUD];
 
 function azar(min: number, max: number): number {
   return min + Math.random() * (max - min);
@@ -153,6 +166,33 @@ function dibujarParticula(ctx: CanvasRenderingContext2D, p: Particula, alpha: nu
   ctx.restore();
 }
 
+function tomarRanuraDelPool(st: { pool: Particula[]; cursor: number; compacto: boolean }, forzar = false): Particula | null {
+  const tope = st.compacto ? MAX_MOVIL : MAX_POOL;
+  let vivas = 0;
+  for (let i = 0; i < MAX_POOL; i++) {
+    if (st.pool[i].viva) vivas++;
+  }
+  if (vivas < tope) {
+    for (let k = 0; k < MAX_POOL; k++) {
+      const idx = (st.cursor + k) % MAX_POOL;
+      if (!st.pool[idx].viva) {
+        st.cursor = (idx + 1) % MAX_POOL;
+        return st.pool[idx];
+      }
+    }
+  }
+  if (vivas >= tope || forzar) {
+    for (let k = 0; k < MAX_POOL; k++) {
+      const idx = (st.cursor + k) % MAX_POOL;
+      if (st.pool[idx].viva) {
+        st.cursor = (idx + 1) % MAX_POOL;
+        return st.pool[idx];
+      }
+    }
+  }
+  return null;
+}
+
 export function useMotorParticulas(reducido: boolean) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const reducidoRef = useRef(reducido);
@@ -231,31 +271,7 @@ export function useMotorParticulas(reducido: boolean) {
     window.addEventListener('resize', ajustarTamano, { passive: true });
     document.addEventListener('visibilitychange', alCambiarVisibilidad);
 
-    function tomarRanura(): Particula | null {
-      const tope = st.compacto ? MAX_MOVIL : MAX_POOL;
-      let vivas = 0;
-      for (let i = 0; i < MAX_POOL; i++) {
-        if (st.pool[i].viva) vivas++;
-      }
-      for (let k = 0; k < MAX_POOL; k++) {
-        const idx = (st.cursor + k) % MAX_POOL;
-        if (!st.pool[idx].viva && vivas < tope) {
-          st.cursor = (idx + 1) % MAX_POOL;
-          return st.pool[idx];
-        }
-      }
-      // Si el pool llegó al tope, recicla la ranura siguiente en anillo dentro del límite permitido.
-      if (vivas >= tope) {
-        for (let k = 0; k < MAX_POOL; k++) {
-          const idx = (st.cursor + k) % MAX_POOL;
-          if (st.pool[idx].viva) {
-            st.cursor = (idx + 1) % MAX_POOL;
-            return st.pool[idx];
-          }
-        }
-      }
-      return null;
-    }
+    const tomarRanura = () => tomarRanuraDelPool(st);
 
     function generarEstela(x: number, y: number, vxBase: number, vyBase: number) {
       const p = tomarRanura();
@@ -371,12 +387,11 @@ export function useMotorParticulas(reducido: boolean) {
       if (reducidoRef.current || document.hidden) return;
       const st = estado.current;
       const factorMovil = st.compacto ? 0.55 : 1;
-      const tope = st.compacto ? MAX_MOVIL : MAX_POOL;
 
       const baseCantidad: Record<ClaseParticula, number> = {
         robo: 16,
         pozo: 20,
-        seleccion: 9,
+        seleccion: 18,
         barajado: 14,
         cierre: 34,
         eliminacion: 24,
@@ -384,25 +399,9 @@ export function useMotorParticulas(reducido: boolean) {
       const cantidad = Math.max(4, Math.round(baseCantidad[clase] * factorMovil));
       const paleta = clase === 'eliminacion' ? PALETA_ELIMINACION : PALETA_DORADA;
 
-      let vivas = 0;
-      for (let i = 0; i < MAX_POOL; i++) if (st.pool[i].viva) vivas++;
-
       for (let k = 0; k < cantidad; k++) {
-        let ranura: Particula | null = null;
-        for (let m = 0; m < MAX_POOL; m++) {
-          const idx = (st.cursor + m) % MAX_POOL;
-          if (!st.pool[idx].viva && vivas < tope) {
-            st.cursor = (idx + 1) % MAX_POOL;
-            ranura = st.pool[idx];
-            vivas++;
-            break;
-          }
-        }
-        if (!ranura) {
-          const idx = st.cursor % MAX_POOL;
-          st.cursor = (idx + 1) % MAX_POOL;
-          ranura = st.pool[idx];
-        }
+        const ranura = tomarRanuraDelPool(st, true);
+        if (!ranura) break;
 
         const [r, g, b] = colorDe(paleta);
         ranura.viva = true;
@@ -488,6 +487,128 @@ export function useMotorParticulas(reducido: boolean) {
           ranura.vrot = azar(-3.2, 3.2);
           ranura.forma = Math.random() < 0.5 ? 'chispa' : 'polvo';
           ranura.alphaMax = azar(0.7, 0.95);
+        }
+      }
+      arrancarRef.current?.();
+    },
+
+    emitirBordeCarta(rect) {
+      if (reducidoRef.current || document.hidden) return;
+      const st = estado.current;
+      const cantidad = st.compacto ? 2 : 4;
+      for (let k = 0; k < cantidad; k++) {
+        const ranura = tomarRanuraDelPool(st, true);
+        if (!ranura) break;
+        const [r, g, b] = colorDe(PALETA_DORADA);
+        const lado = Math.random();
+        let px = rect.left + Math.random() * rect.width;
+        let py = rect.top + azar(-2, 4);
+        if (lado < 0.25) {
+          px = rect.left + azar(-2, 4);
+          py = rect.top + Math.random() * rect.height * 0.65;
+        } else if (lado > 0.75) {
+          px = rect.left + rect.width + azar(-4, 2);
+          py = rect.top + Math.random() * rect.height * 0.65;
+        }
+        ranura.viva = true;
+        ranura.edad = 0;
+        ranura.x = px;
+        ranura.y = py;
+        ranura.vx = azar(-18, 18);
+        ranura.vy = azar(-55, -20);
+        ranura.gravedad = -12;
+        ranura.friccion = 0.97;
+        ranura.vida = azar(0.45, 0.75);
+        ranura.radio = azar(1.0, 2.0);
+        ranura.rot = azar(0, Math.PI * 2);
+        ranura.vrot = azar(-1.8, 1.8);
+        ranura.forma = Math.random() < 0.35 ? 'chispa' : 'polvo';
+        ranura.r = r;
+        ranura.g = g;
+        ranura.b = b;
+        ranura.alphaMax = azar(0.55, 0.85);
+      }
+      arrancarRef.current?.();
+    },
+
+    emitirUrgenciaHud(reloj) {
+      if (reducidoRef.current || document.hidden) return;
+      const st = estado.current;
+      if (!st.ancho || !st.alto) return;
+      const bordes = st.compacto ? 3 : 6;
+      for (let k = 0; k < bordes; k++) {
+        const ranura = tomarRanuraDelPool(st, true);
+        if (!ranura) break;
+        const [r, g, b] = colorDe(PALETA_URGENCIA);
+        const lado = (Math.random() * 4) | 0;
+        let x = 0;
+        let y = 0;
+        let vx = 0;
+        let vy = 0;
+        if (lado === 0) {
+          x = Math.random() * st.ancho;
+          y = azar(2, 16);
+          vx = azar(-16, 16);
+          vy = azar(14, 40);
+        } else if (lado === 1) {
+          x = Math.random() * st.ancho;
+          y = st.alto - azar(6, 20);
+          vx = azar(-16, 16);
+          vy = azar(-44, -14);
+        } else if (lado === 2) {
+          x = azar(2, 16);
+          y = Math.random() * st.alto;
+          vx = azar(14, 42);
+          vy = azar(-24, 6);
+        } else {
+          x = st.ancho - azar(2, 16);
+          y = Math.random() * st.alto;
+          vx = azar(-42, -14);
+          vy = azar(-24, 6);
+        }
+        ranura.viva = true;
+        ranura.edad = 0;
+        ranura.x = x;
+        ranura.y = y;
+        ranura.vx = vx;
+        ranura.vy = vy;
+        ranura.gravedad = -8;
+        ranura.friccion = 0.965;
+        ranura.vida = azar(0.5, 0.85);
+        ranura.radio = azar(1.1, 2.3);
+        ranura.rot = azar(0, Math.PI * 2);
+        ranura.vrot = azar(-2.2, 2.2);
+        ranura.forma = Math.random() < 0.3 ? 'chispa' : 'polvo';
+        ranura.r = r;
+        ranura.g = g;
+        ranura.b = b;
+        ranura.alphaMax = azar(0.55, 0.82);
+      }
+      if (reloj) {
+        const enReloj = st.compacto ? 1 : 2;
+        for (let k = 0; k < enReloj; k++) {
+          const ranura = tomarRanuraDelPool(st, true);
+          if (!ranura) break;
+          const [r, g, b] = colorDe(PALETA_URGENCIA);
+          const ang = azar(0, Math.PI * 2);
+          const rad = Math.min(reloj.width, reloj.height) * 0.48;
+          ranura.viva = true;
+          ranura.edad = 0;
+          ranura.x = reloj.left + reloj.width / 2 + Math.cos(ang) * rad;
+          ranura.y = reloj.top + reloj.height / 2 + Math.sin(ang) * rad;
+          ranura.vx = Math.cos(ang) * azar(12, 30);
+          ranura.vy = Math.sin(ang) * azar(12, 30) - 10;
+          ranura.gravedad = -10;
+          ranura.friccion = 0.96;
+          ranura.vida = azar(0.4, 0.7);
+          ranura.radio = azar(1.1, 2.1);
+          ranura.rot = azar(0, Math.PI * 2);
+          ranura.vrot = azar(-2, 2);
+          ranura.forma = Math.random() < 0.35 ? 'chispa' : 'polvo';
+          ranura.r = r;
+          ranura.g = g;
+          ranura.b = b;
+          ranura.alphaMax = azar(0.6, 0.88);
         }
       }
       arrancarRef.current?.();

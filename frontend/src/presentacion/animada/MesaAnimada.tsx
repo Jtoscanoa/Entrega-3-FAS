@@ -11,6 +11,7 @@ import { RelojTurno } from './RelojTurno';
 import { CapaVuelos, Vuelo } from './Vuelos';
 import { FranjaRed, useEstadoRed } from './EstadoRed';
 import { useMotorParticulas } from './Particulas';
+import { agruparManoVisual, detectarGruposContiguos } from './agrupacionVisual';
 import './tema';
 
 export default function MesaAnimada({ mesa }: { mesa: VistaMesa }) {
@@ -91,6 +92,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
   const [barajando, setBarajando] = useState(false);
   const [cartelRonda, setCartelRonda] = useState<number | null>(null);
   const [destelloCierre, setDestelloCierre] = useState(0);
+  const [dosFilas, setDosFilas] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 560);
   const siguienteVuelo = useRef(1);
   const visto = useRef(mesa.eventos.length ? mesa.eventos[mesa.eventos.length - 1].id : 0);
   const cimaAnterior = useRef(e.cima);
@@ -103,9 +105,12 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
 
   const red = useEstadoRed(mesa.conectado);
   const items = useMemo(() => itemsDe(e.orden), [e.orden]);
+  const gruposMano = useMemo(() => detectarGruposContiguos(e.orden), [e.orden]);
   const rivales = mesa.jugadores.filter((s) => s !== mesa.yo);
   const total = e.venceEn && e.turnoDesde ? Math.max(1, Math.round((new Date(e.venceEn).getTime() - e.turnoDesde) / 1000)) : 0;
   const cimaMostrada = cimaRetenida !== undefined ? cimaRetenida : e.cima;
+  const urgenteHud = mesa.miTurno && mesa.segundos !== null && mesa.segundos > 0 && mesa.segundos <= 10 && !e.finalizada;
+  const criticoHud = urgenteHud && (mesa.segundos ?? 99) <= 5;
 
   const rectDeItem = (id: string) =>
     manoRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.getBoundingClientRect() ?? null;
@@ -284,10 +289,42 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
     return () => clearTimeout(t);
   }, [mesa.miTurno, e.numeroTurno]);
 
+  // Partículas continuas alrededor del contorno mientras una carta está seleccionada.
+  useEffect(() => {
+    if (seleccion === null || reducido) return undefined;
+    const it = items[seleccion];
+    if (!it) return undefined;
+    const t = window.setInterval(() => {
+      const r = rectDeItem(it.id);
+      if (r) motor.emitirBordeCarta(r);
+    }, 125);
+    return () => window.clearInterval(t);
+  }, [seleccion, items, reducido, motor]);
+
+  // Polvitos rojizos en bordes del HUD y reloj cuando quedan 10 s o menos de turno.
+  useEffect(() => {
+    if (!urgenteHud || reducido) return undefined;
+    const emitir = () => motor.emitirUrgenciaHud(rect('reloj'));
+    emitir();
+    const t = window.setInterval(emitir, 115);
+    return () => window.clearInterval(t);
+  }, [urgenteHud, reducido, motor, rect]);
+
   const alReordenar = (nuevos: ItemMano[]) => {
     const elegida = seleccion !== null ? items[seleccion]?.id : null;
     mesa.reordenar(nuevos.map((x) => x.codigo));
     if (elegida) mesa.seleccionar(nuevos.findIndex((x) => x.id === elegida));
+  };
+  const agruparJuegos = () => {
+    const elegida = seleccion !== null ? items[seleccion]?.id : null;
+    const { orden } = agruparManoVisual(e.orden);
+    mesa.reordenar(orden);
+    if (elegida) {
+      const nuevosItems = itemsDe(orden);
+      mesa.seleccionar(nuevosItems.findIndex((x) => x.id === elegida));
+    }
+    const r = manoRef.current?.getBoundingClientRect();
+    if (r) motor.emitir(r.left + r.width / 2, r.top + r.height / 2, 'seleccion');
   };
   const moverElegida = (delta: number) => {
     if (seleccion === null) return;
@@ -355,7 +392,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                 <span className="a-rotulo">{mesa.debeRobar ? 'Robar del mazo' : 'Mazo'}</span>
               </motion.button>
 
-              <div className="a-reloj-hueco">
+              <div className="a-reloj-hueco" ref={anclar('reloj')}>
                 <AnimatePresence>
                   {mesa.segundos !== null && total > 0 && !e.finalizada && (
                     <motion.div key="reloj" initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0 }}>
@@ -439,16 +476,31 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
           </AnimatePresence>
 
           <section className="a-zona-mano" aria-label="Tu mano">
+            <AnimatePresence>
+              {urgenteHud && (
+                <motion.span key="zona-urgente" className="a-zona-mano-urgente" aria-hidden="true"
+                  initial={{ opacity: 0 }}
+                  animate={reducido ? { opacity: 0.35 } : { opacity: [0.16, criticoHud ? 0.9 : 0.65, 0.16] }}
+                  exit={{ opacity: 0 }}
+                  transition={reducido ? { duration: 0.2 } : { duration: criticoHud ? 0.52 : 0.92, repeat: Infinity, ease: 'easeInOut' }} />
+              )}
+            </AnimatePresence>
             <div className="a-mano-cabecera">
               <h2>Tu mano <ContadorVivo valor={e.orden.length} /></h2>
               <div className="a-fila">
-                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorPinta}>Ordenar por pinta</button>
-                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorValor}>Ordenar por número</button>
+                <button type="button" className="a-boton suave" onClick={agruparJuegos}>Agrupar juegos</button>
+                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorPinta}>Por pinta</button>
+                <button type="button" className="a-boton suave" onClick={mesa.ordenarPorValor}>Por número</button>
+                <button type="button" className={['a-boton suave a-conmutador', dosFilas ? 'activo' : ''].join(' ')}
+                  aria-pressed={dosFilas} onClick={() => setDosFilas((v) => !v)}>
+                  {dosFilas ? 'Vista abanico' : 'Vista 2 filas'}
+                </button>
               </div>
             </div>
             <div className="a-mano-marco" ref={marcoMano}>
               <Mano ref={manoRef} items={items} seleccion={seleccion} ocultas={ocultas} nueva={e.nueva}
-                enTurno={mesa.miTurno} alSeleccionar={mesa.seleccionar} alReordenar={alReordenar}
+                enTurno={mesa.miTurno} dosFilas={dosFilas} grupos={gruposMano}
+                alSeleccionar={mesa.seleccionar} alReordenar={alReordenar}
                 alChispearCarta={(x, y) => motor.emitir(x, y, 'seleccion')} />
             </div>
             <div className="a-mover" aria-live="polite">
@@ -458,7 +510,13 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                   <span>{nombreCarta(cartaSel)}</span>
                   <button type="button" className="a-boton suave" onClick={() => moverElegida(1)} disabled={seleccion === e.orden.length - 1}>Mover →</button>
                 </>
-              ) : <span className="a-tenue">Arrastra para agrupar ternas y cuartas; toca una carta para elegirla.</span>}
+              ) : (
+                <span className="a-tenue">
+                  {dosFilas
+                    ? 'En 2 filas ves todas tus cartas; usa Agrupar juegos o ← Mover para ordenarlas.'
+                    : 'Arrastra o pulsa Agrupar juegos para separar ternas y cuartas; toca una carta para elegirla.'}
+                </span>
+              )}
             </div>
             <div className="a-acciones">
               <motion.button type="button" className="a-boton principal" disabled={!mesa.debeDescartar || !cartaSel}
@@ -499,6 +557,15 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
       </motion.div>
 
       <CapaVuelos vuelos={vuelos} alTerminar={(id) => setVuelos((v) => v.filter((x) => x.id !== id))} />
+      <AnimatePresence>
+        {urgenteHud && (
+          <motion.div key="urgencia-hud" className="a-urgencia-hud" aria-hidden="true"
+            initial={{ opacity: 0 }}
+            animate={reducido ? { opacity: 0.38 } : { opacity: [0.18, criticoHud ? 0.92 : 0.72, 0.18] }}
+            exit={{ opacity: 0 }}
+            transition={reducido ? { duration: 0.2 } : { duration: criticoHud ? 0.52 : 0.92, repeat: Infinity, ease: 'easeInOut' }} />
+        )}
+      </AnimatePresence>
       {lienzo}
       <AnimatePresence>
         {mesa.liquidacion && !mesa.fin && <PanelLiquidacion key={`liq-${mesa.liquidacion.ronda}`} mesa={mesa} l={mesa.liquidacion} />}

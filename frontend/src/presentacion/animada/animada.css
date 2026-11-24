@@ -245,17 +245,31 @@
 .a-aviso span { color: #e2c4bf; font-size: 13px; }
 .a-aviso.info { background: rgba(12, 20, 17, .9); border-color: var(--a-borde); }
 
-/* Mano en abanico */
-.a-zona-mano { margin-top: 12px; padding: 12px 14px 14px; border-radius: 20px; border: 1px solid var(--a-borde); background: linear-gradient(180deg, rgba(14, 24, 20, .92), rgba(7, 13, 11, .92)); }
-.a-mano-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
+/* Mano en abanico y modo 2 filas */
+.a-zona-mano { position: relative; overflow: hidden; margin-top: 12px; padding: 12px 14px 14px; border-radius: 20px; border: 1px solid var(--a-borde); background: linear-gradient(180deg, rgba(14, 24, 20, .92), rgba(7, 13, 11, .92)); }
+.a-zona-mano-urgente {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  border: 1.5px solid rgba(208, 86, 78, .72);
+  background: radial-gradient(ellipse at 50% 100%, rgba(208, 86, 78, .16), transparent 70%);
+}
+.a-mano-cabecera { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .a-mano-cabecera h2 { font-family: var(--a-serif); font-weight: 600; font-size: 18px; }
 .a-contador { position: relative; display: inline-flex; align-items: center; justify-content: center; overflow: hidden; font-family: var(--a-sans); font-variant-numeric: lining-nums tabular-nums; font-size: 12px; font-weight: 700; margin-left: 6px; padding: 2px 8px; border-radius: 999px; background: rgba(201, 164, 92, .16); color: var(--a-laton); vertical-align: middle; }
 .a-contador-brillo { position: absolute; inset: 0; border-radius: inherit; background: rgba(255, 244, 214, .7); pointer-events: none; }
-.a-fila { display: flex; gap: 8px; flex-wrap: wrap; }
+.a-fila { display: flex; gap: 6px; flex-wrap: wrap; }
+.a-conmutador.activo { border-color: rgba(227, 192, 122, .55); background: rgba(201, 164, 92, .15); color: var(--a-turno); }
 .a-mano-marco { position: relative; }
 .a-mano { display: flex; justify-content: center; list-style: none; margin: 0; padding: 36px 6px 16px; min-height: calc(var(--cw) * 1.42 + 52px); }
 .a-mano-item { position: relative; flex: none; transform-origin: 50% 130%; touch-action: pan-y; }
 .a-mano-item + .a-mano-item { margin-left: clamp(calc(var(--cw) * -.62), calc((100% - 28px - var(--cw) * var(--n)) / (var(--n) - 1)), 6px); }
+.a-mano-item.sep-grupo { margin-left: clamp(calc(var(--cw) * -.44), calc((100% - 28px - var(--cw) * var(--n)) / (var(--n) - 1) + 10px), 16px); }
+.a-mano.dos-filas { flex-wrap: wrap; justify-content: center; gap: 10px 5px; padding: 18px 4px 10px; min-height: 0; }
+.a-mano.dos-filas .a-mano-item + .a-mano-item { margin-left: 0; }
+.a-mano.dos-filas .a-mano-item.sep-grupo { margin-left: 8px; }
+.a-boton-carta.en-grupo::before {
+  content: ""; position: absolute; left: 10%; right: 10%; bottom: -5px; height: 2px; border-radius: 2px;
+  background: rgba(143, 196, 158, .72); pointer-events: none;
+}
 .a-boton-carta { position: relative; display: block; padding: 0; border: 0; background: none; border-radius: 7px; cursor: grab; }
 .a-boton-carta:active { cursor: grabbing; }
 .a-carta-tilt { position: relative; display: block; transform-style: preserve-3d; }
@@ -316,6 +330,12 @@
 .a-vuelo { position: absolute; left: 0; top: 0; --cw: 64px; }
 .a-vuelo .a-carta { width: 100%; height: 100%; }
 .a-particulas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 41; }
+.a-urgencia-hud {
+  position: fixed; inset: 0; pointer-events: none; z-index: 38;
+  border: 1.5px solid rgba(208, 86, 78, .65);
+  box-shadow: inset 0 0 85px rgba(185, 42, 34, .34);
+  background: radial-gradient(ellipse at center, transparent 58%, rgba(185, 42, 34, .22) 100%);
+}
 
 /* Paneles de liquidacion y fin */
 .a-velo { position: fixed; inset: 0; z-index: 45; display: grid; place-items: center; padding: 16px 16px 72px; background: rgba(2, 5, 4, .74); }
@@ -387,6 +407,7 @@
   .a-dorsos { display: none; }
   .a-toast-turno { right: 12px; bottom: 12px; padding: 6px 14px; font-size: 15px; }
   .a-mano { padding: 30px 2px 12px; }
+  .a-mano.dos-filas { padding: 14px 2px 8px; gap: 10px 4px; }
   .a-zona-mano { padding: 10px 8px 12px; }
   .a-acciones .a-boton { flex: 1 1 140px; }
   .a-panel { padding: 18px 14px 16px; }
