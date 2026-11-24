@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { api, ErrorApi, guardado, Sesion } from './api';
 import { mensajeDe } from './mensajes';
 import Sala from './Sala';
-import Mesa from './Mesa';
+import { useMesa, ParametrosMesa } from './estado/useMesa';
+import MesaLigera from './presentacion/ligera/MesaLigera';
 
 interface Lugar { codigo: string; partidaId: number | null }
 
@@ -25,7 +26,14 @@ export default function App() {
     return <Sala sesion={sesion} codigo={lugar.codigo}
       alIniciar={(partidaId) => irA({ codigo: lugar.codigo, partidaId })} alSalir={() => irA(null)} />;
   }
-  return <Mesa sesion={sesion} codigo={lugar.codigo} partidaId={lugar.partidaId} alSalir={() => irA(null)} />;
+  return <PantallaMesa key={lugar.partidaId} sesion={sesion} codigo={lugar.codigo} partidaId={lugar.partidaId}
+    alSalir={() => irA(null)} />;
+}
+
+/** El estado de la mesa vive aqui, por encima de la piel que lo dibuja. */
+function PantallaMesa(p: ParametrosMesa) {
+  const mesa = useMesa(p);
+  return <MesaLigera mesa={mesa} />;
 }
 
 function Inicio({ alEntrar }: { alEntrar: (s: Sesion) => void }) {
