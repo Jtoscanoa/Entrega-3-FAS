@@ -10,6 +10,7 @@ import { PanelFin, PanelLiquidacion } from './Paneles';
 import { RelojTurno } from './RelojTurno';
 import { CapaVuelos, Vuelo } from './Vuelos';
 import { FranjaRed, useEstadoRed } from './EstadoRed';
+import { useMotorParticulas } from './Particulas';
 import './tema';
 
 export default function MesaAnimada({ mesa }: { mesa: VistaMesa }) {
@@ -55,6 +56,7 @@ function Asiento({ mesa, sub, k, total, anclar, propio = false }:
 function Mesa({ mesa }: { mesa: VistaMesa }) {
   const { e, seleccion, cartaSel, aviso } = mesa;
   const reducido = !!useReducedMotion();
+  const { motor, lienzo } = useMotorParticulas(reducido);
   const { anclar, rect } = useAnclas();
   const manoRef = useRef<HTMLUListElement>(null);
   const [marcoMano, animarMano] = useAnimate<HTMLDivElement>();
@@ -75,6 +77,8 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
 
   const rectDeItem = (id: string) =>
     manoRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.getBoundingClientRect() ?? null;
+
+  const centro = (r: DOMRect) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
 
   // Los eventos nuevos se animan antes de pintar (useLayoutEffect): asi la carta que llega no parpadea en la mano.
   useLayoutEffect(() => {
@@ -97,11 +101,17 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
       const mazo = rect('mazo');
       const pozo = rect('pozo');
       if (ev.tipo === 'reparto' && mazo) {
+        const cm = centro(mazo);
         items.forEach((it, i) => {
           const r = rectDeItem(it.id);
           if (!r) return;
           aOcultar.add(it.id);
-          lanzar({ desde: mazo, hasta: r, carta: it.codigo, voltear: true, retraso: 0.15 + i * 0.07, alAterrizar: () => mostrar(it.id) });
+          const retraso = 0.15 + i * 0.07;
+          lanzar({ desde: mazo, hasta: r, carta: it.codigo, voltear: true, retraso, alAterrizar: () => mostrar(it.id) });
+          if (i % 2 === 0) {
+            const ch = centro(r);
+            motor.seguirVuelo({ desdeX: cm.x, desdeY: cm.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: retraso * 1000, duracionMs: 550 });
+          }
         });
         rivales.forEach((s, k) => {
           const r = rect(`asiento:${s}`);
@@ -111,6 +121,10 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         const desde = ev.origen === 'DESCARTE' ? pozo : mazo;
         const hasta = rect(`asiento:${ev.jugadorId}`);
         if (desde && hasta) {
+          const cd = centro(desde);
+          const ch = centro(hasta);
+          motor.emitir(cd.x, cd.y, 'robo');
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: 0, duracionMs: 550 });
           lanzar({ desde, hasta, carta: ev.origen === 'DESCARTE' ? cimaAnterior.current : null, voltear: false, retraso: 0 });
         }
       } else if (ev.tipo === 'recibida') {
@@ -118,6 +132,10 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         const desde = ev.origen === 'DESCARTE' ? pozo : mazo;
         const hasta = it ? rectDeItem(it.id) : null;
         if (it && desde && hasta) {
+          const cd = centro(desde);
+          const ch = centro(hasta);
+          motor.emitir(cd.x, cd.y, 'robo');
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: 0, duracionMs: 550 });
           aOcultar.add(it.id);
           lanzar({ desde, hasta, carta: ev.carta, voltear: ev.origen !== 'DESCARTE', retraso: 0, alAterrizar: () => mostrar(it.id) });
         }
@@ -127,8 +145,23 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
           : rect(`asiento:${ev.jugadorId}`);
         rectDescarte.current = null;
         if (desde) {
+          const cd = centro(desde);
+          const ch = centro(pozo);
+          if (ev.jugadorId === mesa.yo) motor.emitir(cd.x, cd.y, 'seleccion');
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: 0, duracionMs: 550 });
           setCimaRetenida(cimaAnterior.current);
-          lanzar({ desde, hasta: pozo, carta: ev.carta, voltear: false, retraso: 0, alAterrizar: () => setCimaRetenida(undefined) });
+          lanzar({
+            desde,
+            hasta: pozo,
+            carta: ev.carta,
+            voltear: false,
+            retraso: 0,
+            alAterrizar: () => {
+              setCimaRetenida(undefined);
+              const cp = centro(rect('pozo') ?? pozo);
+              motor.emitir(cp.x, cp.y, 'pozo');
+            },
+          });
         }
       }
     };
@@ -258,7 +291,8 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
             </div>
             <div className="a-mano-marco" ref={marcoMano}>
               <Mano ref={manoRef} items={items} seleccion={seleccion} ocultas={ocultas} nueva={e.nueva}
-                alSeleccionar={mesa.seleccionar} alReordenar={alReordenar} />
+                alSeleccionar={mesa.seleccionar} alReordenar={alReordenar}
+                alChispearCarta={(x, y) => motor.emitir(x, y, 'seleccion')} />
             </div>
             <div className="a-mover" aria-live="polite">
               {cartaSel ? (
@@ -308,6 +342,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
       </motion.div>
 
       <CapaVuelos vuelos={vuelos} alTerminar={(id) => setVuelos((v) => v.filter((x) => x.id !== id))} />
+      {lienzo}
       <AnimatePresence>
         {mesa.liquidacion && !mesa.fin && <PanelLiquidacion key={`liq-${mesa.liquidacion.ronda}`} mesa={mesa} l={mesa.liquidacion} />}
       </AnimatePresence>

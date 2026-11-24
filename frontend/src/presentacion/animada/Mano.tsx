@@ -23,6 +23,7 @@ interface Props {
   nueva: string | null;
   alSeleccionar: (indice: number | null) => void;
   alReordenar: (items: ItemMano[]) => void;
+  alChispearCarta?: (x: number, y: number) => void;
 }
 
 function abanico(i: number, n: number) {
@@ -32,7 +33,7 @@ function abanico(i: number, n: number) {
 }
 
 export const Mano = forwardRef<HTMLUListElement, Props>(function Mano(
-  { items, seleccion, ocultas, nueva, alSeleccionar, alReordenar }, ref) {
+  { items, seleccion, ocultas, nueva, alSeleccionar, alReordenar, alChispearCarta }, ref) {
   const reducido = useReducedMotion();
   const arrastrando = useRef(false);
   const n = items.length;
@@ -48,11 +49,23 @@ export const Mano = forwardRef<HTMLUListElement, Props>(function Mano(
             animate={{ rotate: elegida ? 0 : rotate, y: elegida ? y - 26 : y, opacity: ocultas.has(it.id) ? 0 : 1 }}
             transition={{ ...RESORTE, opacity: { duration: 0.12 } }}
             whileDrag={reducido ? undefined : { scale: 1.08, rotate: 0 }}
-            onDragStart={() => { arrastrando.current = true; }}
+            onDragStart={(ev) => {
+              arrastrando.current = true;
+              const el = (ev.target as HTMLElement | null)?.closest('.a-mano-item');
+              const r = el?.getBoundingClientRect();
+              if (r) alChispearCarta?.(r.left + r.width / 2, r.top + r.height * 0.28);
+            }}
             onDragEnd={() => { setTimeout(() => { arrastrando.current = false; }, 0); }}>
             <button type="button" className={['a-boton-carta', elegida ? 'elegida' : '', it.codigo === nueva ? 'nueva' : ''].join(' ')}
               aria-pressed={elegida} aria-label={nombreCarta(it.codigo)}
-              onClick={() => { if (!arrastrando.current) alSeleccionar(elegida ? null : i); }}>
+              onClick={(ev) => {
+                if (arrastrando.current) return;
+                if (!elegida) {
+                  const r = ev.currentTarget.getBoundingClientRect();
+                  alChispearCarta?.(r.left + r.width / 2, r.top + r.height * 0.25);
+                }
+                alSeleccionar(elegida ? null : i);
+              }}>
               <Carta codigo={it.codigo} />
               <motion.span className="a-halo" aria-hidden="true" animate={{ opacity: elegida ? 1 : 0 }} />
             </button>
