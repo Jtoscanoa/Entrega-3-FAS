@@ -33,17 +33,40 @@ export function DorsoCarta() {
   return <div className="a-dorso" aria-hidden="true"><span>101</span></div>;
 }
 
-/** Carta con dos caras: gira en 3D cuando pasa de boca abajo a boca arriba. */
-export function Carta({ codigo, bocaAbajo = false, girar = false, retraso = 0 }:
-  { codigo: string | null; bocaAbajo?: boolean; girar?: boolean; retraso?: number }) {
+/** Carta con dos caras: gira en 3D cuando pasa de boca abajo a boca arriba o completa una vuelta al robar. */
+export function Carta({
+  codigo,
+  bocaAbajo = false,
+  girar = false,
+  retraso = 0,
+  giroInicialY,
+  giroFinalY,
+  duracionGiro,
+}: {
+  codigo: string | null;
+  bocaAbajo?: boolean;
+  girar?: boolean;
+  retraso?: number;
+  giroInicialY?: number;
+  giroFinalY?: number;
+  duracionGiro?: number;
+}) {
   const reducido = useReducedMotion();
   const oculta = bocaAbajo || !codigo;
+  const destinoY = !reducido && giroFinalY !== undefined ? giroFinalY : oculta ? 180 : 0;
+  const inicioY = !reducido
+    ? (giroInicialY !== undefined ? giroInicialY : girar ? 180 : false)
+    : false;
   return (
     <div className="a-carta">
       <motion.div className="a-carta-interior"
-        initial={girar && !reducido ? { rotateY: 180 } : false}
-        animate={{ rotateY: oculta ? 180 : 0 }}
-        transition={{ duration: 0.5, delay: retraso, ease: [0.3, 0.7, 0.2, 1] }}>
+        initial={inicioY === false ? false : { rotateY: inicioY }}
+        animate={{ rotateY: destinoY }}
+        transition={{
+          duration: duracionGiro ?? 0.5,
+          delay: retraso,
+          ease: giroInicialY !== undefined ? [0.22, 1, 0.36, 1] : [0.3, 0.7, 0.2, 1],
+        }}>
         <div className="a-frente">{codigo && <CaraCarta codigo={codigo} />}</div>
         <div className="a-reverso"><DorsoCarta /></div>
       </motion.div>

@@ -64,6 +64,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
   const [ocultas, setOcultas] = useState<ReadonlySet<string>>(new Set());
   const [cimaRetenida, setCimaRetenida] = useState<string | null | undefined>(undefined);
   const [avisoTurno, setAvisoTurno] = useState(false);
+  const [golpePozo, setGolpePozo] = useState(0);
   const siguienteVuelo = useRef(1);
   const visto = useRef(mesa.eventos.length ? mesa.eventos[mesa.eventos.length - 1].id : 0);
   const cimaAnterior = useRef(e.cima);
@@ -107,15 +108,15 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
           if (!r) return;
           aOcultar.add(it.id);
           const retraso = 0.15 + i * 0.07;
-          lanzar({ desde: mazo, hasta: r, carta: it.codigo, voltear: true, retraso, alAterrizar: () => mostrar(it.id) });
+          lanzar({ desde: mazo, hasta: r, carta: it.codigo, voltear: true, retraso, modo: 'reparto', alAterrizar: () => mostrar(it.id) });
           if (i % 2 === 0) {
             const ch = centro(r);
-            motor.seguirVuelo({ desdeX: cm.x, desdeY: cm.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: retraso * 1000, duracionMs: 550 });
+            motor.seguirVuelo({ desdeX: cm.x, desdeY: cm.y, hastaX: ch.x, hastaY: ch.y, arcoY: -34, retrasoMs: retraso * 1000, duracionMs: 550 });
           }
         });
         rivales.forEach((s, k) => {
           const r = rect(`asiento:${s}`);
-          for (let j = 0; r && j < 2; j++) lanzar({ desde: mazo, hasta: r, carta: null, voltear: false, retraso: 0.1 + (k * 2 + j) * 0.08 });
+          for (let j = 0; r && j < 2; j++) lanzar({ desde: mazo, hasta: r, carta: null, voltear: false, retraso: 0.1 + (k * 2 + j) * 0.08, modo: 'roboRival' });
         });
       } else if (ev.tipo === 'robo' && ev.jugadorId !== mesa.yo) {
         const desde = ev.origen === 'DESCARTE' ? pozo : mazo;
@@ -124,8 +125,8 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
           const cd = centro(desde);
           const ch = centro(hasta);
           motor.emitir(cd.x, cd.y, 'robo');
-          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: 0, duracionMs: 550 });
-          lanzar({ desde, hasta, carta: ev.origen === 'DESCARTE' ? cimaAnterior.current : null, voltear: false, retraso: 0 });
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: -34, retrasoMs: 0, duracionMs: 550 });
+          lanzar({ desde, hasta, carta: ev.origen === 'DESCARTE' ? cimaAnterior.current : null, voltear: false, retraso: 0, modo: 'roboRival' });
         }
       } else if (ev.tipo === 'recibida') {
         const it = [...items].reverse().find((x) => x.codigo === ev.carta);
@@ -134,10 +135,11 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         if (it && desde && hasta) {
           const cd = centro(desde);
           const ch = centro(hasta);
+          const modo = ev.origen === 'DESCARTE' ? 'roboPozo' : 'roboMazo';
           motor.emitir(cd.x, cd.y, 'robo');
-          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: 0, duracionMs: 550 });
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: -34, retrasoMs: 0, duracionMs: 660 });
           aOcultar.add(it.id);
-          lanzar({ desde, hasta, carta: ev.carta, voltear: ev.origen !== 'DESCARTE', retraso: 0, alAterrizar: () => mostrar(it.id) });
+          lanzar({ desde, hasta, carta: ev.carta, voltear: ev.origen !== 'DESCARTE', retraso: 0, modo, alAterrizar: () => mostrar(it.id) });
         }
       } else if (ev.tipo === 'descarte' && pozo) {
         const desde = ev.jugadorId === mesa.yo
@@ -148,7 +150,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
           const cd = centro(desde);
           const ch = centro(pozo);
           if (ev.jugadorId === mesa.yo) motor.emitir(cd.x, cd.y, 'seleccion');
-          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: 0, retrasoMs: 0, duracionMs: 550 });
+          motor.seguirVuelo({ desdeX: cd.x, desdeY: cd.y, hastaX: ch.x, hastaY: ch.y, arcoY: -26, retrasoMs: 0, duracionMs: 480 });
           setCimaRetenida(cimaAnterior.current);
           lanzar({
             desde,
@@ -156,8 +158,11 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
             carta: ev.carta,
             voltear: false,
             retraso: 0,
+            modo: 'descarte',
+            rotacionFinal: -2,
             alAterrizar: () => {
               setCimaRetenida(undefined);
+              setGolpePozo((g) => g + 1);
               const cp = centro(rect('pozo') ?? pozo);
               motor.emitir(cp.x, cp.y, 'pozo');
             },
@@ -248,8 +253,20 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                 whileHover={mesa.debeRobar && e.robarDelDescarte ? { y: -4 } : undefined}>
                 <span className="a-pila-pozo" aria-hidden="true">
                   <span className="a-borde-pozo b1" /><span className="a-borde-pozo b2" />
+                  {golpePozo > 0 && !reducido && (
+                    <motion.span key={`onda-${golpePozo}`} className="a-onda-pozo"
+                      initial={{ scale: 0.84, opacity: 0.78 }} animate={{ scale: 1.52, opacity: 0 }}
+                      transition={{ duration: 0.55, ease: [0.2, 0.8, 0.2, 1] }} />
+                  )}
                   {cimaMostrada
-                    ? <motion.span key={cimaMostrada} className="a-cima" initial={{ opacity: 0.6 }} animate={{ opacity: 1 }}><Carta codigo={cimaMostrada} /></motion.span>
+                    ? <motion.span key={cimaMostrada} className="a-cima"
+                        initial={{ opacity: 0.6, rotate: -2 }}
+                        animate={!reducido && golpePozo > 0
+                          ? { opacity: 1, rotate: -2, scale: [1.07, 0.985, 1] }
+                          : { opacity: 1, rotate: -2, scale: 1 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}>
+                        <Carta codigo={cimaMostrada} />
+                      </motion.span>
                     : <span className="a-vacio">Vacío</span>}
                 </span>
                 <span className="a-rotulo">{mesa.debeRobar && e.robarDelDescarte ? 'Robar del pozo' : 'Pozo'}</span>
