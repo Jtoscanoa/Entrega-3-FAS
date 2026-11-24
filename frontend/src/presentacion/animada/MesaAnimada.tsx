@@ -525,7 +525,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                 <button type="button" className="a-boton suave" onClick={mesa.ordenarPorValor}>Por número</button>
                 <button type="button" className={['a-boton suave a-conmutador', dosFilas ? 'activo' : ''].join(' ')}
                   aria-pressed={dosFilas} onClick={() => setDosFilas((v) => !v)}>
-                  {dosFilas ? 'Vista abanico' : 'Vista 2 filas'}
+                  Vista 2 filas
                 </button>
               </div>
             </div>

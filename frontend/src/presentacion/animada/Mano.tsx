@@ -169,7 +169,7 @@ function CartaMano(props: CartaManoProps) {
     return (
       <motion.li layout className={claseItem} data-id={it.id}
         style={{ zIndex: elegida ? 30 : i + 1 }}
-        animate={{ rotate: 0, y: elegida ? -14 : 0, opacity: oculta ? 0 : 1 }}
+        animate={{ rotate: 0, y: elegida ? -10 : 0, opacity: oculta ? 0 : 1 }}
         transition={{ ...RESORTE, opacity: { duration: 0.12 } }}>
         {contenido}
       </motion.li>
