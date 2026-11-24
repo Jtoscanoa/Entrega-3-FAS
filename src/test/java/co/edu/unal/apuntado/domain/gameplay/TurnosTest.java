@@ -6,7 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import co.edu.unal.apuntado.domain.gameplay.Escenario.MazoFalso;
+import co.edu.unal.apuntado.domain.gameplay.EventoDominio.TurnoAsignado;
 import co.edu.unal.apuntado.domain.rules.modelo.ConfiguracionReglas;
+import java.time.Duration;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class TurnosTest {
@@ -124,5 +127,100 @@ class TurnosTest {
         assertEquals("ULTIMO_ACTIVO", fin.motivo());
         assertTrue(e.eventosDe(EventoDominio.RondaLiquidada.class).get(0).eliminados().contains("sub-b"));
         assertEquals(MotivoComando.PARTIDA_FINALIZADA, motivo(() -> e.orquestador.descartar(id, "sub-a", "AD", 1)));
+    }
+
+    // ------------------------------------------------------------------ presencia (RF17, ADR-08b)
+
+    private static TurnoAsignado ultimoTurno(Escenario e) {
+        List<TurnoAsignado> t = e.eventosDe(TurnoAsignado.class);
+        return t.get(t.size() - 1);
+    }
+
+    @Test
+    void alIniciarSePresumeQueTodosEstanConectados() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        assertEquals(Duration.ofSeconds(30), e.programador.ultimaEspera(), "primer turno con el limite normal");
+        assertEquals(List.of("sub-a", "sub-b"), e.orquestador.vistaDe(id, "sub-a").conectados());
+    }
+
+    @Test
+    void elTurnoDeUnAusenteVenceALosDiezSegundosYSeJuegaPorDefecto() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        e.orquestador.marcarConexion(id, "sub-b", false);
+        assertEquals(List.of("sub-a"), e.orquestador.vistaDe(id, "sub-a").conectados());
+        e.orquestador.descartar(id, "sub-a", "AD", 1);
+        assertEquals(Duration.ofSeconds(10), e.programador.ultimaEspera());
+        assertEquals(Escenario.AHORA.plusSeconds(10), ultimoTurno(e).venceEn());
+        e.programador.ultimo().run();
+        assertEquals("sub-a", ultimoTurno(e).jugadorId(), "el ausente robo y descarto por defecto");
+        assertEquals(10, e.orquestador.vistaDe(id, "sub-b").mano().size());
+        assertTrue(e.eventosDe(EventoDominio.RondaLiquidada.class).isEmpty(), "nunca cierra por el ausente");
+    }
+
+    @Test
+    void desconectarseEnSuTurnoAcortaElPlazoYVolverLoRestaura() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        e.orquestador.marcarConexion(id, "sub-a", false);
+        assertEquals(Duration.ofSeconds(10), e.programador.ultimaEspera());
+        Runnable vencimientoCorto = e.programador.ultimo();
+        assertEquals(1, ultimoTurno(e).numeroTurno(), "mismo turno, nueva hora limite");
+
+        e.orquestador.marcarConexion(id, "sub-a", true);
+        assertEquals(Duration.ofSeconds(30), e.programador.ultimaEspera(), "vuelve el limite normal");
+        assertEquals(Escenario.AHORA.plusSeconds(30), ultimoTurno(e).venceEn());
+        int antes = e.eventos.size();
+        vencimientoCorto.run();
+        assertEquals(antes, e.eventos.size(), "el vencimiento reprogramado ya no vale aunque sea del mismo turno");
+        assertEquals(11, e.orquestador.vistaDe(id, "sub-a").mano().size());
+    }
+
+    @Test
+    void conLaMesaVaciaNoSeProgramanVencimientosHastaQueVuelvaAlguien() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        e.orquestador.marcarConexion(id, "sub-a", false);
+        Runnable vencimientoCorto = e.programador.ultimo();
+        int programados = e.programador.pendientes.size();
+
+        e.orquestador.marcarConexion(id, "sub-b", false);
+        assertEquals(programados, e.programador.pendientes.size(), "mesa vacia: no se programa nada");
+        assertEquals(null, ultimoTurno(e).venceEn(), "pausa: sin hora limite");
+        vencimientoCorto.run();
+        assertEquals(11, e.orquestador.vistaDe(id, "sub-a").mano().size(), "nada vence en pausa");
+        assertTrue(e.orquestador.vistaDe(id, "sub-a").conectados().isEmpty());
+    }
+
+    @Test
+    void laMesaVaciaSePausaYSeReanudaCuandoVuelveAlguien() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        e.orquestador.marcarConexion(id, "sub-b", false);
+        e.orquestador.marcarConexion(id, "sub-a", false);
+        e.orquestador.marcarConexion(id, "sub-b", false);
+        int enPausa = e.programador.pendientes.size();
+        e.orquestador.marcarConexion(id, "sub-b", false);
+        assertEquals(enPausa, e.programador.pendientes.size());
+
+        e.orquestador.marcarConexion(id, "sub-b", true);
+        assertEquals(enPausa + 1, e.programador.pendientes.size(), "se reanuda al volver un jugador");
+        assertEquals(Duration.ofSeconds(10), e.programador.ultimaEspera(), "quien juega sigue ausente");
+        e.programador.ultimo().run();
+        assertEquals("sub-b", ultimoTurno(e).jugadorId());
+    }
+
+    @Test
+    void laPresenciaDeAjenosOFueraDeTurnoNoReprograma() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        int programados = e.programador.pendientes.size();
+        e.orquestador.marcarConexion(id, "intruso", false);
+        e.orquestador.marcarConexion(id, "sub-b", true);
+        e.orquestador.marcarConexion(id, "sub-b", false);
+        e.orquestador.marcarConexion(id, "sub-b", true);
+        assertEquals(programados, e.programador.pendientes.size(), "sub-b no tiene el turno y la mesa no se vacia");
+        assertEquals(MotivoComando.PARTIDA_INEXISTENTE, motivo(() -> e.orquestador.marcarConexion(99, "sub-a", false)));
     }
 }
