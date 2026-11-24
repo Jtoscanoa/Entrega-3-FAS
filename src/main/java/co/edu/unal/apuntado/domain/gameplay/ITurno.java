@@ -28,4 +28,7 @@ public interface ITurno {
      * cualquier otro estado (o para quien no juega la partida) no hace nada.
      */
     void reanudarRonda(long partidaId, String jugadorId);
+
+    /** True si el jugador tiene asiento en la partida (p. ej. para aceptar su mensaje de chat). */
+    boolean participa(long partidaId, String jugadorId);
 }

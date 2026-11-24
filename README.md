@@ -59,6 +59,7 @@ EC2 (Docker Compose con Caddy para HTTPS) + RDS PostgreSQL 16 privado (ADR-09b).
 - `POST /api/sesion {apodo}` → token de invitado (ADR-07b).
 - `POST /api/salas` · `POST /api/salas/{codigo}/unirse` · `GET /api/salas/{codigo}` · `POST /api/salas/{codigo}/iniciar {modalidad, robarDelDescarte, umbral, segundosPorTurno, …}` (con `Authorization: Bearer`).
 - STOMP en `/ws` (CONNECT con `Authorization: Bearer …`): enviar a `/app/partidas/{id}/{robar|descartar|cerrar|reanudar}` con `numeroTurno`; suscribirse a `/topic/partidas/{id}`, `/user/queue/partida` y `/user/queue/errores`. Cada mensaje llega como `{tipo, datos}`.
+- Chat de la mesa: enviar `{texto}` a `/app/partidas/{id}/chat` (solo jugadores con asiento, 1 a 200 caracteres, máximo 5 mensajes cada 10 s); llega a la mesa como `{tipo: "Chat", datos: {jugadorId, texto, hora}}`.
 
 ## Evidencias de validación
 

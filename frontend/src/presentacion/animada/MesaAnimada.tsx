@@ -13,6 +13,7 @@ import { FranjaRed, useEstadoRed } from './EstadoRed';
 import { useMotorParticulas } from './Particulas';
 import { agruparManoVisual, detectarGruposContiguos } from './agrupacionVisual';
 import { GuiaTutorial, usePartidaTutorial } from './Tutorial';
+import { ChatAnimado } from './ChatAnimado';
 import './tema';
 
 export default function MesaAnimada({ mesa }: { mesa: VistaMesa }) {
@@ -387,6 +388,7 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
               onClick={() => setPano(p.id)} />
           ))}
         </div>
+        {!esTutorial && <ChatAnimado mesa={mesa} />}
         {!esTutorial && <button type="button" className="a-boton suave" onClick={() => setTutorialAbierto(true)}>Tutorial</button>}
         <span className={['a-conexion', mesa.conectado ? 'ok' : 'caida'].join(' ')} role="status">
           <motion.i aria-hidden="true" animate={mesa.conectado ? { opacity: 1 } : { opacity: [1, 0.25, 1] }}

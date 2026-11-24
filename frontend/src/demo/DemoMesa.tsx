@@ -97,6 +97,7 @@ export default function DemoMesa({ version }: { version: Version }) {
       setTimeout(() => { h.alConectar(); }, 50);
       return {
         reanudar: () => { setTimeout(() => sim.vista(), 40); },
+        chatear: (texto: string) => sim.emitir('Chat', { jugadorId: YO, texto, hora: new Date().toISOString() }),
         robar: (d: boolean) => sim.robar(d),
         descartar: (c: string) => sim.descartar(c),
         cerrar: () => sim.rechazar(),

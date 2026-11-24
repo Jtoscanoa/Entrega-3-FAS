@@ -16,6 +16,9 @@ export interface OpcionesPartida {
 /** Sobre de los mensajes STOMP salientes del servidor: {tipo, datos}. */
 export interface Mensaje { tipo: string; datos: any }
 
+/** Mensaje del chat de la mesa tal como lo difunde el servidor (ya limpio y acotado). */
+export interface MensajeChat { id: number; jugadorId: string; texto: string; hora: string }
+
 /** Estado de la mesa tal como lo comunica el servidor (RD4: la SPA no decide nada sobre las reglas). */
 export interface EstadoMesa {
   ronda: number; orden: string[]; cima: string | null; marcador: Record<string, number>;
@@ -72,6 +75,9 @@ export interface VistaMesa {
   historial: Liquidacion[];
   fin: FinPartida | null;
   eventos: EventoMesa[];
+  /** Chat en vivo de la mesa, del mas viejo al mas nuevo. */
+  chat: MensajeChat[];
+  enviarChat: (texto: string) => void;
   seleccionar: (indice: number | null) => void;
   robar: (delDescarte: boolean) => void;
   descartar: () => void;

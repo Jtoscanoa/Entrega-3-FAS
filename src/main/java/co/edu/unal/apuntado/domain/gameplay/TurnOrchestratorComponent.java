@@ -339,6 +339,11 @@ public final class TurnOrchestratorComponent implements ITurno {
         }
     }
 
+    @Override
+    public boolean participa(long partidaId, String jugadorId) {
+        return conCandado(partidaId, p -> p.asientoDe(jugadorId) != null);
+    }
+
     /** Idempotente: solo actua si una ronda ya liquidada no pudo abrir la siguiente (D9). */
     @Override
     public void reanudarRonda(long partidaId, String jugadorId) {

@@ -223,4 +223,13 @@ class TurnosTest {
         assertEquals(programados, e.programador.pendientes.size(), "sub-b no tiene el turno y la mesa no se vacia");
         assertEquals(MotivoComando.PARTIDA_INEXISTENTE, motivo(() -> e.orquestador.marcarConexion(99, "sub-a", false)));
     }
+
+    @Test
+    void soloLosJugadoresConAsientoParticipan() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        assertTrue(e.orquestador.participa(id, "sub-b"));
+        assertFalse(e.orquestador.participa(id, "intruso"));
+        assertEquals(MotivoComando.PARTIDA_INEXISTENTE, motivo(() -> e.orquestador.participa(99L, "sub-a")));
+    }
 }

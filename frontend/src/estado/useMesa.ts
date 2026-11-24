@@ -5,7 +5,7 @@ import { api, conectarMesa, ConexionMesa, ManejadoresMesa } from '../api';
 import { infoCarta, ordenarPorPinta, ordenarPorValor, reconciliar } from '../cartas';
 import { mensajeDe, PARTIDA_INTERRUMPIDA, rondaPendiente } from '../mensajes';
 import type {
-  Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, OrigenRobo, Sesion, VistaMesa,
+  Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo, Sesion, VistaMesa,
 } from './tipos';
 
 /** Puertos hacia el servidor. Se inyectan para poder ejercitar el hook sin red (modo demostracion). */
@@ -34,6 +34,7 @@ const INICIAL: EstadoMesa = {
   ausentes: [],
 };
 const MAX_EVENTOS = 40;
+const MAX_CHAT = 60;
 
 function quitarUna(cartas: string[], carta: string): string[] {
   const i = cartas.indexOf(carta);
@@ -52,6 +53,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const [historial, setHistorial] = useState<Liquidacion[]>([]);
   const [fin, setFin] = useState<FinPartida | null>(null);
   const [eventos, setEventos] = useState<EventoMesa[]>([]);
+  const [chat, setChat] = useState<MensajeChat[]>([]);
+  const siguienteChat = useRef(1);
   const [ahora, setAhora] = useState(Date.now());
   const conexion = useRef<ConexionMesa | null>(null);
   const nombresRef = useRef(nombres);
@@ -156,6 +159,10 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
             REINTENTO_RONDA_MS);
         }
         break;
+      case 'Chat':
+        setChat((l) => [...l, { id: siguienteChat.current++, jugadorId: d.jugadorId, texto: d.texto, hora: d.hora }]
+          .slice(-MAX_CHAT));
+        break;
       case 'PartidaFinalizada':
         setFin({ ganador: d.ganadorId, motivo: d.motivo });
         setE((s) => ({ ...s, finalizada: true, turnoDe: null }));
@@ -221,7 +228,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
 
   return {
     yo: sesion.sub, codigo, e, conectado, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar,
-    segundos, instruccion, aviso, bitacora, liquidacion, historial, fin, eventos,
+    segundos, instruccion, aviso, bitacora, liquidacion, historial, fin, eventos, chat,
+    enviarChat: (texto) => { if (texto.trim()) conexion.current?.chatear(texto); },
     alias: (sub) => nombresRef.current[sub] ?? (sub === sesion.sub ? 'Tú' : 'Jugador'),
     seleccionar: setSeleccion,
     robar: (delDescarte) => conexion.current?.robar(delDescarte, e.numeroTurno),

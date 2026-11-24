@@ -16,7 +16,14 @@ const MOTIVOS: Record<string, string> = {
   JUGADORES_INSUFICIENTES: 'Se necesitan al menos 2 jugadores para iniciar.',
   APODO_INVALIDO: 'Escribe un apodo de 1 a 20 caracteres.',
   HTTP_401: 'Tu sesión venció. Vuelve a entrar con tu apodo.',
+  CHAT_VACIO: 'Escribe algo antes de enviar.',
+  CHAT_LARGO: 'El mensaje es muy largo (máximo 200 caracteres).',
+  CHAT_MUY_RAPIDO: 'Vas muy rápido: espera unos segundos para volver a escribir.',
+  CHAT_SIN_ASIENTO: 'Solo los jugadores de la mesa pueden escribir en el chat.',
 };
+
+/** Largo maximo de un mensaje de chat; el servidor lo vuelve a comprobar. */
+export const LARGO_CHAT = 200;
 
 /** Retro E2 2.3: tras un reinicio el servidor anula la ronda en curso; la SPA vuelve al vestibulo con este aviso. */
 export const PARTIDA_INTERRUMPIDA = 'La partida se interrumpió por un reinicio del servidor. La ronda en curso se anuló; '

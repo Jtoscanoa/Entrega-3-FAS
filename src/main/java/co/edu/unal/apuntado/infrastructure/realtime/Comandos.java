@@ -13,4 +13,7 @@ public final class Comandos {
     public record Cerrar(String carta, int numeroTurno) { }
 
     public record ErrorComando(String motivo) { }
+
+    /** Mensaje de chat de la mesa: texto libre, sin reglas de juego. */
+    public record Chat(String texto) { }
 }

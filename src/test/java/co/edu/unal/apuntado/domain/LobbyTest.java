@@ -32,6 +32,7 @@ class LobbyTest {
         @Override public VistaPartida vistaDe(long p, String j) { return null; }
         @Override public void marcarConexion(long p, String j, boolean c) { }
         @Override public void reanudarRonda(long p, String j) { }
+        @Override public boolean participa(long p, String j) { return true; }
     }
 
     private static final OpcionesPartida APUNTADO =
