@@ -1,0 +1,5 @@
+# HTTPS automatico para el dominio de .env; Caddy reenvia tambien el WebSocket (/ws) sin configuracion extra.
+{$DOMINIO} {
+	encode gzip
+	reverse_proxy app:8080
+}

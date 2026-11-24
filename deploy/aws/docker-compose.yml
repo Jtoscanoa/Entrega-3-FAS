@@ -1,0 +1,25 @@
+# Produccion en AWS EC2 (ADR-09b): Caddy (HTTPS automatico con Let's Encrypt) delante de la app.
+# PostgreSQL vive en RDS; las credenciales llegan por .env (no se versiona). Ver deploy/aws/README.md.
+services:
+  app:
+    image: ${IMAGEN}
+    restart: unless-stopped
+    env_file: .env
+    expose: ["8080"]
+    logging:
+      driver: json-file
+      options: { max-size: "20m", max-file: "5" }
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    ports: ["80:80", "443:443"]
+    environment:
+      DOMINIO: ${DOMINIO}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_datos:/data
+      - caddy_config:/config
+    depends_on: [app]
+volumes:
+  caddy_datos:
+  caddy_config:

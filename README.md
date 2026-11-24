@@ -3,7 +3,7 @@
 MVP del **Entregable 3** de *Fundamentos de Arquitectura de Software* (UNAL Medellín, 2026-02).
 Equipo **"4 menos 1"**: Juan Pablo Mazo Berrío · Jose Mauricio Toscano Aguas · Duvan Steven Calderón Taborda.
 
-- **Aplicación desplegada:** `[URL de Render — completar tras el primer despliegue]`
+- **Aplicación desplegada:** `[URL de AWS (sslip.io) — completar tras el despliegue]`
 - **Estilo:** monolito modular de un solo cuanto; el motor de reglas es un microkernel de compilación (`ReglaJuego` + `RegistroReglas` con ServiceLoader). Ver `docs/adrs/`.
 - **Stack:** Java 21, Spring Boot 3.3, PostgreSQL 16 + Flyway, STOMP 1.2 sobre WebSocket; SPA en React + TypeScript (Vite).
 
@@ -32,7 +32,7 @@ cd frontend && npm run build
 ```
 
 El pipeline `.github/workflows/ci.yml` ejecuta lo mismo en cada push y PR. En `main`, si todo pasa, publica la imagen
-en ghcr.io y dispara el despliegue en Render (secreto `RENDER_DEPLOY_HOOK_URL`).
+en ghcr.io y la despliega en AWS EC2 por SSH (secretos `EC2_HOST` y `EC2_SSH_KEY`).
 
 | FF | Qué protege | Dónde |
 |---|---|---|
@@ -50,10 +50,9 @@ en ghcr.io y dispara el despliegue en Render (secreto `RENDER_DEPLOY_HOOK_URL`).
 | FF-18 | CONNECT sin token, vencido o con firma ajena rechazado | `AutenticacionStompTest`, `TokenInvitadoTest` |
 | FF-14, FF-15 | Latencia p95 < 300 ms y reconexión ≤ 5 s | k6 `tests/fitness/k6/` (job nocturno) |
 
-## Despliegue en Render
+## Despliegue en AWS
 
-`render.yaml` es un Blueprint: en Render, **New → Blueprint** → elegir este repositorio. Crea la base PostgreSQL
-`mesa101-db` y el servicio web `mesa101` (Docker), con `JWT_SECRET` generado.
+EC2 (Docker Compose con Caddy para HTTPS) + RDS PostgreSQL 16 privado (ADR-09b). Archivos y pasos en `deploy/aws/`.
 
 ## API
 
