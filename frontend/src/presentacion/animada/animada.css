@@ -199,7 +199,7 @@
 .a-dorsos > span { position: absolute; left: 7px; top: 0; width: 20px; height: 28px; transform-origin: 50% 100%; }
 .a-dorsos .a-dorso { border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .45), 0 1px 3px rgba(0, 0, 0, .4); }
 .a-dorsos .a-dorso-filete, .a-dorsos .a-dorso-sello { display: none; }
-.a-yo { position: relative; z-index: 1; display: flex; }
+.a-yo { position: relative; z-index: 1; display: flex; justify-content: center; }
 
 /* Avatar con anillo de turno */
 .a-avatar {
@@ -416,6 +416,37 @@
 .a-resto { color: var(--a-tenue); font-size: 13px; }
 .a-confeti { position: fixed; inset: 0; z-index: 1; overflow: hidden; pointer-events: none; }
 .a-confeti span { position: absolute; top: 0; border-radius: 1px; }
+
+/* Chat en vivo: boton en la cabecera y panel desplegable anclado arriba a la derecha */
+.a-chat { position: relative; }
+.a-chat-boton { position: relative; display: inline-flex; align-items: center; gap: 6px; }
+.a-chat-boton.activo { border-color: rgba(227, 192, 122, .6); }
+.a-chat-contador { min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; display: inline-grid; place-items: center; font-size: 11px; font-weight: 700; background: var(--a-turno); color: #1b1405; }
+.a-chat-previa, .a-chat-panel { position: fixed; z-index: 44; top: 56px; right: 12px; width: min(340px, calc(100% - 24px)); border-radius: 14px; border: 1px solid var(--a-borde); background: rgba(10, 18, 15, .97); box-shadow: 0 18px 40px rgba(0, 0, 0, .55); text-align: left; }
+.a-chat-previa { padding: 10px 12px; font-size: 13.5px; cursor: pointer; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.a-chat-previa b { color: var(--a-laton); }
+.a-chat-panel { display: flex; flex-direction: column; max-height: min(460px, calc(100dvh - 140px)); }
+.a-chat-panel header { display: flex; align-items: center; justify-content: space-between; padding: 10px 8px 6px 14px; border-bottom: 1px solid var(--a-borde); }
+.a-chat-panel h2 { font-family: var(--a-serif); font-size: 16px; color: var(--a-laton); }
+.a-chat-lista { list-style: none; margin: 0; padding: 10px 14px; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; flex: 1; min-height: 120px; }
+.a-chat-lista li { display: flex; flex-direction: column; gap: 2px; max-width: 88%; align-self: flex-start; padding: 6px 10px; border-radius: 12px; background: rgba(255, 255, 255, .05); overflow-wrap: anywhere; }
+.a-chat-lista li b { font-size: 12px; color: var(--a-laton); }
+.a-chat-lista li.mio { align-self: flex-end; background: rgba(201, 164, 92, .14); }
+.a-chat-lista li.a-tenue { max-width: none; background: none; }
+.a-chat-form { display: flex; gap: 8px; padding: 10px 12px 12px; border-top: 1px solid var(--a-borde); }
+.a-chat-form input { flex: 1; min-width: 0; padding: 8px 10px; border-radius: 10px; border: 1px solid var(--a-borde); background: rgba(255, 255, 255, .06); color: var(--a-tinta); font: inherit; }
+
+/* Centrado en escritorio: la mesa queda en el centro de la pantalla (no el bloque mesa + lateral) y, si sobra
+   alto, en el centro vertical entre la cabecera y el selector de version. */
+@media (min-width: 901px) {
+  .a-mesa { display: flex; flex-direction: column; }
+  .a-mesa > .a-cuerpo { flex: 1 0 auto; width: 100%; align-content: safe center; }
+}
+@media (min-width: 1280px) {
+  .a-cuerpo { grid-template-columns: minmax(220px, 1fr) minmax(0, 1040px) minmax(220px, 1fr); max-width: none; }
+  .a-cuerpo > .a-juego { grid-column: 2; }
+  .a-cuerpo > .a-lateral { grid-column: 3; justify-self: start; width: min(300px, 100%); }
+}
 
 /* Pantallas angostas (hasta 360 px) */
 @media (max-width: 900px) {

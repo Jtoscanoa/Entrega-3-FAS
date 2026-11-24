@@ -1,8 +1,8 @@
 // Version ligera de la mesa: la interfaz original, sin animaciones, pensada para telefonos de bajos recursos.
 // Solo recibe lo que entrega useMesa(); no conoce la conexion ni las reglas (RD4, FF-19).
-import { useRef } from 'react';
+import { FormEvent, useEffect, useRef, useState } from 'react';
 import { infoCarta } from '../../cartas';
-import { ayudaCierre, MOTIVO_FIN, NOMBRE_MODALIDAD, TIPO_CIERRE } from '../../mensajes';
+import { ayudaCierre, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, TIPO_CIERRE } from '../../mensajes';
 import type { VistaMesa } from '../../estado/tipos';
 
 export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
@@ -75,6 +75,7 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       <aside className="bitacora">
         <h2>Lo último</h2>
         <ul>{bitacora.map((t, i) => <li key={i}>{t}</li>)}</ul>
+        <ChatLigero mesa={mesa} />
         {historial.length > 0 && (
           <>
             <h2>Historial de rondas</h2>
@@ -143,5 +144,27 @@ function Carta({ codigo, seleccionada, nueva, onClick, onDragStart, onDrop }: Pr
       onDragOver={(ev) => ev.preventDefault()} onDrop={onDrop} title={`${c.puntos} puntos`}>
       <span className="valor">{c.valor}</span><span className="pinta">{c.simbolo}</span>
     </div>
+  );
+}
+
+/** Chat en vivo de la mesa, sin animaciones: lista con desplazamiento y un campo para escribir. */
+function ChatLigero({ mesa }: { mesa: VistaMesa }) {
+  const [texto, setTexto] = useState('');
+  const lista = useRef<HTMLUListElement>(null);
+  useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }); }, [mesa.chat.length]);
+  const enviar = (ev: FormEvent) => { ev.preventDefault(); mesa.enviarChat(texto); setTexto(''); };
+  return (
+    <section className="chat" aria-label="Chat de la mesa">
+      <h2>Chat</h2>
+      <ul ref={lista} className="chat-lista" aria-live="polite">
+        {mesa.chat.length === 0 && <li className="tenue">Nadie ha escrito todavía.</li>}
+        {mesa.chat.map((m) => <li key={m.id}><b>{m.jugadorId === mesa.yo ? 'Tú' : mesa.nombre(m.jugadorId)}:</b> {m.texto}</li>)}
+      </ul>
+      <form className="fila" onSubmit={enviar}>
+        <input aria-label="Mensaje para la mesa" placeholder="Escribe a la mesa" maxLength={LARGO_CHAT} value={texto}
+          onChange={(e) => setTexto(e.target.value)} />
+        <button type="submit" disabled={!texto.trim()}>Enviar</button>
+      </form>
+    </section>
   );
 }

@@ -61,6 +61,7 @@ export function conectarMesa(token: string, partidaId: number, h: ManejadoresMes
   };
   return {
     reanudar: () => enviar('reanudar'),
+    chatear: (texto: string) => enviar('chat', { texto }),
     robar: (delDescarte: boolean, numeroTurno: number) => enviar('robar', { delDescarte, numeroTurno }),
     descartar: (carta: string, numeroTurno: number) => enviar('descartar', { carta, numeroTurno }),
     cerrar: (carta: string, numeroTurno: number) => enviar('cerrar', { carta, numeroTurno }),

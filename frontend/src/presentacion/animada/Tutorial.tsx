@@ -420,6 +420,8 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
     historial: st.historial,
     fin: null,
     eventos: st.eventos,
+    chat: [],
+    enviarChat: () => undefined,
     seleccionar,
     robar,
     descartar,
