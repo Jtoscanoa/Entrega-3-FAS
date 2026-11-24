@@ -47,6 +47,15 @@ public interface IMatchState {
         }
     }
 
+    record RondaAnulada(long partidaId, long rondaId, int numero) { }
+
+    record Recuperacion(List<RondaAnulada> rondasAnuladas, List<Long> partidasInterrumpidas) {
+        public Recuperacion {
+            rondasAnuladas = List.copyOf(rondasAnuladas);
+            partidasInterrumpidas = List.copyOf(partidasInterrumpidas);
+        }
+    }
+
     /** Crea sala (si falta), jugadores, partida, configuracion y participantes; devuelve el id de la partida. */
     long guardarPartida(NuevaPartida partida);
 
@@ -59,4 +68,10 @@ public interface IMatchState {
      * @throws LiquidacionDuplicadaException si la ronda ya no estaba EN_CURSO (0 filas): rollback inmediato
      */
     void guardarLiquidacion(LiquidacionRonda liquidacion);
+
+    /**
+     * Recuperacion tras una caida: en UNA transaccion, toda ronda EN_CURSO pasa a ANULADA y toda partida EN_CURSO a
+     * INTERRUMPIDA (su estado vivo se perdio con la memoria). Las rondas LIQUIDADAS y sus puntajes no se tocan.
+     */
+    Recuperacion anularPartidasEnCurso();
 }

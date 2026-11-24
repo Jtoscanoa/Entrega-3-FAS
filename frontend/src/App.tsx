@@ -30,7 +30,7 @@ export default function App() {
     <>
       {sesion && lugar && lugar.partidaId !== null
         ? <PantallaMesa key={lugar.partidaId} version={version} sesion={sesion} codigo={lugar.codigo}
-            partidaId={lugar.partidaId} alSalir={() => nav.irA(null)} />
+            partidaId={lugar.partidaId} alSalir={(aviso) => nav.irA(null, aviso)} />
         : <PantallasPrevias nav={nav} version={version} />}
       <SelectorVersion version={version} alCambiar={cambiarVersion} />
     </>
@@ -44,10 +44,10 @@ function PantallaMesa({ version, ...p }: ParametrosMesa & { version: Version }) 
 }
 
 function PantallasPrevias({ nav, version }: { nav: Navegacion; version: Version }) {
-  const { sesion, lugar, irA, entrar, salir } = nav;
+  const { sesion, lugar, aviso, irA, entrar, salir } = nav;
   const codigoSala = sesion && lugar && lugar.partidaId === null ? lugar.codigo : null;
   const inicio = useInicio(entrar);
-  const vestibulo = useVestibulo(sesion, (codigo) => irA({ codigo, partidaId: null }), salir);
+  const vestibulo = useVestibulo(sesion, (codigo) => irA({ codigo, partidaId: null }), salir, aviso);
   const sala = useSala(sesion, codigoSala,
     (partidaId) => { if (codigoSala) irA({ codigo: codigoSala, partidaId }); }, () => irA(null));
 

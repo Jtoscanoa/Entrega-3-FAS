@@ -31,6 +31,7 @@ class LobbyTest {
         @Override public void vencerTurno(long p, int n) { }
         @Override public VistaPartida vistaDe(long p, String j) { return null; }
         @Override public void marcarConexion(long p, String j, boolean c) { }
+        @Override public void reanudarRonda(long p, String j) { }
     }
 
     private static final OpcionesPartida APUNTADO =

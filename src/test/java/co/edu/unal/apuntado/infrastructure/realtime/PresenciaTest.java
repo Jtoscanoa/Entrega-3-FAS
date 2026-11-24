@@ -47,6 +47,7 @@ class PresenciaTest {
         @Override public ResultadoValidacion cerrar(long p, String j, String c, int n) { return null; }
         @Override public void vencerTurno(long p, int n) { }
         @Override public VistaPartida vistaDe(long p, String j) { return null; }
+        @Override public void reanudarRonda(long p, String j) { }
 
         @Override
         public void marcarConexion(long partidaId, String jugadorId, boolean conectado) {

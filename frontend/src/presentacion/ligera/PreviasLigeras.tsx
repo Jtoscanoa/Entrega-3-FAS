@@ -29,6 +29,7 @@ function Vestibulo({ v }: { v: VistaVestibulo }) {
     <main className="centro">
       <div className="panel">
         <h1>Hola, {v.apodo}</h1>
+        {v.aviso && <p className="aviso info" role="status">{v.aviso}</p>}
         <button className="principal" onClick={v.crear}>Crear una sala</button>
         <div className="separador">o únete con un código</div>
         <div className="fila">

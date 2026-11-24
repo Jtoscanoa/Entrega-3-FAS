@@ -16,14 +16,17 @@ export function useNavegacion() {
     return s && new Date(s.venceEn) > new Date() ? s : null;
   });
   const [lugar, setLugar] = useState<Lugar | null>(() => guardado.leer<Lugar>('lugar'));
+  const [aviso, setAviso] = useState('');
 
-  const irA = useCallback((l: Lugar | null) => {
+  /** {@code avisoAlLlegar} se muestra en la pantalla de destino hasta la siguiente navegacion. */
+  const irA = useCallback((l: Lugar | null, avisoAlLlegar = '') => {
     setLugar(l);
+    setAviso(avisoAlLlegar);
     if (l) guardado.escribir('lugar', l); else guardado.borrar('lugar');
   }, []);
   const entrar = useCallback((s: Sesion) => { guardado.escribir('sesion', s); setSesion(s); }, []);
   const salir = useCallback(() => { guardado.borrar('sesion'); irA(null); setSesion(null); }, [irA]);
-  return { sesion, lugar, irA, entrar, salir };
+  return { sesion, lugar, aviso, irA, entrar, salir };
 }
 
 export function useInicio(alEntrar: (s: Sesion) => void): VistaInicio {
@@ -36,7 +39,7 @@ export function useInicio(alEntrar: (s: Sesion) => void): VistaInicio {
 }
 
 export function useVestibulo(sesion: Sesion | null, alEntrarSala: (codigo: string) => void,
-                             alCambiarApodo: () => void): VistaVestibulo {
+                             alCambiarApodo: () => void, aviso = ''): VistaVestibulo {
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState('');
   const intentar = async (accion: () => Promise<string>) => {
@@ -53,6 +56,7 @@ export function useVestibulo(sesion: Sesion | null, alEntrarSala: (codigo: strin
       return c;
     }),
     cambiarApodo: alCambiarApodo,
+    aviso,
   };
 }
 

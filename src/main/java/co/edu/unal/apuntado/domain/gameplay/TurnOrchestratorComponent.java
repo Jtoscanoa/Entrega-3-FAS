@@ -306,7 +306,9 @@ public final class TurnOrchestratorComponent implements ITurno {
 
     // ------------------------------------------------------------------ rondas
 
+    /** Si falla el registro de la ronda no queda rastro en memoria: el abridor y el numero vuelven a su valor. */
     private void abrirRonda(PartidaEnMemoria p) {
+        int abridorAnterior = p.indiceAbridor;
         p.numeroRonda++;
         p.indiceAbridor = p.indiceAbridor < 0 ? 0 : p.siguienteActivo(p.indiceAbridor);
         p.claveMazo = p.id + "-" + p.numeroRonda;
@@ -317,10 +319,35 @@ public final class TurnOrchestratorComponent implements ITurno {
                     p.asientos.get(p.indiceAbridor).id());
         } catch (RuntimeException e) {
             mazo.liberar(p.claveMazo);
+            p.claveMazo = null;
             p.numeroRonda--;
+            p.indiceAbridor = abridorAnterior;
             throw e;
         }
         repartirYAnunciar(p, orden);
+    }
+
+    /**
+     * D9: la liquidacion anterior ya se confirmo, asi que un fallo al registrar la ronda siguiente no se propaga al
+     * cierre. La partida queda ENTRE_RONDAS, se avisa con RondaPendiente y {@link #reanudarRonda} la reintenta.
+     */
+    private void abrirSiguienteRonda(PartidaEnMemoria p) {
+        try {
+            abrirRonda(p);
+        } catch (RuntimeException e) {
+            eventos.publicar(new EventoDominio.RondaPendiente(p.id, p.numeroRonda + 1, e.getClass().getSimpleName()));
+        }
+    }
+
+    /** Idempotente: solo actua si una ronda ya liquidada no pudo abrir la siguiente (D9). */
+    @Override
+    public void reanudarRonda(long partidaId, String jugadorId) {
+        conCandado(partidaId, p -> {
+            if (p.fase == Fase.ENTRE_RONDAS && p.numeroRonda > 0 && p.asientoDe(jugadorId) != null) {
+                abrirSiguienteRonda(p);
+            }
+            return null;
+        });
     }
 
     private void repartirYAnunciar(PartidaEnMemoria p, List<Asiento> orden) {
@@ -394,7 +421,7 @@ public final class TurnOrchestratorComponent implements ITurno {
                     liq.motivoFin().orElseThrow().name()));
             return;
         }
-        abrirRonda(p);
+        abrirSiguienteRonda(p);
     }
 
     private static ReglasPersistidas reglas(ConfiguracionReglas c) {
