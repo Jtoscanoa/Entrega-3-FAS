@@ -24,7 +24,7 @@ export interface RectArea {
 export interface MotorParticulas {
   emitir: (x: number, y: number, clase: ClaseParticula) => void;
   emitirBordeCarta: (rect: RectArea) => void;
-  emitirUrgenciaHud: (reloj?: RectArea | null) => void;
+  emitirUrgenciaHud: (bordes: ReadonlyArray<RectArea | null | undefined>) => void;
   seguirVuelo: (tramo: TramoEstela) => void;
 }
 
@@ -531,84 +531,51 @@ export function useMotorParticulas(reducido: boolean) {
       arrancarRef.current?.();
     },
 
-    emitirUrgenciaHud(reloj) {
+    emitirUrgenciaHud(bordes) {
       if (reducidoRef.current || document.hidden) return;
       const st = estado.current;
       if (!st.ancho || !st.alto) return;
-      const bordes = st.compacto ? 3 : 6;
-      for (let k = 0; k < bordes; k++) {
-        const ranura = tomarRanuraDelPool(st, true);
-        if (!ranura) break;
-        const [r, g, b] = colorDe(PALETA_URGENCIA);
-        const lado = (Math.random() * 4) | 0;
-        let x = 0;
-        let y = 0;
-        let vx = 0;
-        let vy = 0;
-        if (lado === 0) {
-          x = Math.random() * st.ancho;
-          y = azar(2, 16);
-          vx = azar(-16, 16);
-          vy = azar(14, 40);
-        } else if (lado === 1) {
-          x = Math.random() * st.ancho;
-          y = st.alto - azar(6, 20);
-          vx = azar(-16, 16);
-          vy = azar(-44, -14);
-        } else if (lado === 2) {
-          x = azar(2, 16);
-          y = Math.random() * st.alto;
-          vx = azar(14, 42);
-          vy = azar(-24, 6);
-        } else {
-          x = st.ancho - azar(2, 16);
-          y = Math.random() * st.alto;
-          vx = azar(-42, -14);
-          vy = azar(-24, 6);
-        }
-        ranura.viva = true;
-        ranura.edad = 0;
-        ranura.x = x;
-        ranura.y = y;
-        ranura.vx = vx;
-        ranura.vy = vy;
-        ranura.gravedad = -8;
-        ranura.friccion = 0.965;
-        ranura.vida = azar(0.5, 0.85);
-        ranura.radio = azar(1.1, 2.3);
-        ranura.rot = azar(0, Math.PI * 2);
-        ranura.vrot = azar(-2.2, 2.2);
-        ranura.forma = Math.random() < 0.3 ? 'chispa' : 'polvo';
-        ranura.r = r;
-        ranura.g = g;
-        ranura.b = b;
-        ranura.alphaMax = azar(0.55, 0.82);
-      }
-      if (reloj) {
-        const enReloj = st.compacto ? 1 : 2;
-        for (let k = 0; k < enReloj; k++) {
+      const porBorde = st.compacto ? 2 : 4;
+      for (const rect of bordes) {
+        if (!rect || rect.width <= 0 || rect.height <= 0) continue;
+        for (let k = 0; k < porBorde; k++) {
+          const lado = (Math.random() * 4) | 0;
+          let x = 0;
+          let y = 0;
+          if (lado === 0) {
+            x = rect.left + Math.random() * rect.width;
+            y = rect.top + azar(-2, 3);
+          } else if (lado === 1) {
+            x = rect.left + Math.random() * rect.width;
+            y = rect.top + rect.height + azar(-3, 2);
+          } else if (lado === 2) {
+            x = rect.left + azar(-2, 3);
+            y = rect.top + Math.random() * rect.height;
+          } else {
+            x = rect.left + rect.width + azar(-3, 2);
+            y = rect.top + Math.random() * rect.height;
+          }
+          if (x < -8 || x > st.ancho + 8 || y < -8 || y > st.alto + 8) continue;
           const ranura = tomarRanuraDelPool(st, true);
           if (!ranura) break;
           const [r, g, b] = colorDe(PALETA_URGENCIA);
-          const ang = azar(0, Math.PI * 2);
-          const rad = Math.min(reloj.width, reloj.height) * 0.48;
           ranura.viva = true;
           ranura.edad = 0;
-          ranura.x = reloj.left + reloj.width / 2 + Math.cos(ang) * rad;
-          ranura.y = reloj.top + reloj.height / 2 + Math.sin(ang) * rad;
-          ranura.vx = Math.cos(ang) * azar(12, 30);
-          ranura.vy = Math.sin(ang) * azar(12, 30) - 10;
-          ranura.gravedad = -10;
-          ranura.friccion = 0.96;
-          ranura.vida = azar(0.4, 0.7);
-          ranura.radio = azar(1.1, 2.1);
+          ranura.x = x;
+          ranura.y = y;
+          ranura.vx = azar(-18, 18);
+          ranura.vy = azar(-28, 10);
+          ranura.gravedad = -8;
+          ranura.friccion = 0.965;
+          ranura.vida = azar(0.45, 0.8);
+          ranura.radio = azar(1.1, 2.2);
           ranura.rot = azar(0, Math.PI * 2);
-          ranura.vrot = azar(-2, 2);
-          ranura.forma = Math.random() < 0.35 ? 'chispa' : 'polvo';
+          ranura.vrot = azar(-2.2, 2.2);
+          ranura.forma = Math.random() < 0.3 ? 'chispa' : 'polvo';
           ranura.r = r;
           ranura.g = g;
           ranura.b = b;
-          ranura.alphaMax = azar(0.6, 0.88);
+          ranura.alphaMax = azar(0.55, 0.85);
         }
       }
       arrancarRef.current?.();

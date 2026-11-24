@@ -112,8 +112,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
   const rivales = mesa.jugadores.filter((s) => s !== mesa.yo);
   const total = e.venceEn && e.turnoDesde ? Math.max(1, Math.round((new Date(e.venceEn).getTime() - e.turnoDesde) / 1000)) : 0;
   const cimaMostrada = cimaRetenida !== undefined ? cimaRetenida : e.cima;
-  const urgenteHud = mesa.miTurno && mesa.segundos !== null && mesa.segundos > 0 && mesa.segundos <= 10 && !e.finalizada;
-  const criticoHud = urgenteHud && (mesa.segundos ?? 99) <= 5;
+  const urgenteHud = mesa.miTurno && mesa.segundos !== null && mesa.segundos > 0 && mesa.segundos <= 5 && !e.finalizada;
 
   const rectDeItem = (id: string) =>
     manoRef.current?.querySelector(`[data-id="${CSS.escape(id)}"]`)?.getBoundingClientRect() ?? null;
@@ -304,10 +303,10 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
     return () => window.clearInterval(t);
   }, [seleccion, items, reducido, motor]);
 
-  // Polvitos rojizos en bordes del HUD y reloj cuando quedan 10 s o menos de turno.
+  // Polvitos rojizos en los bordes de la mesa y la mano cuando quedan 5 s o menos de turno.
   useEffect(() => {
     if (!urgenteHud || reducido) return undefined;
-    const emitir = () => motor.emitirUrgenciaHud(rect('reloj'));
+    const emitir = () => motor.emitirUrgenciaHud([rect('fieltro'), rect('mano')]);
     emitir();
     const t = window.setInterval(emitir, 115);
     return () => window.clearInterval(t);
@@ -377,6 +376,15 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         <div className="a-juego">
           <section ref={anclar('fieltro')} className="a-fieltro" aria-label="Mesa de juego">
             <span className="a-brillo-capa" aria-hidden="true"><span className="a-brillo" /></span>
+            <AnimatePresence>
+              {urgenteHud && (
+                <motion.span key="fieltro-urgente" className="a-borde-urgente a-borde-urgente-mesa" aria-hidden="true"
+                  initial={{ opacity: 0 }}
+                  animate={reducido ? { opacity: 0.45 } : { opacity: [0.22, 0.95, 0.22] }}
+                  exit={{ opacity: 0 }}
+                  transition={reducido ? { duration: 0.2 } : { duration: 0.58, repeat: Infinity, ease: 'easeInOut' }} />
+              )}
+            </AnimatePresence>
             <svg className="a-filigrana" viewBox="0 0 320 180" aria-hidden="true">
               <rect x="16" y="14" width="288" height="152" rx="76" fill="none" stroke="currentColor" strokeWidth="1" />
               <rect x="24" y="22" width="272" height="136" rx="68" fill="none" stroke="currentColor" strokeWidth="0.6" strokeDasharray="4 4" />
@@ -510,11 +518,11 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
           <section className="a-zona-mano" ref={anclar('mano')} aria-label="Tu mano">
             <AnimatePresence>
               {urgenteHud && (
-                <motion.span key="zona-urgente" className="a-zona-mano-urgente" aria-hidden="true"
+                <motion.span key="zona-urgente" className="a-borde-urgente a-borde-urgente-mano" aria-hidden="true"
                   initial={{ opacity: 0 }}
-                  animate={reducido ? { opacity: 0.35 } : { opacity: [0.16, criticoHud ? 0.9 : 0.65, 0.16] }}
+                  animate={reducido ? { opacity: 0.45 } : { opacity: [0.22, 0.95, 0.22] }}
                   exit={{ opacity: 0 }}
-                  transition={reducido ? { duration: 0.2 } : { duration: criticoHud ? 0.52 : 0.92, repeat: Infinity, ease: 'easeInOut' }} />
+                  transition={reducido ? { duration: 0.2 } : { duration: 0.58, repeat: Infinity, ease: 'easeInOut' }} />
               )}
             </AnimatePresence>
             <div className="a-mano-cabecera">
@@ -589,15 +597,6 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
       </motion.div>
 
       <CapaVuelos vuelos={vuelos} alTerminar={(id) => setVuelos((v) => v.filter((x) => x.id !== id))} />
-      <AnimatePresence>
-        {urgenteHud && (
-          <motion.div key="urgencia-hud" className="a-urgencia-hud" aria-hidden="true"
-            initial={{ opacity: 0 }}
-            animate={reducido ? { opacity: 0.38 } : { opacity: [0.18, criticoHud ? 0.92 : 0.72, 0.18] }}
-            exit={{ opacity: 0 }}
-            transition={reducido ? { duration: 0.2 } : { duration: criticoHud ? 0.52 : 0.92, repeat: Infinity, ease: 'easeInOut' }} />
-        )}
-      </AnimatePresence>
       {lienzo}
       <AnimatePresence>
         {mesa.liquidacion && !mesa.fin && <PanelLiquidacion key={`liq-${mesa.liquidacion.ronda}`} mesa={mesa} l={mesa.liquidacion} />}

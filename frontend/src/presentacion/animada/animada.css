@@ -283,10 +283,13 @@
 
 /* Mano en abanico y modo 2 filas */
 .a-zona-mano { position: relative; overflow: hidden; margin-top: 12px; padding: 12px 14px 14px; border-radius: 20px; border: 1px solid var(--a-borde); background: linear-gradient(180deg, rgba(14, 24, 20, .92), rgba(7, 13, 11, .92)); }
-.a-zona-mano-urgente {
-  position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
-  border: 1.5px solid rgba(208, 86, 78, .72);
-  background: radial-gradient(ellipse at 50% 100%, rgba(208, 86, 78, .16), transparent 70%);
+.a-borde-urgente {
+  position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 4;
+  border: 2px solid rgba(224, 92, 82, .9);
+  box-shadow: inset 0 0 14px rgba(208, 86, 78, .45);
+}
+.a-borde-urgente-mesa {
+  box-shadow: inset 0 0 0 7px rgba(185, 42, 34, .22), inset 0 0 18px rgba(208, 86, 78, .48);
 }
 .a-mano-cabecera { position: relative; display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; }
 .a-mano-cabecera h2 { font-family: var(--a-serif); font-weight: 600; font-size: 18px; }
@@ -366,12 +369,6 @@
 .a-vuelo { position: absolute; left: 0; top: 0; --cw: 64px; }
 .a-vuelo .a-carta { width: 100%; height: 100%; }
 .a-particulas { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 41; }
-.a-urgencia-hud {
-  position: fixed; inset: 0; pointer-events: none; z-index: 38;
-  border: 1.5px solid rgba(208, 86, 78, .65);
-  box-shadow: inset 0 0 85px rgba(185, 42, 34, .34);
-  background: radial-gradient(ellipse at center, transparent 58%, rgba(185, 42, 34, .22) 100%);
-}
 
 /* Paneles de liquidacion y fin */
 .a-velo { position: fixed; inset: 0; z-index: 45; display: grid; place-items: center; padding: 16px 16px 72px; background: rgba(2, 5, 4, .74); }
