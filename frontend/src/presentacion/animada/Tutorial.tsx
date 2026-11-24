@@ -1,337 +1,616 @@
-// Tutorial interactivo y guiado de Mesa 101: permite inspeccionar las 14 figuras, practicar robo/agrupacion/descarte
-// y recorrer en vivo las 4 zonas de la mesa. Solo presentacion (RD4).
+// Partida rápida guiada paso a paso sobre la mesa animada real: permite aprender robando del pozo/mazo,
+// agrupando juegos, descartando, viendo turnos rivales y cerrando una ronda. Solo presentacion (RD4).
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
-import { useEffect, useMemo, useState } from 'react';
+import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { infoCarta } from '../../cartas';
+import type { Aviso, EventoMesa, Liquidacion, VistaMesa } from '../../estado/tipos';
 import { agruparManoVisual } from './agrupacionVisual';
-import { Carta, DorsoCarta, nombreCarta } from './comun';
-import { PaloSvg } from './CartasSvg';
+import { nombreCarta } from './comun';
 
-export type ZonaGuia = 'rivales' | 'centro' | 'mano' | 'acciones';
+const YO = 'tut-yo';
+const RIVALES = ['tut-beto', 'tut-caro'] as const;
+const JUGADORES = [YO, ...RIVALES];
+const NOMBRES: Record<string, string> = {
+  [YO]: 'Tú',
+  'tut-beto': 'Beto',
+  'tut-caro': 'Carolina',
+};
 
-const VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', '*'] as const;
-const PINTAS = [
-  { id: 'C', nombre: 'Corazones' },
-  { id: 'D', nombre: 'Diamantes' },
-  { id: 'T', nombre: 'Tréboles' },
-  { id: 'P', nombre: 'Picas' },
-] as const;
+const MANO_INICIAL = ['7C', '4D', '7P', 'KC', '5D', '2D', '7T', 'KD', '2C', '9T'];
 
-const MANO_EJEMPLO = ['7C', '4D', '7P', '5D', 'KC', '7T', '6D', '2P'];
-const MANO_CIERRE = ['4C', '4D', '4P', '7T', '8T', '9T', 'KC', 'KD', 'KP', '2P', 'QC'];
+interface EstadoTutorial {
+  revision: number;
+  paso: number;
+  esperandoRivales: boolean;
+  orden: string[];
+  cima: string | null;
+  seleccion: number | null;
+  nueva: string | null;
+  fase: string;
+  turnoDe: string;
+  numeroTurno: number;
+  marcador: Record<string, number>;
+  bitacora: string[];
+  aviso: Aviso | null;
+  liquidacion: Liquidacion | null;
+  historial: Liquidacion[];
+  eventos: EventoMesa[];
+}
 
-const ZONAS_GUIA: Array<{ zona: ZonaGuia; titulo: string; texto: string }> = [
-  {
-    zona: 'rivales',
-    titulo: '1. Rivales, puntos y presencia',
-    texto: 'Aquí ves el marcador de cada jugador, el anillo dorado en quien tiene el turno y el aviso «sin conexión» si alguien pierde la red.',
-  },
-  {
-    zona: 'centro',
-    titulo: '2. Mazo, reloj de turno y pozo',
-    texto: 'Al empezar tu turno robas del mazo o del pozo. En los últimos 10 segundos todo el tablero titila en rojo para avisarte.',
-  },
-  {
-    zona: 'mano',
-    titulo: '3. Tu mano y agrupación visual',
-    texto: 'Arrastra cartas o usa «Agrupar juegos», «Por pinta», «Por número» y «Vista 2 filas» en móvil para ver todas las cartas sin taparlas.',
-  },
-  {
-    zona: 'acciones',
-    titulo: '4. Descartar o cerrar la ronda',
-    texto: 'Elige una carta para elevarla y descártala. Si tus otras 10 cartas arman tus combinaciones, usa esa carta para cerrar la ronda.',
-  },
-];
-
-export function Tutorial({
-  abierto,
-  alCerrar,
-  obtenerRect,
-}: {
-  abierto: boolean;
-  alCerrar: () => void;
-  obtenerRect?: (zona: ZonaGuia) => DOMRect | null;
-}) {
-  const reducido = useReducedMotion();
-  const [paso, setPaso] = useState(0);
-  const [valorSel, setValorSel] = useState<string>('A');
-  const [pintaSel, setPintaSel] = useState<string>('C');
-  const [robada, setRobada] = useState<string | null>(null);
-  const [manoPaso3, setManoPaso3] = useState<string[]>(MANO_EJEMPLO);
-  const [agrupadoPaso3, setAgrupadoPaso3] = useState(false);
-  const [selPaso4, setSelPaso4] = useState<number | null>(null);
-  const [resultadoPaso4, setResultadoPaso4] = useState('');
-  const [guiaIndice, setGuiaIndice] = useState<number | null>(null);
-
-  useEffect(() => {
-    if (!abierto && guiaIndice === null) return undefined;
-    const onKey = (ev: KeyboardEvent) => {
-      if (ev.key === 'Escape') {
-        setGuiaIndice(null);
-        alCerrar();
-      }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [abierto, guiaIndice, alCerrar]);
-
-  useEffect(() => {
-    if (abierto) setGuiaIndice(null);
-  }, [abierto]);
-
-  const codigoInspeccion = valorSel === '*' ? '*' : `${valorSel}${pintaSel}`;
-  const infoInspeccion = useMemo(() => infoCarta(codigoInspeccion), [codigoInspeccion]);
-  const gruposPaso3 = useMemo(
-    () => (agrupadoPaso3 ? agruparManoVisual(manoPaso3).grupos : manoPaso3.map(() => -1)),
-    [agrupadoPaso3, manoPaso3],
-  );
-
-  const zonaActual = guiaIndice !== null ? ZONAS_GUIA[guiaIndice] : null;
-  const rectGuia = zonaActual && obtenerRect ? obtenerRect(zonaActual.zona) : null;
-
-  const iniciarGuiaEnMesa = () => {
-    alCerrar();
-    setGuiaIndice(0);
+function crearEstadoInicial(revision: number): EstadoTutorial {
+  return {
+    revision,
+    paso: 0,
+    esperandoRivales: false,
+    orden: [...MANO_INICIAL],
+    cima: 'KP',
+    seleccion: null,
+    nueva: null,
+    fase: 'ESPERANDO_ROBO',
+    turnoDe: YO,
+    numeroTurno: 1,
+    marcador: { [YO]: 0, 'tut-beto': 0, 'tut-caro': 0 },
+    bitacora: ['Práctica rápida: completa 2 turnos hasta cerrar la ronda.'],
+    aviso: null,
+    liquidacion: null,
+    historial: [],
+    eventos: [],
   };
+}
+
+export interface ControlTutorial {
+  vista: VistaMesa;
+  revision: number;
+  paso: number;
+  totalPasos: number;
+  esperandoRivales: boolean;
+  titulo: string;
+  texto: string;
+  objetivoSelector: string | null;
+  hayLiquidacion: boolean;
+  notificarAgrupado: () => void;
+  reiniciar: () => void;
+  salir: () => void;
+}
+
+export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
+  const [st, setSt] = useState<EstadoTutorial>(() => crearEstadoInicial(1));
+  const siguienteEvento = useRef(1);
+  const timers = useRef<number[]>([]);
+
+  const limpiarTimers = useCallback(() => {
+    timers.current.forEach((id) => window.clearTimeout(id));
+    timers.current = [];
+  }, []);
+
+  const programar = useCallback((fn: () => void, ms: number) => {
+    const id = window.setTimeout(fn, ms);
+    timers.current.push(id);
+  }, []);
+
+  // Dispara el reparto inicial justo después de montar la mesa para que se animen los vuelos de apertura.
+  useEffect(() => {
+    limpiarTimers();
+    siguienteEvento.current = 1;
+    programar(() => {
+      setSt((prev) => ({
+        ...prev,
+        eventos: [{ id: siguienteEvento.current++, tipo: 'reparto', cartas: MANO_INICIAL.length }],
+      }));
+    }, 90);
+    return limpiarTimers;
+  }, [st.revision, limpiarTimers, programar]);
+
+  const reiniciar = useCallback(() => {
+    limpiarTimers();
+    siguienteEvento.current = 1;
+    setSt((prev) => crearEstadoInicial(prev.revision + 1));
+  }, [limpiarTimers]);
+
+  const salir = useCallback(() => {
+    limpiarTimers();
+    alCerrar();
+  }, [limpiarTimers, alCerrar]);
+
+  const notificarAgrupado = useCallback(() => {
+    setSt((prev) => (prev.paso === 0 ? { ...prev, paso: 1, aviso: null } : prev));
+  }, []);
+
+  const seleccionar = useCallback((indice: number | null) => {
+    setSt((prev) => {
+      const elegido = indice !== null ? prev.orden[indice] ?? null : null;
+      let paso = prev.paso;
+      if (prev.paso === 2 && elegido === '9T') paso = 3;
+      else if (prev.paso === 3 && elegido !== '9T') paso = 2;
+      return { ...prev, seleccion: indice, paso, aviso: null };
+    });
+  }, []);
+
+  const reordenar = useCallback((orden: string[]) => {
+    setSt((prev) => ({ ...prev, orden }));
+  }, []);
+
+  const ordenarPorPinta = useCallback(() => {
+    setSt((prev) => ({
+      ...prev,
+      seleccion: null,
+      orden: [...prev.orden].sort((a, b) => {
+        const ia = infoCarta(a);
+        const ib = infoCarta(b);
+        return ia.pinta.localeCompare(ib.pinta) || ia.rango - ib.rango;
+      }),
+    }));
+  }, []);
+
+  const ordenarPorValor = useCallback(() => {
+    setSt((prev) => ({
+      ...prev,
+      seleccion: null,
+      orden: [...prev.orden].sort((a, b) => {
+        const ia = infoCarta(a);
+        const ib = infoCarta(b);
+        return ia.rango - ib.rango || ia.pinta.localeCompare(ib.pinta);
+      }),
+    }));
+  }, []);
+
+  const robar = useCallback((delDescarte: boolean) => {
+    setSt((prev) => {
+      if (prev.esperandoRivales || prev.fase !== 'ESPERANDO_ROBO') return prev;
+      if (prev.paso === 0) {
+        return {
+          ...prev,
+          aviso: { tipo: 'info', cierre: false, texto: 'Primero pulsa «Agrupar juegos» para ordenar tus cartas y ver qué terna te falta.' },
+        };
+      }
+      if (prev.paso === 1) {
+        if (!delDescarte) {
+          return {
+            ...prev,
+            aviso: { tipo: 'info', cierre: false, texto: 'Para esta jugada te conviene el Rey de picas: toca «Robar del pozo».' },
+          };
+        }
+        const { orden } = agruparManoVisual([...prev.orden, 'KP']);
+        const evRobo: EventoMesa = { id: siguienteEvento.current++, tipo: 'robo', jugadorId: YO, origen: 'DESCARTE' };
+        const evRecibida: EventoMesa = { id: siguienteEvento.current++, tipo: 'recibida', carta: 'KP', origen: 'DESCARTE' };
+        return {
+          ...prev,
+          paso: 2,
+          orden,
+          cima: null,
+          seleccion: null,
+          nueva: 'KP',
+          fase: 'ESPERANDO_DESCARTE',
+          aviso: null,
+          bitacora: ['Robaste Rey de picas del pozo.', ...prev.bitacora].slice(0, 8),
+          eventos: [...prev.eventos, evRobo, evRecibida],
+        };
+      }
+      if (prev.paso === 4) {
+        if (delDescarte) {
+          return {
+            ...prev,
+            aviso: { tipo: 'info', cierre: false, texto: 'El 8♠ del pozo no te sirve; toca «Robar del mazo».' },
+          };
+        }
+        const { orden } = agruparManoVisual([...prev.orden, '6D']);
+        const evRobo: EventoMesa = { id: siguienteEvento.current++, tipo: 'robo', jugadorId: YO, origen: 'MAZO' };
+        const evRecibida: EventoMesa = { id: siguienteEvento.current++, tipo: 'recibida', carta: '6D', origen: 'MAZO' };
+        return {
+          ...prev,
+          paso: 5,
+          orden,
+          seleccion: null,
+          nueva: '6D',
+          fase: 'ESPERANDO_DESCARTE',
+          aviso: null,
+          bitacora: ['Robaste 6 de diamantes del mazo.', ...prev.bitacora].slice(0, 8),
+          eventos: [...prev.eventos, evRobo, evRecibida],
+        };
+      }
+      return prev;
+    });
+  }, []);
+
+  const descartar = useCallback(() => {
+    let disparaRivales = false;
+    setSt((prev) => {
+      if (prev.esperandoRivales || prev.fase !== 'ESPERANDO_DESCARTE') return prev;
+      const cartaSel = prev.seleccion !== null ? prev.orden[prev.seleccion] ?? null : null;
+      if (!cartaSel) return prev;
+
+      if (prev.paso === 2 || prev.paso === 3) {
+        if (cartaSel !== '9T') {
+          return {
+            ...prev,
+            aviso: { tipo: 'info', cierre: false, texto: 'Elige el 9 de tréboles (9♣) al final de tu mano para descartar los puntos sueltos más altos.' },
+          };
+        }
+        disparaRivales = true;
+        const orden = prev.orden.filter((_, i) => i !== prev.seleccion);
+        const evDescarte: EventoMesa = { id: siguienteEvento.current++, tipo: 'descarte', jugadorId: YO, carta: '9T' };
+        return {
+          ...prev,
+          paso: 3,
+          esperandoRivales: true,
+          orden,
+          cima: '9T',
+          seleccion: null,
+          nueva: null,
+          fase: 'ESPERANDO_ROBO',
+          turnoDe: 'tut-beto',
+          aviso: null,
+          bitacora: ['Descartaste 9 de tréboles.', ...prev.bitacora].slice(0, 8),
+          eventos: [...prev.eventos, evDescarte],
+        };
+      }
+
+      if (prev.paso === 5) {
+        return {
+          ...prev,
+          aviso: { tipo: 'info', cierre: false, texto: '¡Ya tienes juego ganador! Usa «Cerrar ronda con esta carta» en lugar de solo descartar.' },
+        };
+      }
+      return prev;
+    });
+
+    if (!disparaRivales) return;
+
+    programar(() => {
+      setSt((prev) => ({
+        ...prev,
+        bitacora: ['Beto robó del mazo.', ...prev.bitacora].slice(0, 8),
+        eventos: [...prev.eventos, { id: siguienteEvento.current++, tipo: 'robo', jugadorId: 'tut-beto', origen: 'MAZO' }],
+      }));
+    }, 450);
+
+    programar(() => {
+      setSt((prev) => ({
+        ...prev,
+        cima: 'JC',
+        turnoDe: 'tut-caro',
+        numeroTurno: prev.numeroTurno + 1,
+        bitacora: ['Beto descartó Jota de corazones.', ...prev.bitacora].slice(0, 8),
+        eventos: [...prev.eventos, { id: siguienteEvento.current++, tipo: 'descarte', jugadorId: 'tut-beto', carta: 'JC' }],
+      }));
+    }, 950);
+
+    programar(() => {
+      setSt((prev) => ({
+        ...prev,
+        bitacora: ['Carolina robó del mazo.', ...prev.bitacora].slice(0, 8),
+        eventos: [...prev.eventos, { id: siguienteEvento.current++, tipo: 'robo', jugadorId: 'tut-caro', origen: 'MAZO' }],
+      }));
+    }, 1400);
+
+    programar(() => {
+      setSt((prev) => ({
+        ...prev,
+        cima: '8P',
+        turnoDe: YO,
+        numeroTurno: prev.numeroTurno + 1,
+        fase: 'ESPERANDO_ROBO',
+        esperandoRivales: false,
+        paso: 4,
+        bitacora: ['Carolina descartó 8 de picas. Es tu turno.', ...prev.bitacora].slice(0, 8),
+        eventos: [...prev.eventos, { id: siguienteEvento.current++, tipo: 'descarte', jugadorId: 'tut-caro', carta: '8P' }],
+      }));
+    }, 1900);
+  }, [programar]);
+
+  const cerrar = useCallback(() => {
+    setSt((prev) => {
+      if (prev.esperandoRivales || prev.fase !== 'ESPERANDO_DESCARTE') return prev;
+      const cartaSel = prev.seleccion !== null ? prev.orden[prev.seleccion] ?? null : null;
+      if (!cartaSel) return prev;
+
+      if (prev.paso <= 3) {
+        return {
+          ...prev,
+          aviso: { tipo: 'info', cierre: false, texto: 'Aún te falta armar tu tercera combinación; primero pulsa «Descartar carta».' },
+        };
+      }
+
+      if (prev.paso === 5) {
+        if (cartaSel !== '2C' && cartaSel !== '2D') {
+          const msg = 'Si descartas esa carta desarmas un juego; elige el 2♣ o el 2♦ para cerrar.';
+          return {
+            ...prev,
+            aviso: { tipo: 'error', cierre: true, texto: msg },
+            eventos: [...prev.eventos, { id: siguienteEvento.current++, tipo: 'rechazo', motivo: msg }],
+          };
+        }
+        const orden = prev.orden.filter((_, i) => i !== prev.seleccion);
+        const puntosRonda = { [YO]: -10, 'tut-beto': 24, 'tut-caro': 38 };
+        const marcador = { [YO]: -10, 'tut-beto': 24, 'tut-caro': 38 };
+        const liq: Liquidacion = {
+          ronda: 1,
+          cerrador: YO,
+          tipoCierre: 'COMPLETO',
+          puntosRonda,
+          marcador,
+          eliminados: [],
+        };
+        const evDescarte: EventoMesa = { id: siguienteEvento.current++, tipo: 'descarte', jugadorId: YO, carta: cartaSel };
+        const evLiq: EventoMesa = { id: siguienteEvento.current++, tipo: 'liquidacion', ronda: 1 };
+        return {
+          ...prev,
+          paso: 6,
+          orden,
+          cima: cartaSel,
+          seleccion: null,
+          nueva: null,
+          fase: 'LIQUIDACION',
+          marcador,
+          aviso: null,
+          liquidacion: liq,
+          historial: [liq],
+          bitacora: [`¡Cerraste la ronda con ${nombreCarta(cartaSel)}!`, ...prev.bitacora].slice(0, 8),
+          eventos: [...prev.eventos, evDescarte, evLiq],
+        };
+      }
+      return prev;
+    });
+  }, []);
+
+  const mover = useCallback((desde: number, hasta: number) => {
+    setSt((prev) => {
+      if (hasta < 0 || hasta >= prev.orden.length) return prev;
+      const orden = [...prev.orden];
+      const [item] = orden.splice(desde, 1);
+      orden.splice(hasta, 0, item);
+      return { ...prev, orden, seleccion: hasta };
+    });
+  }, []);
+
+  const cerrarLiquidacion = useCallback(() => {
+    setSt((prev) => ({ ...prev, liquidacion: null }));
+  }, []);
+
+  const cartaSel = st.seleccion !== null ? st.orden[st.seleccion] ?? null : null;
+  const miTurno = st.turnoDe === YO && !st.esperandoRivales;
+  const debeRobar = miTurno && st.fase === 'ESPERANDO_ROBO';
+  const debeDescartar = miTurno && st.fase === 'ESPERANDO_DESCARTE';
+
+  const instruccion = useMemo(() => {
+    if (st.esperandoRivales) return `Turno de ${NOMBRES[st.turnoDe] ?? 'rival'}…`;
+    if (st.paso === 0) return 'Paso 1: ordena tu mano con «Agrupar juegos».';
+    if (debeRobar && st.paso === 1) return 'Tu turno: roba el K♠ del pozo.';
+    if (debeRobar && st.paso === 4) return 'Tu turno: roba una carta del mazo.';
+    if (debeDescartar && (st.paso === 2 || st.paso === 3)) return 'Elige el 9♣ y descártalo para pasar el turno.';
+    if (debeDescartar && st.paso === 5) return 'Elige el 2♣ o el 2♦ y cierra la ronda.';
+    return 'Práctica completada.';
+  }, [st.esperandoRivales, st.turnoDe, st.paso, debeRobar, debeDescartar]);
+
+  const vista = useMemo<VistaMesa>(() => ({
+    yo: YO,
+    codigo: 'PRÁCTICA',
+    e: {
+      ronda: 1,
+      orden: st.orden,
+      cima: st.cima,
+      marcador: st.marcador,
+      turnoDe: st.turnoDe,
+      numeroTurno: st.numeroTurno,
+      fase: st.fase,
+      modalidad: 'APUNTADO_101',
+      umbral: 101,
+      robarDelDescarte: true,
+      eliminados: [],
+      finalizada: false,
+      venceEn: null,
+      nueva: st.nueva,
+      turnoDesde: null,
+    },
+    conectado: true,
+    nombre: (sub) => (sub ? NOMBRES[sub] ?? sub : ''),
+    alias: (sub) => NOMBRES[sub] ?? sub,
+    jugadores: JUGADORES,
+    seleccion: st.seleccion,
+    cartaSel,
+    miTurno,
+    debeRobar,
+    debeDescartar,
+    segundos: null,
+    instruccion,
+    aviso: st.aviso,
+    bitacora: st.bitacora,
+    liquidacion: st.liquidacion,
+    historial: st.historial,
+    fin: null,
+    eventos: st.eventos,
+    seleccionar,
+    robar,
+    descartar,
+    cerrar,
+    mover,
+    reordenar,
+    ordenarPorPinta,
+    ordenarPorValor,
+    cerrarLiquidacion,
+    salir,
+  }), [
+    st, cartaSel, miTurno, debeRobar, debeDescartar, instruccion,
+    seleccionar, robar, descartar, cerrar, mover, reordenar, ordenarPorPinta, ordenarPorValor, cerrarLiquidacion, salir,
+  ]);
+
+  const meta = useMemo(() => {
+    if (st.esperandoRivales) {
+      return {
+        titulo: 'Turno de los rivales…',
+        texto: 'Observa cómo Beto y Carolina roban y descartan rápidamente.',
+        objetivoSelector: null,
+      };
+    }
+    switch (st.paso) {
+      case 0:
+        return {
+          titulo: 'Paso 1 de 7 · Ordena tu mano',
+          texto: 'Recibiste 10 cartas. Pulsa «Agrupar juegos» para juntar tus combinaciones y ver qué cartas te faltan.',
+          objetivoSelector: '[data-tut="agrupar"]',
+        };
+      case 1:
+        return {
+          titulo: 'Paso 2 de 7 · Roba del pozo',
+          texto: 'Tienes dos Reyes (K♥ y K♦) y en el pozo brilla el K♠. Toca «Robar del pozo» para completar tu segunda terna.',
+          objetivoSelector: '[data-tut="pozo"]',
+        };
+      case 2:
+        return {
+          titulo: 'Paso 3 de 7 · Elige tu carta más alta',
+          texto: 'Ahora tienes 11 cartas y debes soltar una. Toca el 9 de tréboles (9♣) en tu mano para deshacerte de esos 9 puntos.',
+          objetivoSelector: '[data-id="9T#0"]',
+        };
+      case 3:
+        return {
+          titulo: 'Paso 4 de 7 · Descarta para pasar el turno',
+          texto: 'Con el 9♣ seleccionado, pulsa «Descartar carta» para terminar tu primer turno y darle paso a Beto y Carolina.',
+          objetivoSelector: '[data-tut="descartar"]',
+        };
+      case 4:
+        return {
+          titulo: 'Paso 5 de 7 · Roba del mazo',
+          texto: '¡Volvió tu turno! El 8♠ del pozo no te ayuda con 4♦ y 5♦. Toca «Robar del mazo» para probar suerte.',
+          objetivoSelector: '[data-tut="mazo"]',
+        };
+      case 5:
+        if (cartaSel === '2C' || cartaSel === '2D') {
+          return {
+            titulo: 'Paso 6 de 7 · ¡Cierra la ronda!',
+            texto: 'Tus otras 10 cartas forman 3 juegos y solo 2 puntos sueltos (< 5). Pulsa «Cerrar ronda con esta carta» para ganar.',
+            objetivoSelector: '[data-tut="cerrar"]',
+          };
+        }
+        return {
+          titulo: 'Paso 6 de 7 · Prepara el cierre',
+          texto: '¡Salió el 6♦ y completaste 3 juegos! En Apuntado cierras si tu carta suelta vale menos de 5 puntos: toca el 2♣ o el 2♦.',
+          objetivoSelector: '[data-id="2C#0"]',
+        };
+      default:
+        return {
+          titulo: 'Paso 7 de 7 · ¡Ganaste la ronda!',
+          texto: 'Restaste 10 puntos por cerrar y tus rivales sumaron sus cartas sueltas. Cuando alguien llega a 101 queda eliminado.',
+          objetivoSelector: null,
+        };
+    }
+  }, [st.esperandoRivales, st.paso, cartaSel]);
+
+  return {
+    vista,
+    revision: st.revision,
+    paso: st.paso,
+    totalPasos: 7,
+    esperandoRivales: st.esperandoRivales,
+    hayLiquidacion: !!st.liquidacion,
+    notificarAgrupado,
+    reiniciar,
+    salir,
+    ...meta,
+  };
+}
+
+export function GuiaTutorial({ tut, contenedorRef }: { tut: ControlTutorial; contenedorRef: RefObject<HTMLDivElement | null> }) {
+  const reducido = useReducedMotion();
+  const [rectObj, setRectObj] = useState<DOMRect | null>(null);
+
+  useEffect(() => {
+    const fn = (ev: KeyboardEvent) => {
+      if (ev.key === 'Escape') tut.salir();
+    };
+    window.addEventListener('keydown', fn);
+    return () => window.removeEventListener('keydown', fn);
+  }, [tut.salir]);
+
+  const clavePaso = `${tut.revision}-${tut.paso}-${tut.objetivoSelector ?? 'none'}`;
+
+  useEffect(() => {
+    if (!tut.objetivoSelector || tut.hayLiquidacion) {
+      setRectObj(null);
+      return undefined;
+    }
+
+    const buscar = () => contenedorRef.current?.querySelector<HTMLElement>(tut.objetivoSelector!) ?? null;
+    const actualizar = () => {
+      const el = buscar();
+      setRectObj(el ? el.getBoundingClientRect() : null);
+    };
+
+    const tScroll = window.setTimeout(() => {
+      const el = buscar();
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      if (r.top < 72 || r.bottom > window.innerHeight - 130) {
+        el.scrollIntoView({ behavior: reducido ? 'auto' : 'smooth', block: 'center' });
+      }
+      setRectObj(el.getBoundingClientRect());
+    }, 120);
+
+    actualizar();
+    const intervalo = window.setInterval(actualizar, 120);
+    window.addEventListener('scroll', actualizar, true);
+    window.addEventListener('resize', actualizar);
+    return () => {
+      window.clearTimeout(tScroll);
+      window.clearInterval(intervalo);
+      window.removeEventListener('scroll', actualizar, true);
+      window.removeEventListener('resize', actualizar);
+    };
+  }, [clavePaso, tut.objetivoSelector, tut.hayLiquidacion, contenedorRef, reducido]);
+
+  const abajo = rectObj ? (rectObj.top + rectObj.height / 2) > window.innerHeight * 0.5 : false;
+  const clasePos = tut.hayLiquidacion ? 'arriba liquidacion' : abajo ? 'arriba' : 'abajo';
 
   return (
-    <>
+    <div className="a-guia-capa" role="region" aria-label="Guía interactiva paso a paso">
       <AnimatePresence>
-        {abierto && (
-          <motion.div className="a-velo" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-            onClick={(ev) => { if (ev.target === ev.currentTarget) alCerrar(); }}>
-            <motion.section className="a-panel a-panel-tutorial" role="dialog" aria-modal="true" aria-labelledby="titulo-tutorial"
-              initial={reducido ? { opacity: 0 } : { opacity: 0, y: 24, scale: 0.97 }}
-              animate={{ opacity: 1, y: 0, scale: 1 }}
-              exit={reducido ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.98 }}
-              transition={{ duration: 0.25 }}>
-              <div className="a-tut-cabecera">
-                <div>
-                  <p className="a-sobretitulo">Guía interactiva</p>
-                  <h2 id="titulo-tutorial">Cómo jugar Mesa 101</h2>
-                </div>
-                <button type="button" className="a-boton suave" onClick={alCerrar}>Cerrar</button>
-              </div>
-
-              <div className="a-tut-pasos" role="tablist" aria-label="Pasos del tutorial">
-                {['1. Cartas', '2. Robar', '3. Agrupar', '4. Cerrar'].map((etiqueta, idx) => (
-                  <button key={etiqueta} type="button" role="tab" aria-selected={paso === idx}
-                    className={['a-boton suave a-conmutador', paso === idx ? 'activo' : ''].join(' ')}
-                    onClick={() => setPaso(idx)}>
-                    {etiqueta}
-                  </button>
-                ))}
-              </div>
-
-              {paso === 0 && (
-                <div className="a-tut-bloque">
-                  <p className="a-tenue">
-                    Recibes <b>10 cartas</b> (11 quien abre). Toca cualquier valor y pinta para ver su diseño y cuántos puntos suma si queda suelta:
-                  </p>
-                  <div className="a-tut-inspector">
-                    <div className="a-tut-carta-grande">
-                      <Carta codigo={codigoInspeccion} />
-                    </div>
-                    <div className="a-tut-detalle">
-                      <strong>{nombreCarta(codigoInspeccion)}</strong>
-                      <p className="a-tenue a-pequeno">
-                        <b>Apuntado a 101:</b> cierra con 3 ternas y menos de 5 puntos sueltos. Quien llega a 101 queda eliminado.<br />
-                        <b>Clásica 4-3-3:</b> una sola ronda; 1 cuarta + 2 ternas + 1 descarte.
-                      </p>
-                      <div className="a-tut-chips" aria-label="Elegir palo">
-                        {PINTAS.map((p) => (
-                          <button key={p.id} type="button"
-                            className={['a-boton suave a-conmutador', pintaSel === p.id ? 'activo' : ''].join(' ')}
-                            disabled={valorSel === '*'}
-                            aria-label={p.nombre}
-                            onClick={() => setPintaSel(p.id)}>
-                            <span className={['a-tut-palo', p.id === 'C' || p.id === 'D' ? 'rojo' : ''].join(' ')}>
-                              <PaloSvg pinta={p.id} />
-                            </span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="a-tut-valores" aria-label="Elegir valor de carta">
-                    {VALORES.map((v) => (
-                      <button key={v} type="button"
-                        className={['a-boton suave a-conmutador', valorSel === v ? 'activo' : ''].join(' ')}
-                        onClick={() => setValorSel(v)}>
-                        {v === '*' ? '★' : v}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="a-pequeno a-tenue">
-                    Valor actual: <b>{infoInspeccion.puntos} puntos</b> (A, J, Q, K valen 10; 2 al 10 valen su número; ★ vale 0).
-                  </p>
-                </div>
-              )}
-
-              {paso === 1 && (
-                <div className="a-tut-bloque">
-                  <p className="a-tenue">
-                    Al iniciar tu turno tienes <b>10 cartas</b> y debes robar <b>1 carta</b> del mazo (oculta) o del pozo (visible):
-                  </p>
-                  <div className="a-tut-montones">
-                    <button type="button" className="a-monton a-mazo activo" onClick={() => setRobada('9T')}>
-                      <span className="a-pila" aria-hidden="true"><span><DorsoCarta /></span></span>
-                      <span className="a-rotulo">Robar del mazo</span>
-                    </button>
-                    <button type="button" className="a-monton a-pozo activo" onClick={() => setRobada('6C')}>
-                      <span className="a-pila-pozo" aria-hidden="true">
-                        <span className="a-cima"><Carta codigo="6C" /></span>
-                      </span>
-                      <span className="a-rotulo">Robar del pozo</span>
-                    </button>
-                  </div>
-                  <div className="a-tut-resultado">
-                    {robada ? (
-                      <>
-                        <div className="a-tut-mini"><Carta codigo={robada} /></div>
-                        <span>Robaste <b>{nombreCarta(robada)}</b>. Ahora tienes 11 cartas y debes descartar 1.</span>
-                        <button type="button" className="a-boton suave" onClick={() => setRobada(null)}>Reiniciar</button>
-                      </>
-                    ) : (
-                      <span className="a-tenue">Toca el mazo o el pozo arriba para probar el robo.</span>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {paso === 2 && (
-                <div className="a-tut-bloque">
-                  <p className="a-tenue">
-                    Arma <b>ternas/cuartas</b> (mismo número) o <b>escaleras</b> (seguidas de la misma pinta, As como 1 o 14 sin dar la vuelta).
-                  </p>
-                  <div className="a-tut-cartas">
-                    {manoPaso3.map((c, idx) => (
-                      <span key={`${c}-${idx}`} className={['a-tut-item', gruposPaso3[idx] >= 0 ? 'agrupada' : ''].join(' ')}>
-                        <Carta codigo={c} />
-                      </span>
-                    ))}
-                  </div>
-                  <div className="a-tut-acciones">
-                    <button type="button" className="a-boton principal"
-                      onClick={() => {
-                        if (agrupadoPaso3) {
-                          setManoPaso3(MANO_EJEMPLO);
-                          setAgrupadoPaso3(false);
-                        } else {
-                          setManoPaso3(agruparManoVisual(MANO_EJEMPLO).orden);
-                          setAgrupadoPaso3(true);
-                        }
-                      }}>
-                      {agrupadoPaso3 ? 'Desordenar de nuevo' : 'Probar agrupar juegos'}
-                    </button>
-                  </div>
-                  <p className="a-tenue a-pequeno">
-                    {agrupadoPaso3
-                      ? 'Listo: separó la terna [7♥ 7♠ 7♣] y la escalera [4♦ 5♦ 6♦], dejando las sueltas [2♠ K♥] al final.'
-                      : 'Pulsa «Probar agrupar juegos» para ver cómo separa automáticamente las combinaciones de las cartas sueltas.'}
-                  </p>
-                </div>
-              )}
-
-              {paso === 3 && (
-                <div className="a-tut-bloque">
-                  <p className="a-tenue">
-                    Con 11 cartas en tu turno, elige una para elevarla y decide si solo <b>descartas</b> o si <b>cierras</b> la ronda con ella (aquí hay 3 ternas + 2 pts):
-                  </p>
-                  <div className="a-tut-cartas chicas">
-                    {MANO_CIERRE.map((c, idx) => (
-                      <button key={`${c}-${idx}`} type="button"
-                        className={['a-tut-btn-carta', selPaso4 === idx ? 'elegida' : ''].join(' ')}
-                        aria-pressed={selPaso4 === idx} aria-label={nombreCarta(c)}
-                        onClick={() => { setSelPaso4(selPaso4 === idx ? null : idx); setResultadoPaso4(''); }}>
-                        <Carta codigo={c} />
-                      </button>
-                    ))}
-                  </div>
-                  <div className="a-tut-acciones">
-                    <button type="button" className="a-boton principal" disabled={selPaso4 === null}
-                      onClick={() => {
-                        if (selPaso4 !== null) {
-                          setResultadoPaso4(`Descartaste ${nombreCarta(MANO_CIERRE[selPaso4])}. Sigue el siguiente jugador.`);
-                        }
-                      }}>
-                      Simular descarte
-                    </button>
-                    <button type="button" className="a-boton cerrar" disabled={selPaso4 === null}
-                      onClick={() => {
-                        if (selPaso4 === null) return;
-                        const carta = MANO_CIERRE[selPaso4];
-                        setResultadoPaso4(
-                          carta === 'QC'
-                            ? '¡Cierre válido de ejemplo! Descartas Reina de corazones y tus otras 10 cartas suman 2 puntos (< 5 pts).'
-                            : 'El servidor verifica las reglas: si descartas esa carta te queda la Reina (10 pts) o se rompe una combinación.',
-                        );
-                      }}>
-                      Probar cierre
-                    </button>
-                  </div>
-                  {resultadoPaso4 && <p className="a-pequeno a-tut-nota">{resultadoPaso4}</p>}
-                </div>
-              )}
-
-              <div className="a-tut-pie">
-                <div className="a-fila">
-                  <button type="button" className="a-boton suave" disabled={paso === 0} onClick={() => setPaso((p) => p - 1)}>
-                    ← Anterior
-                  </button>
-                  <button type="button" className="a-boton suave" disabled={paso === 3} onClick={() => setPaso((p) => p + 1)}>
-                    Siguiente →
-                  </button>
-                </div>
-                {obtenerRect && (
-                  <button type="button" className="a-boton cerrar" onClick={iniciarGuiaEnMesa}>
-                    Recorrer la mesa (4 zonas)
-                  </button>
-                )}
-              </div>
-            </motion.section>
-          </motion.div>
+        {rectObj && !tut.hayLiquidacion && rectObj.width > 0 && rectObj.height > 0 && (
+          <motion.div
+            key={clavePaso}
+            className="a-guia-marco"
+            aria-hidden="true"
+            style={{
+              left: rectObj.left - 6,
+              top: rectObj.top - 6,
+              width: rectObj.width + 12,
+              height: rectObj.height + 12,
+            }}
+            initial={reducido ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
+            animate={reducido ? { opacity: 1 } : { opacity: 1, scale: [1, 1.025, 1] }}
+            exit={{ opacity: 0 }}
+            transition={reducido
+              ? { duration: 0.15 }
+              : { opacity: { duration: 0.2 }, scale: { duration: 1.5, repeat: Infinity, ease: 'easeInOut' } }}
+          />
         )}
       </AnimatePresence>
 
-      <AnimatePresence>
-        {zonaActual && (
-          <div className="a-guia-capa" role="region" aria-label="Recorrido guiado por la mesa">
-            {rectGuia && (
-              <motion.div key={`marco-${zonaActual.zona}`} className="a-guia-marco" aria-hidden="true"
-                style={{ left: rectGuia.left - 6, top: rectGuia.top - 6, width: rectGuia.width + 12, height: rectGuia.height + 12 }}
-                initial={reducido ? { opacity: 0 } : { opacity: 0, scale: 0.96 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0 }}
-                transition={{ duration: 0.22 }} />
-            )}
-            <motion.div key={`tarjeta-${zonaActual.zona}`} className="a-guia-tarjeta"
-              initial={reducido ? { opacity: 0 } : { opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: 8 }}>
-              <p className="a-sobretitulo">Recorrido guiado ({guiaIndice! + 1}/4)</p>
-              <h3>{zonaActual.titulo}</h3>
-              <p className="a-tenue a-pequeno">{zonaActual.texto}</p>
-              <div className="a-tut-pie">
-                <button type="button" className="a-boton suave" disabled={guiaIndice === 0}
-                  onClick={() => setGuiaIndice((i) => (i !== null ? i - 1 : 0))}>
-                  ← Anterior
-                </button>
-                {guiaIndice! < ZONAS_GUIA.length - 1 ? (
-                  <button type="button" className="a-boton principal"
-                    onClick={() => setGuiaIndice((i) => (i !== null ? i + 1 : 0))}>
-                    Siguiente →
-                  </button>
-                ) : (
-                  <button type="button" className="a-boton principal" onClick={() => setGuiaIndice(null)}>
-                    Finalizar guía
-                  </button>
-                )}
-              </div>
-            </motion.div>
+      <motion.aside
+        key={`tarjeta-${tut.revision}-${tut.paso}-${tut.esperandoRivales ? 'esp' : 'act'}`}
+        className={['a-guia-tarjeta', clasePos].join(' ')}
+        aria-live="polite"
+        initial={reducido ? { opacity: 0 } : { opacity: 0, y: abajo || tut.hayLiquidacion ? -10 : 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.2 }}
+      >
+        <div className="a-guia-cabecera">
+          <div className="a-guia-pasos" aria-label={`Paso ${tut.paso + 1} de ${tut.totalPasos}`}>
+            {Array.from({ length: tut.totalPasos }, (_, i) => (
+              <span key={i} className={[i < tut.paso ? 'hecho' : '', i === tut.paso ? 'actual' : ''].join(' ')} />
+            ))}
           </div>
-        )}
-      </AnimatePresence>
-    </>
+          <span className="a-sobretitulo">Práctica guiada</span>
+        </div>
+        <h3>{tut.titulo}</h3>
+        <p className="a-tenue a-pequeno">{tut.texto}</p>
+        <div className="a-tut-pie">
+          <button type="button" className="a-boton suave" onClick={tut.reiniciar}>Reiniciar</button>
+          {tut.paso >= tut.totalPasos - 1 ? (
+            <button type="button" className="a-boton principal" onClick={tut.salir}>¡Listo para jugar!</button>
+          ) : (
+            <button type="button" className="a-boton fantasma" onClick={tut.salir}>Salir</button>
+          )}
+        </div>
+      </motion.aside>
+    </div>
   );
 }

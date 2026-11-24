@@ -4,7 +4,7 @@ import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/
 import { useState } from 'react';
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
 import { Avatar, Carta, ContadorVivo, usePanoMesa } from './comun';
-import { Tutorial } from './Tutorial';
+import { PartidaTutorial } from './MesaAnimada';
 import './tema';
 
 const PANTALLA = {
@@ -24,7 +24,7 @@ export default function PreviasAnimadas({ vista }: { vista: VistaPrevia }) {
           {vista.pantalla === 'vestibulo' && <Vestibulo key="vestibulo" v={vista.vestibulo} abrirTutorial={() => setTutorial(true)} />}
           {vista.pantalla === 'sala' && <Sala key={`sala-${vista.sala.codigo}`} v={vista.sala} abrirTutorial={() => setTutorial(true)} />}
         </AnimatePresence>
-        <Tutorial abierto={tutorial} alCerrar={() => setTutorial(false)} />
+        {tutorial && <PartidaTutorial alCerrar={() => setTutorial(false)} />}
       </div>
     </MotionConfig>
   );

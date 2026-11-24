@@ -12,13 +12,26 @@ import { CapaVuelos, Vuelo } from './Vuelos';
 import { FranjaRed, useEstadoRed } from './EstadoRed';
 import { useMotorParticulas } from './Particulas';
 import { agruparManoVisual, detectarGruposContiguos } from './agrupacionVisual';
-import { Tutorial } from './Tutorial';
+import { GuiaTutorial, usePartidaTutorial } from './Tutorial';
 import './tema';
 
 export default function MesaAnimada({ mesa }: { mesa: VistaMesa }) {
   return (
     <MotionConfig reducedMotion="user">
       <Mesa mesa={mesa} />
+    </MotionConfig>
+  );
+}
+
+export function PartidaTutorial({ alCerrar }: { alCerrar: () => void }) {
+  const contenedorRef = useRef<HTMLDivElement>(null);
+  const tut = usePartidaTutorial(alCerrar);
+  return (
+    <MotionConfig reducedMotion="user">
+      <div className="a-tutorial-pantalla" ref={contenedorRef} role="dialog" aria-modal="true" aria-label="Tutorial interactivo de Mesa 101">
+        <Mesa key={tut.revision} mesa={tut.vista} esTutorial alAgrupar={tut.notificarAgrupado} />
+        <GuiaTutorial tut={tut} contenedorRef={contenedorRef} />
+      </div>
     </MotionConfig>
   );
 }
@@ -76,7 +89,7 @@ function Asiento({ mesa, sub, k, total, anclar, propio = false, reducido = false
   );
 }
 
-function Mesa({ mesa }: { mesa: VistaMesa }) {
+function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTutorial?: boolean; alAgrupar?: () => void }) {
   const { e, seleccion, cartaSel, aviso } = mesa;
   const reducido = !!useReducedMotion();
   const { motor, lienzo } = useMotorParticulas(reducido);
@@ -327,6 +340,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
     }
     const r = manoRef.current?.getBoundingClientRect();
     if (r) motor.emitir(r.left + r.width / 2, r.top + r.height / 2, 'seleccion');
+    alAgrupar?.();
   };
   const moverElegida = (delta: number) => {
     if (seleccion === null) return;
@@ -360,13 +374,13 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
               onClick={() => setPano(p.id)} />
           ))}
         </div>
-        <button type="button" className="a-boton suave" onClick={() => setTutorialAbierto(true)}>Tutorial</button>
+        {!esTutorial && <button type="button" className="a-boton suave" onClick={() => setTutorialAbierto(true)}>Tutorial</button>}
         <span className={['a-conexion', mesa.conectado ? 'ok' : 'caida'].join(' ')} role="status">
           <motion.i aria-hidden="true" animate={mesa.conectado ? { opacity: 1 } : { opacity: [1, 0.25, 1] }}
             transition={mesa.conectado ? { duration: 0.3 } : { duration: 1.1, repeat: Infinity }} />
           {mesa.conectado ? 'Conectado' : 'Reconectando…'}
         </span>
-        <button type="button" className="a-boton fantasma" onClick={mesa.salir}>Salir</button>
+        <button type="button" className="a-boton fantasma" onClick={mesa.salir}>{esTutorial ? 'Salir del tutorial' : 'Salir'}</button>
       </header>
 
       <FranjaRed red={red} />
@@ -402,7 +416,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
             </div>
 
             <div className="a-centro" ref={anclar('centro')}>
-              <motion.button type="button" className={['a-monton a-mazo', mesa.debeRobar ? 'activo' : ''].join(' ')}
+              <motion.button type="button" data-tut="mazo" className={['a-monton a-mazo', mesa.debeRobar ? 'activo' : ''].join(' ')}
                 ref={anclar('mazo')} disabled={!mesa.debeRobar} onClick={() => mesa.robar(false)}
                 whileHover={mesa.debeRobar ? { y: -4 } : undefined} whileTap={mesa.debeRobar ? { scale: 0.96 } : undefined}>
                 <span className="a-pila" aria-hidden="true">
@@ -433,7 +447,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                 </AnimatePresence>
               </div>
 
-              <motion.button type="button" className={['a-monton a-pozo', mesa.debeRobar && e.robarDelDescarte && cimaMostrada ? 'activo' : ''].join(' ')}
+              <motion.button type="button" data-tut="pozo" className={['a-monton a-pozo', mesa.debeRobar && e.robarDelDescarte && cimaMostrada ? 'activo' : ''].join(' ')}
                 ref={anclar('pozo')} disabled={!mesa.debeRobar || !e.robarDelDescarte || !cimaMostrada}
                 onClick={() => mesa.robar(true)} aria-label={cimaMostrada ? `Pozo: ${nombreCarta(cimaMostrada)}` : 'Pozo vacío'}
                 whileHover={mesa.debeRobar && e.robarDelDescarte ? { y: -4 } : undefined}>
@@ -528,7 +542,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
             <div className="a-mano-cabecera">
               <h2>Tu mano <ContadorVivo valor={e.orden.length} /></h2>
               <div className="a-fila">
-                <button type="button" className="a-boton suave" onClick={agruparJuegos}>Agrupar juegos</button>
+                <button type="button" data-tut="agrupar" className="a-boton suave" onClick={agruparJuegos}>Agrupar juegos</button>
                 <button type="button" className="a-boton suave" onClick={mesa.ordenarPorPinta}>Por pinta</button>
                 <button type="button" className="a-boton suave" onClick={mesa.ordenarPorValor}>Por número</button>
                 <button type="button" className={['a-boton suave a-conmutador', dosFilas ? 'activo' : ''].join(' ')}
@@ -559,9 +573,9 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
               )}
             </div>
             <div className="a-acciones" ref={anclar('acciones')}>
-              <motion.button type="button" className="a-boton principal" disabled={!mesa.debeDescartar || !cartaSel}
+              <motion.button type="button" data-tut="descartar" className="a-boton principal" disabled={!mesa.debeDescartar || !cartaSel}
                 onClick={descartar} whileTap={{ scale: 0.97 }}>Descartar carta</motion.button>
-              <motion.button type="button" className="a-boton cerrar" disabled={!mesa.debeDescartar || !cartaSel}
+              <motion.button type="button" data-tut="cerrar" className="a-boton cerrar" disabled={!mesa.debeDescartar || !cartaSel}
                 onClick={mesa.cerrar} whileTap={{ scale: 0.97 }}>Cerrar ronda con esta carta</motion.button>
             </div>
             {e.modalidad && <p className="a-tenue a-pequeno">{ayudaCierre(e.modalidad)}</p>}
@@ -602,7 +616,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         {mesa.liquidacion && !mesa.fin && <PanelLiquidacion key={`liq-${mesa.liquidacion.ronda}`} mesa={mesa} l={mesa.liquidacion} />}
       </AnimatePresence>
       <AnimatePresence>{mesa.fin && <PanelFin key="fin" mesa={mesa} fin={mesa.fin} />}</AnimatePresence>
-      <Tutorial abierto={tutorialAbierto} alCerrar={() => setTutorialAbierto(false)} obtenerRect={rect} />
+      {!esTutorial && tutorialAbierto && <PartidaTutorial alCerrar={() => setTutorialAbierto(false)} />}
       <div className="a-sr" aria-live="polite">{mesa.miTurno ? `Es tu turno. ${mesa.instruccion}` : ''}</div>
     </div>
   );

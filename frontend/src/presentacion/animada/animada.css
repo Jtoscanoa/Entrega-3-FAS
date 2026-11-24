@@ -508,48 +508,40 @@
 .a-espera { display: flex; align-items: center; gap: 10px; color: var(--a-tenue); font-size: 14px; }
 .a-prev-enlaces { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 
-/* Tutorial interactivo y guía en vivo */
-.a-panel-tutorial { width: min(600px, 100%); display: flex; flex-direction: column; gap: 14px; }
-.a-tut-cabecera { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
-.a-tut-pasos { display: flex; gap: 6px; flex-wrap: wrap; }
-.a-tut-bloque { display: flex; flex-direction: column; gap: 12px; }
-.a-tut-inspector { display: flex; align-items: center; gap: 16px; padding: 12px; border-radius: 14px; background: rgba(255, 255, 255, .03); border: 1px solid var(--a-borde); }
-.a-tut-carta-grande { flex: none; --cw: 92px; }
-.a-tut-detalle { display: flex; flex-direction: column; gap: 8px; flex: 1; min-width: 0; }
-.a-tut-chips, .a-tut-valores { display: flex; gap: 6px; flex-wrap: wrap; }
-.a-tut-palo { display: inline-block; width: 16px; height: 16px; color: var(--a-tinta); vertical-align: middle; }
-.a-tut-palo.rojo { color: #e06c64; }
-.a-tut-montones { display: flex; justify-content: center; gap: 28px; --cw: 68px; padding: 6px 0; }
-.a-tut-resultado { display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap; min-height: 62px; padding: 8px 12px; border-radius: 12px; background: rgba(255, 255, 255, .03); }
-.a-tut-mini { --cw: 42px; flex: none; }
-.a-tut-cartas { display: flex; justify-content: center; flex-wrap: wrap; gap: 6px; --cw: 54px; padding: 6px 0; }
-.a-tut-item { position: relative; }
-.a-tut-item.agrupada::after { content: ""; position: absolute; left: 8%; right: 8%; bottom: -5px; height: 2px; border-radius: 2px; background: rgba(143, 196, 158, .8); }
-.a-tut-cartas-chicas { display: flex; justify-content: center; flex-wrap: wrap; gap: 4px; --cw: 44px; padding: 8px 0 4px; }
-.a-tut-btn-carta { padding: 0; border: 0; background: none; cursor: pointer; border-radius: 8px; transition: transform .15s ease; }
-.a-tut-btn-carta.elegida { transform: translateY(-8px); box-shadow: 0 0 0 2px var(--a-turno); }
-.a-tut-acciones { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
-.a-tut-acciones .a-boton.principal { width: auto; margin-top: 0; }
-.a-tut-nota { padding: 8px 12px; border-radius: 10px; background: rgba(201, 164, 92, .1); border: 1px solid rgba(201, 164, 92, .35); color: var(--a-tinta); }
-.a-tut-pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 4px; border-top: 1px solid var(--a-borde); }
+/* Partida rápida guiada y guía paso a paso */
+.a-tutorial-pantalla { position: fixed; inset: 0; z-index: 48; overflow-y: auto; background: #050a08; padding-bottom: 64px; }
 .a-guia-capa { position: fixed; inset: 0; z-index: 55; pointer-events: none; }
 .a-guia-marco {
-  position: fixed; border-radius: 16px; border: 2px solid var(--a-turno);
-  box-shadow: 0 0 0 9999px rgba(2, 5, 4, .58), 0 0 24px rgba(227, 192, 122, .35);
+  position: fixed; border-radius: 14px; border: 2px solid var(--a-turno);
+  box-shadow: 0 0 0 1px rgba(255, 244, 214, .35), 0 0 22px rgba(227, 192, 122, .45);
+  pointer-events: none;
 }
 .a-guia-tarjeta {
-  position: fixed; left: 0; right: 0; bottom: 70px; width: min(440px, calc(100% - 24px)); margin: 0 auto;
-  pointer-events: auto; display: flex; flex-direction: column; gap: 8px; padding: 14px 16px; border-radius: 16px;
-  background: linear-gradient(180deg, #16241f, #0a120f); border: 1px solid rgba(227, 192, 122, .5);
-  box-shadow: 0 24px 60px rgba(0, 0, 0, .65);
+  position: fixed; left: 0; right: 0; width: min(460px, calc(100% - 24px)); margin: 0 auto;
+  pointer-events: auto; display: flex; flex-direction: column; gap: 7px; padding: 13px 16px; border-radius: 16px;
+  background: linear-gradient(180deg, rgba(22, 36, 31, .97), rgba(10, 18, 15, .97));
+  border: 1px solid rgba(227, 192, 122, .52);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, .68);
 }
+.a-guia-tarjeta.abajo { bottom: 66px; }
+.a-guia-tarjeta.arriba { top: 56px; }
+.a-guia-tarjeta.arriba.liquidacion { top: 10px; }
+.a-guia-cabecera { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.a-guia-pasos { display: flex; align-items: center; gap: 5px; }
+.a-guia-pasos span { width: 16px; height: 4px; border-radius: 999px; background: rgba(233, 228, 216, .18); }
+.a-guia-pasos span.hecho { background: rgba(143, 196, 158, .75); }
+.a-guia-pasos span.actual { width: 24px; background: var(--a-turno); }
 .a-guia-tarjeta h3 { margin: 0; font-family: var(--a-serif); font-size: 18px; color: var(--a-turno); }
-.a-guia-tarjeta .a-boton.principal { width: auto; margin-top: 0; }
+.a-tut-pie { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; padding-top: 6px; border-top: 1px solid var(--a-borde); }
+.a-tut-pie .a-boton.principal { width: auto; margin-top: 0; }
 @media (max-width: 560px) {
   .a-previas { padding: 18px 12px 84px; }
   .a-titulo { font-size: 38px; }
   .a-modalidades, .a-numeros { grid-template-columns: 1fr; }
   .a-codigo span { width: 38px; height: 48px; font-size: 24px; }
-  .a-tut-inspector { flex-direction: column; align-items: flex-start; }
-  .a-tut-carta-grande { align-self: center; --cw: 82px; }
+  .a-guia-tarjeta { width: calc(100% - 16px); padding: 10px 12px; gap: 5px; border-radius: 14px; }
+  .a-guia-tarjeta.abajo { bottom: 62px; }
+  .a-guia-tarjeta.arriba { top: 48px; }
+  .a-guia-tarjeta.arriba.liquidacion { top: 6px; }
+  .a-guia-tarjeta h3 { font-size: 16px; }
 }
