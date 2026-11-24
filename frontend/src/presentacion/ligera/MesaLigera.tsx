@@ -20,10 +20,12 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
 
       <section className="marcador">
         {jugadores.map((sub) => (
-          <div key={sub} className={['jugador', sub === e.turnoDe ? 'en-turno' : '', e.eliminados.includes(sub) ? 'eliminado' : ''].join(' ')}>
-            <span className="nombre">{nombre(sub)}</span>
+          <div key={sub} className={['jugador', sub === e.turnoDe ? 'en-turno' : '', e.eliminados.includes(sub) ? 'eliminado' : '',
+            e.ausentes.includes(sub) ? 'sin-conexion' : ''].join(' ')}>
+            <span className="nombre">{e.ausentes.includes(sub) && <IconoSinConexion />}{nombre(sub)}</span>
             <span className="puntos">{e.marcador[sub] ?? 0}{e.modalidad === 'APUNTADO_101' && <small> / {e.umbral}</small>}</span>
             {e.eliminados.includes(sub) && <span className="etiqueta">eliminado</span>}
+            {e.ausentes.includes(sub) && <span className="etiqueta">sin conexión</span>}
           </div>
         ))}
       </section>
@@ -115,6 +117,16 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
         </div></div>
       )}
     </main>
+  );
+}
+
+/** Senal tachada: el jugador no tiene ninguna sesion abierta (RF17). */
+function IconoSinConexion() {
+  return (
+    <svg className="icono-red" viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+      <path d="M2 6.5a9 9 0 0 1 12 0M4.5 9a5.5 5.5 0 0 1 7 0M7 11.5a2 2 0 0 1 2 0M2.5 2.5l11 11" fill="none"
+        stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+    </svg>
   );
 }
 

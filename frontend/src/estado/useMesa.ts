@@ -27,6 +27,7 @@ export interface ParametrosMesa { sesion: Sesion; codigo: string; partidaId: num
 const INICIAL: EstadoMesa = {
   ronda: 0, orden: [], cima: null, marcador: {}, turnoDe: null, numeroTurno: 0, fase: '', modalidad: '',
   umbral: 101, robarDelDescarte: false, eliminados: [], finalizada: false, venceEn: null, nueva: null, turnoDesde: null,
+  ausentes: [],
 };
 const MAX_EVENTOS = 40;
 
@@ -53,6 +54,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   nombresRef.current = nombres;
   const siguienteEvento = useRef(1);
   const ultimoRoboPropio = useRef<OrigenRobo | null>(null);
+  const ausentesRef = useRef<string[]>([]);
+  ausentesRef.current = e.ausentes;
 
   const nombre = useCallback((sub: string | null) =>
     !sub ? '—' : sub === sesion.sub ? 'Tú' : nombresRef.current[sub] ?? 'Jugador', [sesion.sub]);
@@ -73,8 +76,19 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
           ...s, ronda: d.numeroRonda, orden: reconciliar(s.orden, d.mano), cima: d.cimaDescarte, marcador: d.marcador,
           turnoDe: d.turnoDe, numeroTurno: d.numeroTurno, fase: d.fase, modalidad: d.modalidad, umbral: d.umbral,
           robarDelDescarte: d.robarDelDescarte, eliminados: d.eliminados, finalizada: d.finalizada,
+          ausentes: Array.isArray(d.conectados)
+            ? Object.keys(d.marcador).filter((sub) => !d.conectados.includes(sub)) : s.ausentes,
         }));
         break;
+      case 'Presencia': {
+        // Solo se anotan cambios reales: la primera llegada de un jugador no es un "volvió".
+        if (d.jugadorId === sesion.sub || ausentesRef.current.includes(d.jugadorId) !== d.conectado) break;
+        setE((s) => ({ ...s, ausentes: d.conectado
+          ? s.ausentes.filter((x) => x !== d.jugadorId)
+          : Array.from(new Set([...s.ausentes, d.jugadorId])) }));
+        anotar(`${nombre(d.jugadorId)} ${d.conectado ? 'volvió' : 'se desconectó'}.`);
+        break;
+      }
       case 'RondaIniciada':
         setE((s) => ({ ...s, ronda: d.numeroRonda, cima: d.cimaDescarte, nueva: null }));
         setSeleccion(null);
@@ -133,7 +147,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
       default:
         break;
     }
-  }, [anotar, quien, registrar, sesion.sub]);
+  }, [anotar, nombre, quien, registrar, sesion.sub]);
 
   useEffect(() => {
     conector.nombres(sesion.token, codigo).then(setNombres).catch(() => undefined);
@@ -158,7 +172,13 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const jugadores = useMemo(() => (Object.keys(e.marcador).length ? Object.keys(e.marcador) : Object.keys(nombres)),
     [e.marcador, nombres]);
 
+  const turnoAusente = !!e.turnoDe && e.turnoDe !== sesion.sub && e.ausentes.includes(e.turnoDe);
   let instruccion = `Turno de ${nombre(e.turnoDe)}. Espera tu turno.`;
+  if (turnoAusente) {
+    instruccion = segundos !== null
+      ? `Turno de ${nombre(e.turnoDe)} (sin conexión): se juega solo en ${segundos} s.`
+      : `Turno de ${nombre(e.turnoDe)} (sin conexión): se jugará solo.`;
+  }
   if (e.finalizada) instruccion = 'La partida terminó.';
   else if (debeRobar) instruccion = e.robarDelDescarte ? 'Tu turno: roba una carta del mazo o del pozo.' : 'Tu turno: roba una carta del mazo.';
   else if (debeDescartar) instruccion = 'Elige una carta y descártala, o úsala como descarte para cerrar la ronda.';

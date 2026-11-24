@@ -27,12 +27,13 @@ function Asiento({ mesa, sub, k, total, anclar, propio = false }:
   const { e } = mesa;
   const enTurno = e.turnoDe === sub && !e.finalizada;
   const eliminado = e.eliminados.includes(sub);
+  const ausente = e.ausentes.includes(sub);
   const d = total > 1 ? (k - (total - 1) / 2) / ((total - 1) / 2) : 0;
   const puntos = e.marcador[sub] ?? 0;
   return (
-    <motion.div ref={anclar(`asiento:${sub}`)} role="group" aria-label={`${mesa.nombre(sub)}, ${puntos} puntos${enTurno ? ', en turno' : ''}`}
-      className={['a-asiento', propio ? 'propio' : '', enTurno ? 'en-turno' : '', eliminado ? 'eliminado' : ''].join(' ')}
-      initial={{ opacity: 0, y: -10 }} animate={{ opacity: eliminado ? 0.42 : 1, y: propio ? 0 : d * d * 16 }}
+    <motion.div ref={anclar(`asiento:${sub}`)} role="group" aria-label={`${mesa.nombre(sub)}, ${puntos} puntos${enTurno ? ', en turno' : ''}${ausente ? ', sin conexión' : ''}`}
+      className={['a-asiento', propio ? 'propio' : '', enTurno ? 'en-turno' : '', eliminado ? 'eliminado' : '', ausente ? 'ausente' : ''].join(' ')}
+      initial={{ opacity: 0, y: -10 }} animate={{ opacity: eliminado ? 0.42 : ausente ? 0.55 : 1, y: propio ? 0 : d * d * 16 }}
       transition={{ duration: 0.4 }}>
       <Avatar sub={sub} nombre={mesa.alias(sub)} enTurno={enTurno} tam={propio ? 44 : 48} />
       <span className="a-asiento-texto">
@@ -42,6 +43,18 @@ function Asiento({ mesa, sub, k, total, anclar, propio = false }:
           {e.modalidad === 'APUNTADO_101' && <small> / {e.umbral}</small>}
         </span>
         {eliminado && <span className="a-etiqueta">eliminado</span>}
+        <AnimatePresence initial={false}>
+          {ausente && (
+            <motion.span key="sin-red" className="a-etiqueta a-sin-red" initial={{ opacity: 0, y: -3 }} animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}>
+              <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true">
+                <path d="M2 6.5a9 9 0 0 1 12 0M4.5 9a5.5 5.5 0 0 1 7 0M7 11.5a2 2 0 0 1 2 0M2.5 2.5l11 11" fill="none"
+                  stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+              </svg>
+              sin conexión
+            </motion.span>
+          )}
+        </AnimatePresence>
       </span>
       {!propio && (
         <span className="a-dorsos" aria-hidden="true">
