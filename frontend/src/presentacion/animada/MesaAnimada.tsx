@@ -370,7 +370,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                 onClick={() => mesa.robar(true)} aria-label={cimaMostrada ? `Pozo: ${nombreCarta(cimaMostrada)}` : 'Pozo vacío'}
                 whileHover={mesa.debeRobar && e.robarDelDescarte ? { y: -4 } : undefined}>
                 <span className="a-pila-pozo" aria-hidden="true">
-                  {pilaPozo.length > 0 ? (
+                  {cimaMostrada && (pilaPozo.length > 0 ? (
                     pilaPozo.map((p) => (
                       <span key={p.id} className="a-carta-apilada"
                         style={{ transform: `translate(${p.dx}px, ${p.dy}px) rotate(${p.rot}deg)` }}>
@@ -379,8 +379,8 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                       </span>
                     ))
                   ) : (
-                    cimaMostrada && <span className="a-borde-pozo b1" />
-                  )}
+                    <span className="a-borde-pozo b1" />
+                  ))}
                   {golpePozo > 0 && !reducido && (
                     <motion.span key={`onda-${golpePozo}`} className="a-onda-pozo"
                       initial={{ scale: 0.84, opacity: 0.78 }} animate={{ scale: 1.52, opacity: 0 }}
@@ -488,8 +488,8 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
               <summary>Historial de rondas</summary>
               <table>
                 <thead><tr><th>Ronda</th>{mesa.jugadores.map((s) => <th key={s}>{mesa.nombre(s)}</th>)}</tr></thead>
-                <tbody>{mesa.historial.map((h) => (
-                  <tr key={h.ronda}><td>{h.ronda}</td>{mesa.jugadores.map((s) => (
+                <tbody>{mesa.historial.map((h, i) => (
+                  <tr key={`${h.ronda}-${i}`}><td>{h.ronda}</td>{mesa.jugadores.map((s) => (
                     <td key={s}>{s === h.cerrador ? `${h.puntosRonda[s] ?? 0} ✓` : h.puntosRonda[s] ?? '—'}</td>))}</tr>
                 ))}</tbody>
               </table>

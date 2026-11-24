@@ -199,9 +199,9 @@
 .a-instruccion { position: relative; z-index: 1; text-align: center; font-size: 15px; }
 .a-instruccion.mia { color: var(--a-turno); font-weight: 600; }
 .a-toast-turno {
-  position: absolute; z-index: 5; left: 0; right: 0; bottom: 20%; width: max-content; margin: 0 auto; pointer-events: none;
-  padding: 8px 20px; border-radius: 999px; background: rgba(6, 12, 10, .88); border: 1px solid rgba(227, 192, 122, .6);
-  color: var(--a-turno); font-family: var(--a-serif); font-size: 19px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+  position: absolute; z-index: 5; right: 18px; bottom: 16px; width: max-content; pointer-events: none;
+  padding: 7px 18px; border-radius: 999px; background: rgba(6, 12, 10, .9); border: 1px solid rgba(227, 192, 122, .6);
+  color: var(--a-turno); font-family: var(--a-serif); font-size: 18px; box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
 }
 .a-cartel-ronda {
   position: absolute; z-index: 5; inset: 0; display: grid; place-items: center; pointer-events: none;
@@ -329,7 +329,7 @@
   .a-reloj { width: 60px; height: 60px; }
   .a-reloj-anillo span { transform-origin: 50% 28px; height: 8px; }
   .a-reloj-num { font-size: 19px; }
-  .a-rivales { gap: 6px; }
+  .a-rivales { gap: 6px; margin-bottom: 12px; }
   .a-asiento { padding: 4px 9px 4px 4px; gap: 6px; }
   .a-rivales .a-asiento { flex-direction: column; gap: 3px; padding: 6px 8px; border-radius: 14px; min-width: 76px; }
   .a-rivales .a-asiento-texto { align-items: center; text-align: center; }
@@ -338,10 +338,13 @@
   .a-asiento-puntos b { font-size: 15px; }
   .a-asiento-puntos small { font-size: 11px; }
   .a-dorsos { display: none; }
+  .a-toast-turno { right: 12px; bottom: 12px; padding: 6px 14px; font-size: 15px; }
   .a-mano { padding: 30px 2px 12px; }
   .a-zona-mano { padding: 10px 8px 12px; }
   .a-acciones .a-boton { flex: 1 1 140px; }
+  .a-panel { padding: 18px 14px 16px; }
   .a-fila-liq, .a-liq-cabecera { grid-template-columns: 32px 1fr 46px 46px; column-gap: 8px; }
+  .a-sello, .a-sello-onda { left: auto; right: 112px; top: 8px; padding: 1px 6px; font-size: 9.5px; letter-spacing: .12em; }
   .a-escalon { width: 92px; }
 }
 
