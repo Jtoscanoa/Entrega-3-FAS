@@ -30,6 +30,8 @@ jobs:
             target/pmd.xml
             target/surefire-reports
             target/metricas-acoplamiento.csv
+            target/metricas-paquetes.csv
+            target/pmd-demeter/
   spa:
     if: github.event_name != 'schedule'
     runs-on: ubuntu-latest

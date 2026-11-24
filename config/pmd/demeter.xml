@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<ruleset name="Ley de Demeter" xmlns="http://pmd.sourceforge.net/ruleset/2.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://pmd.sourceforge.net/ruleset/2.0.0 https://pmd.sourceforge.io/ruleset_2_0_0.xsd">
+  <description>
+    Ley de Demeter (seccion 4.2 del E3): un metodo solo habla con sus "amigos cercanos" (this, sus parametros,
+    sus campos y los objetos que crea). Se mide sobre domain.*; el reporte queda en target/pmd-demeter/pmd.xml.
+    Es una medicion, no una barrera: la regla de PMD tambien marca cadenas inocuas sobre records y streams.
+  </description>
+  <rule ref="category/java/design.xml/LawOfDemeter"/>
+</ruleset>
