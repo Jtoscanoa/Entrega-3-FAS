@@ -122,7 +122,13 @@ function CartaMano({
             </span>
           )}
         </motion.span>
-        <motion.span className="a-halo" aria-hidden="true" animate={{ opacity: elegida ? 1 : 0 }} />
+        <motion.span className="a-halo" aria-hidden="true" animate={{ opacity: elegida ? 1 : 0 }} transition={{ duration: 0.16 }}>
+          {!reducido && (
+            <span className="a-halo-anillo">
+              <span className="a-halo-giro" />
+            </span>
+          )}
+        </motion.span>
       </button>
     </Reorder.Item>
   );

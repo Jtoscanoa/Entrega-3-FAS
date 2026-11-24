@@ -1,8 +1,11 @@
-// Piezas compartidas de la version animada: cartas dibujadas con CSS (sin imagenes con derechos), avatares
+// Piezas compartidas de la version animada: cartas vectoriales propias (sin imagenes con derechos), avatares
 // con iniciales y utilidades de movimiento. Solo se anima transform y opacity.
 import { motion, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { infoCarta } from '../../cartas';
+import { CaraCarta, DorsoCarta } from './CartasSvg';
+
+export { CaraCarta, DorsoCarta };
 
 const NOMBRE_PINTA: Record<string, string> = { C: 'corazones', D: 'diamantes', T: 'tréboles', P: 'picas' };
 const NOMBRE_VALOR: Record<string, string> = { A: 'As', J: 'Jota', Q: 'Reina', K: 'Rey' };
@@ -12,26 +15,6 @@ export function nombreCarta(codigo: string): string {
   if (codigo === '*') return 'Comodín, 0 puntos';
   const c = infoCarta(codigo);
   return `${NOMBRE_VALOR[c.valor] ?? c.valor} de ${NOMBRE_PINTA[c.pinta] ?? c.pinta}, ${c.puntos} puntos`;
-}
-
-export function CaraCarta({ codigo }: { codigo: string }) {
-  const c = infoCarta(codigo);
-  const figura = ['J', 'Q', 'K'].includes(c.valor);
-  const comodin = codigo === '*';
-  const doble = c.valor.length > 1;
-  return (
-    <div className={['a-cara', c.roja ? 'roja' : '', figura ? 'figura' : ''].join(' ')}>
-      <span className={['a-esquina arriba', doble ? 'doble' : ''].join(' ')}><b>{c.valor}</b><i>{c.simbolo}</i></span>
-      <span className="a-centro" aria-hidden="true">
-        {comodin ? '★' : figura ? <><em>{c.valor}</em><small>{c.simbolo}</small></> : c.simbolo}
-      </span>
-      <span className={['a-esquina abajo', doble ? 'doble' : ''].join(' ')}><b>{c.valor}</b><i>{c.simbolo}</i></span>
-    </div>
-  );
-}
-
-export function DorsoCarta() {
-  return <div className="a-dorso" aria-hidden="true"><span>101</span></div>;
 }
 
 /** Carta con dos caras: gira en 3D cuando pasa de boca abajo a boca arriba o completa una vuelta al robar. */
