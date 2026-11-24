@@ -18,13 +18,14 @@ export function CaraCarta({ codigo }: { codigo: string }) {
   const c = infoCarta(codigo);
   const figura = ['J', 'Q', 'K'].includes(c.valor);
   const comodin = codigo === '*';
+  const doble = c.valor.length > 1;
   return (
     <div className={['a-cara', c.roja ? 'roja' : '', figura ? 'figura' : ''].join(' ')}>
-      <span className="a-esquina arriba"><b>{c.valor}</b><i>{c.simbolo}</i></span>
+      <span className={['a-esquina arriba', doble ? 'doble' : ''].join(' ')}><b>{c.valor}</b><i>{c.simbolo}</i></span>
       <span className="a-centro" aria-hidden="true">
         {comodin ? '★' : figura ? <><em>{c.valor}</em><small>{c.simbolo}</small></> : c.simbolo}
       </span>
-      <span className="a-esquina abajo"><b>{c.valor}</b><i>{c.simbolo}</i></span>
+      <span className={['a-esquina abajo', doble ? 'doble' : ''].join(' ')}><b>{c.valor}</b><i>{c.simbolo}</i></span>
     </div>
   );
 }
