@@ -63,6 +63,8 @@ h1 { margin: 0 0 4px; } h2 { font-size: 16px; margin: 16px 0 8px; }
 .carta.sel { transform: translateY(-12px); box-shadow: 0 0 0 3px var(--acento); }
 .carta.nueva { box-shadow: 0 0 0 3px #5dade2; }
 .monton.pozo .carta { cursor: inherit; }
+.monton:disabled { opacity: .8; }
+.monton.pozo:disabled .carta { opacity: 1; }
 .acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .bitacora { grid-area: bitacora; background: rgba(255,255,255,.08); border-radius: 16px; padding: 12px 16px; font-size: 14px; }
 .bitacora ul { padding-left: 18px; margin: 0; } .bitacora li { margin-bottom: 4px; }

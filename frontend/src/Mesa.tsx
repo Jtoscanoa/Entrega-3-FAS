@@ -45,6 +45,9 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
   const nombre = useCallback((sub: string | null) =>
     !sub ? '—' : sub === sesion.sub ? 'Tú' : nombresRef.current[sub] ?? 'Jugador', [sesion.sub]);
   const anotar = useCallback((t: string) => setBitacora((b) => [t, ...b].slice(0, 8)), []);
+  /** Conjuga en segunda persona cuando la accion es del propio jugador ("Tú descartaste" y no "Tú descartó"). */
+  const quien = useCallback((sub: string, tercera: string, segunda: string) =>
+    sub === sesion.sub ? `Tú ${segunda}` : `${nombre(sub)} ${tercera}`, [nombre, sesion.sub]);
 
   const alMensaje = useCallback((m: Mensaje) => {
     const d = m.datos;
@@ -59,7 +62,7 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
       case 'RondaIniciada':
         setE((s) => ({ ...s, ronda: d.numeroRonda, cima: d.cimaDescarte, nueva: null }));
         setSeleccion(null);
-        anotar(`Empieza la ronda ${d.numeroRonda}. Abre ${nombre(d.abridor)}.`);
+        anotar(`Empieza la ronda ${d.numeroRonda}. ${quien(d.abridor, 'abre', 'abres')}.`);
         conexion.current?.reanudar();
         break;
       case 'ManoEntregada':
@@ -70,7 +73,7 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
         conexion.current?.reanudar();
         break;
       case 'CartaRobada':
-        anotar(`${nombre(d.jugadorId)} robó del ${d.origen === 'DESCARTE' ? 'pozo' : 'mazo'}.`);
+        anotar(`${quien(d.jugadorId, 'robó', 'robaste')} del ${d.origen === 'DESCARTE' ? 'pozo' : 'mazo'}.`);
         conexion.current?.reanudar();
         break;
       case 'CartaRecibida':
@@ -80,7 +83,7 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
         setE((s) => ({ ...s, cima: d.carta, nueva: null,
           orden: d.jugadorId === sesion.sub ? quitarUna(s.orden, d.carta) : s.orden }));
         if (d.jugadorId === sesion.sub) setSeleccion(null);
-        anotar(`${nombre(d.jugadorId)} descartó ${infoCarta(d.carta).valor}${infoCarta(d.carta).simbolo}.`);
+        anotar(`${quien(d.jugadorId, 'descartó', 'descartaste')} ${infoCarta(d.carta).valor}${infoCarta(d.carta).simbolo}.`);
         break;
       case 'MazoRepuesto':
         anotar('Se acabó el mazo: el pozo se rebarajó.');
@@ -95,7 +98,7 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
         setHistorial((h) => [...h, l]);
         setE((s) => ({ ...s, marcador: { ...s.marcador, ...d.marcador },
           eliminados: Array.from(new Set([...s.eliminados, ...(d.eliminados ?? [])])) }));
-        anotar(`${nombre(d.cerradorId)} cerró la ronda ${d.numeroRonda}.`);
+        anotar(`${quien(d.cerradorId, 'cerró', 'cerraste')} la ronda ${d.numeroRonda}.`);
         break;
       }
       case 'PartidaFinalizada':
@@ -105,7 +108,7 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
       default:
         break;
     }
-  }, [anotar, nombre, sesion.sub]);
+  }, [anotar, nombre, quien, sesion.sub]);
 
   useEffect(() => {
     api.estadoSala(sesion.token, codigo)
@@ -138,7 +141,7 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
   const descartar = () => { if (cartaSel) conexion.current?.descartar(cartaSel, e.numeroTurno); };
   const cerrar = () => { if (cartaSel) conexion.current?.cerrar(cartaSel, e.numeroTurno); };
 
-  let instruccion = `Turno de ${nombre(e.turnoDe)}.`;
+  let instruccion = `Turno de ${nombre(e.turnoDe)}. Espera tu turno.`;
   if (e.finalizada) instruccion = 'La partida terminó.';
   else if (debeRobar) instruccion = e.robarDelDescarte ? 'Tu turno: roba una carta del mazo o del pozo.' : 'Tu turno: roba una carta del mazo.';
   else if (debeDescartar) instruccion = 'Elige una carta y descártala, o úsala como descarte para cerrar la ronda.';
@@ -221,7 +224,7 @@ export default function Mesa({ sesion, codigo, partidaId, alSalir }: Props) {
 
       {liquidacion && !fin && (
         <div className="velo"><div className="panel">
-          <h2>Ronda {liquidacion.ronda}: cerró {nombre(liquidacion.cerrador)}</h2>
+          <h2>Ronda {liquidacion.ronda}: {liquidacion.cerrador === sesion.sub ? 'cerraste tú' : `cerró ${nombre(liquidacion.cerrador)}`}</h2>
           <p className="tenue">{TIPO_CIERRE[liquidacion.tipoCierre] ?? liquidacion.tipoCierre}</p>
           <table className="liquidacion">
             <thead><tr><th>Jugador</th><th>Esta ronda</th><th>Total</th></tr></thead>
