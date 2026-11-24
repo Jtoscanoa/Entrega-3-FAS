@@ -131,5 +131,25 @@ export function ContadorVivo({ valor, texto }: { valor: number; texto?: string }
   );
 }
 
+export type PanoMesa = 'esmeralda' | 'burdeos' | 'medianoche';
+const CLAVE_PANO = 'mesa101.pano';
+
+/** Preferencia visual del color del paño de mesa, guardada localmente. */
+export function usePanoMesa(): [PanoMesa, (p: PanoMesa) => void] {
+  const [pano, setPano] = useState<PanoMesa>(() => {
+    try {
+      const v = localStorage.getItem(CLAVE_PANO);
+      return v === 'esmeralda' || v === 'burdeos' || v === 'medianoche' ? v : 'esmeralda';
+    } catch {
+      return 'esmeralda';
+    }
+  });
+  const cambiar = useCallback((p: PanoMesa) => {
+    setPano(p);
+    try { localStorage.setItem(CLAVE_PANO, p); } catch { /* almacenamiento no disponible */ }
+  }, []);
+  return [pano, cambiar];
+}
+
 /** Transicion de resorte sobria (sin rebote exagerado). */
 export const RESORTE = { type: 'spring', stiffness: 420, damping: 34, mass: 0.8 } as const;

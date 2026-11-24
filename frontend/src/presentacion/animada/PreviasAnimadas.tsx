@@ -1,8 +1,10 @@
 // Version animada de las pantallas previas: inicio, vestibulo y sala de espera con eleccion de modalidad.
 // Las transiciones entre pantallas van con AnimatePresence; solo transform y opacity.
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react';
+import { useState } from 'react';
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
-import { Avatar, Carta, ContadorVivo } from './comun';
+import { Avatar, Carta, ContadorVivo, usePanoMesa } from './comun';
+import { Tutorial } from './Tutorial';
 import './tema';
 
 const PANTALLA = {
@@ -12,14 +14,17 @@ const PANTALLA = {
 } as const;
 
 export default function PreviasAnimadas({ vista }: { vista: VistaPrevia }) {
+  const [pano] = usePanoMesa();
+  const [tutorial, setTutorial] = useState(false);
   return (
     <MotionConfig reducedMotion="user">
-      <div className="a-raiz a-previas">
+      <div className="a-raiz a-previas" data-pano={pano}>
         <AnimatePresence mode="wait">
-          {vista.pantalla === 'inicio' && <Inicio key="inicio" v={vista.inicio} />}
-          {vista.pantalla === 'vestibulo' && <Vestibulo key="vestibulo" v={vista.vestibulo} />}
-          {vista.pantalla === 'sala' && <Sala key={`sala-${vista.sala.codigo}`} v={vista.sala} />}
+          {vista.pantalla === 'inicio' && <Inicio key="inicio" v={vista.inicio} abrirTutorial={() => setTutorial(true)} />}
+          {vista.pantalla === 'vestibulo' && <Vestibulo key="vestibulo" v={vista.vestibulo} abrirTutorial={() => setTutorial(true)} />}
+          {vista.pantalla === 'sala' && <Sala key={`sala-${vista.sala.codigo}`} v={vista.sala} abrirTutorial={() => setTutorial(true)} />}
         </AnimatePresence>
+        <Tutorial abierto={tutorial} alCerrar={() => setTutorial(false)} />
       </div>
     </MotionConfig>
   );
@@ -60,7 +65,7 @@ function AvisoError({ texto }: { texto: string }) {
   );
 }
 
-function Inicio({ v }: { v: VistaInicio }) {
+function Inicio({ v, abrirTutorial }: { v: VistaInicio; abrirTutorial: () => void }) {
   return (
     <motion.main className="a-pantalla" {...PANTALLA}>
       <Abanico />
@@ -73,13 +78,14 @@ function Inicio({ v }: { v: VistaInicio }) {
         <motion.button type="submit" className="a-boton principal ancho" disabled={!v.puedeEntrar} whileTap={{ scale: 0.97 }}>
           Entrar
         </motion.button>
+        <button type="button" className="a-boton suave ancho" onClick={abrirTutorial}>Cómo jugar (Tutorial)</button>
         <AvisoError texto={v.error} />
       </form>
     </motion.main>
   );
 }
 
-function Vestibulo({ v }: { v: VistaVestibulo }) {
+function Vestibulo({ v, abrirTutorial }: { v: VistaVestibulo; abrirTutorial: () => void }) {
   return (
     <motion.main className="a-pantalla" {...PANTALLA}>
       <p className="a-sobretitulo">Mesa 101</p>
@@ -95,7 +101,10 @@ function Vestibulo({ v }: { v: VistaVestibulo }) {
           <motion.button type="submit" className="a-boton" disabled={!v.puedeUnirse} whileTap={{ scale: 0.97 }}>Unirme</motion.button>
         </form>
         <AvisoError texto={v.error} />
-        <button type="button" className="a-boton fantasma" onClick={v.cambiarApodo}>Cambiar de apodo</button>
+        <div className="a-prev-enlaces">
+          <button type="button" className="a-boton fantasma" onClick={v.cambiarApodo}>Cambiar de apodo</button>
+          <button type="button" className="a-boton fantasma" onClick={abrirTutorial}>Tutorial</button>
+        </div>
       </div>
     </motion.main>
   );
@@ -107,7 +116,7 @@ const MODALIDADES = [
   { id: 'CLASICA_433', nombre: 'Clásica 4-3-3', texto: 'Cierra con 1 cuarta + 2 ternas + 1 descarte. Una sola ronda.' },
 ] as const;
 
-function Sala({ v }: { v: VistaSala }) {
+function Sala({ v, abrirTutorial }: { v: VistaSala; abrirTutorial: () => void }) {
   const { estado, opciones, cambiar } = v;
   const reducido = useReducedMotion();
   const jugadores = estado?.jugadores ?? [];
@@ -198,7 +207,10 @@ function Sala({ v }: { v: VistaSala }) {
           </p>
         )}
         <AvisoError texto={v.error} />
-        <button type="button" className="a-boton fantasma" onClick={v.salir}>Salir de la sala</button>
+        <div className="a-prev-enlaces">
+          <button type="button" className="a-boton fantasma" onClick={v.salir}>Salir de la sala</button>
+          <button type="button" className="a-boton fantasma" onClick={abrirTutorial}>Tutorial</button>
+        </div>
       </div>
     </motion.main>
   );

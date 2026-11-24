@@ -4,7 +4,7 @@ import { AnimatePresence, motion, MotionConfig, useAnimate, useReducedMotion } f
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { ayudaCierre, NOMBRE_MODALIDAD } from '../../mensajes';
 import type { EventoMesa, VistaMesa } from '../../estado/tipos';
-import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, useAnclas } from './comun';
+import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, PanoMesa, useAnclas, usePanoMesa } from './comun';
 import { ItemMano, itemsDe, Mano } from './Mano';
 import { PanelFin, PanelLiquidacion } from './Paneles';
 import { RelojTurno } from './RelojTurno';
@@ -12,6 +12,7 @@ import { CapaVuelos, Vuelo } from './Vuelos';
 import { FranjaRed, useEstadoRed } from './EstadoRed';
 import { useMotorParticulas } from './Particulas';
 import { agruparManoVisual, detectarGruposContiguos } from './agrupacionVisual';
+import { Tutorial } from './Tutorial';
 import './tema';
 
 export default function MesaAnimada({ mesa }: { mesa: VistaMesa }) {
@@ -93,6 +94,8 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
   const [cartelRonda, setCartelRonda] = useState<number | null>(null);
   const [destelloCierre, setDestelloCierre] = useState(0);
   const [dosFilas, setDosFilas] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 560);
+  const [pano, setPano] = usePanoMesa();
+  const [tutorialAbierto, setTutorialAbierto] = useState(false);
   const siguienteVuelo = useRef(1);
   const visto = useRef(mesa.eventos.length ? mesa.eventos[mesa.eventos.length - 1].id : 0);
   const cimaAnterior = useRef(e.cima);
@@ -340,11 +343,25 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
     mesa.descartar();
   };
 
+  const PANOS: Array<{ id: PanoMesa; nombre: string }> = [
+    { id: 'esmeralda', nombre: 'Esmeralda' },
+    { id: 'burdeos', nombre: 'Burdeos' },
+    { id: 'medianoche', nombre: 'Medianoche' },
+  ];
+
   return (
-    <div className="a-raiz a-mesa">
+    <div className="a-raiz a-mesa" data-pano={pano}>
       <header className="a-encabezado">
         <span className="a-marca">Mesa 101</span>
         <span className="a-info">{NOMBRE_MODALIDAD[e.modalidad] ?? 'Partida'} · Ronda {e.ronda} · Sala <b>{mesa.codigo}</b></span>
+        <div className="a-panos" role="group" aria-label="Ambiente de la mesa">
+          {PANOS.map((p) => (
+            <button key={p.id} type="button" className={['a-pano-btn', p.id, pano === p.id ? 'activo' : ''].join(' ')}
+              aria-label={`Paño ${p.nombre}`} aria-pressed={pano === p.id} title={`Paño ${p.nombre}`}
+              onClick={() => setPano(p.id)} />
+          ))}
+        </div>
+        <button type="button" className="a-boton suave" onClick={() => setTutorialAbierto(true)}>Tutorial</button>
         <span className={['a-conexion', mesa.conectado ? 'ok' : 'caida'].join(' ')} role="status">
           <motion.i aria-hidden="true" animate={mesa.conectado ? { opacity: 1 } : { opacity: [1, 0.25, 1] }}
             transition={mesa.conectado ? { duration: 0.3 } : { duration: 1.1, repeat: Infinity }} />
@@ -360,17 +377,23 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         <div className="a-juego">
           <section ref={anclar('fieltro')} className="a-fieltro" aria-label="Mesa de juego">
             <span className="a-brillo-capa" aria-hidden="true"><span className="a-brillo" /></span>
+            <svg className="a-filigrana" viewBox="0 0 320 180" aria-hidden="true">
+              <rect x="16" y="14" width="288" height="152" rx="76" fill="none" stroke="currentColor" strokeWidth="1" />
+              <rect x="24" y="22" width="272" height="136" rx="68" fill="none" stroke="currentColor" strokeWidth="0.6" strokeDasharray="4 4" />
+              <polygon points="160,32 167,40 160,48 153,40" fill="none" stroke="currentColor" strokeWidth="0.8" />
+              <polygon points="160,132 167,140 160,148 153,140" fill="none" stroke="currentColor" strokeWidth="0.8" />
+            </svg>
             {destelloCierre > 0 && !reducido && (
               <motion.span key={`cierre-${destelloCierre}`} className="a-destello-cierre" aria-hidden="true"
                 initial={{ opacity: 0, scale: 0.85 }}
                 animate={{ opacity: [0, 0.65, 0], scale: [0.85, 1.15] }}
                 transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }} />
             )}
-            <div className="a-rivales">
+            <div className="a-rivales" ref={anclar('rivales')}>
               {rivales.map((s, k) => <Asiento key={s} mesa={mesa} sub={s} k={k} total={rivales.length} anclar={anclar} reducido={reducido} />)}
             </div>
 
-            <div className="a-centro">
+            <div className="a-centro" ref={anclar('centro')}>
               <motion.button type="button" className={['a-monton a-mazo', mesa.debeRobar ? 'activo' : ''].join(' ')}
                 ref={anclar('mazo')} disabled={!mesa.debeRobar} onClick={() => mesa.robar(false)}
                 whileHover={mesa.debeRobar ? { y: -4 } : undefined} whileTap={mesa.debeRobar ? { scale: 0.96 } : undefined}>
@@ -438,6 +461,15 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
               </motion.button>
             </div>
 
+            {mesa.miTurno && !e.finalizada && (
+              <div className="a-pasos-turno" aria-hidden="true">
+                <span className={mesa.debeRobar ? 'activo' : 'listo'}>1. Robar</span>
+                <i>›</i>
+                <span className={mesa.debeDescartar && !cartaSel ? 'activo' : ''}>2. Ordenar</span>
+                <i>›</i>
+                <span className={mesa.debeDescartar && !!cartaSel ? 'activo' : ''}>3. Descartar / Cerrar</span>
+              </div>
+            )}
             <motion.p key={mesa.instruccion} className={['a-instruccion', mesa.miTurno ? 'mia' : ''].join(' ')}
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>{mesa.instruccion}</motion.p>
 
@@ -475,7 +507,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
             )}
           </AnimatePresence>
 
-          <section className="a-zona-mano" aria-label="Tu mano">
+          <section className="a-zona-mano" ref={anclar('mano')} aria-label="Tu mano">
             <AnimatePresence>
               {urgenteHud && (
                 <motion.span key="zona-urgente" className="a-zona-mano-urgente" aria-hidden="true"
@@ -518,7 +550,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
                 </span>
               )}
             </div>
-            <div className="a-acciones">
+            <div className="a-acciones" ref={anclar('acciones')}>
               <motion.button type="button" className="a-boton principal" disabled={!mesa.debeDescartar || !cartaSel}
                 onClick={descartar} whileTap={{ scale: 0.97 }}>Descartar carta</motion.button>
               <motion.button type="button" className="a-boton cerrar" disabled={!mesa.debeDescartar || !cartaSel}
@@ -571,6 +603,7 @@ function Mesa({ mesa }: { mesa: VistaMesa }) {
         {mesa.liquidacion && !mesa.fin && <PanelLiquidacion key={`liq-${mesa.liquidacion.ronda}`} mesa={mesa} l={mesa.liquidacion} />}
       </AnimatePresence>
       <AnimatePresence>{mesa.fin && <PanelFin key="fin" mesa={mesa} fin={mesa.fin} />}</AnimatePresence>
+      <Tutorial abierto={tutorialAbierto} alCerrar={() => setTutorialAbierto(false)} obtenerRect={rect} />
       <div className="a-sr" aria-live="polite">{mesa.miTurno ? `Es tu turno. ${mesa.instruccion}` : ''}</div>
     </div>
   );
