@@ -32,6 +32,7 @@ class Simulador {
   marcador: Record<string, number> = { [YO]: 0, 'demo-beto': 0, 'demo-caro': 0, 'demo-dani': 0 };
   eliminados: string[] = [];
   segundos = 45;
+  betoAusente = false;
 
   emitir(tipo: string, datos: unknown) { this.h?.alMensaje({ tipo, datos } as Mensaje); }
   vista() {
@@ -119,6 +120,10 @@ export default function DemoMesa({ version }: { version: Version }) {
         {boton('Liquidar', () => sim.liquidar())}
         {boton('Fin', () => sim.terminar())}
         {boton('Cortar red 3 s', () => { sim.h?.alDesconectar(); setTimeout(() => sim.h?.alConectar(), 3000); })}
+        {boton('Beto se va / vuelve', () => {
+          sim.betoAusente = !sim.betoAusente;
+          sim.emitir('Presencia', { partidaId: 1, jugadorId: 'demo-beto', conectado: !sim.betoAusente });
+        })}
         {boton('Reloj 12 s', () => { sim.segundos = 12; sim.asignar(YO, 'ESPERANDO_ROBO'); sim.segundos = 45; })}
       </div>
     </>

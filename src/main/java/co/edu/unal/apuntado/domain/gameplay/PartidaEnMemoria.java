@@ -5,9 +5,11 @@ import co.edu.unal.apuntado.domain.rules.modelo.ConfiguracionReglas;
 import co.edu.unal.apuntado.infrastructure.persistence.IMatchState.JugadaRegistrada;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.locks.ReentrantLock;
 
 /** Estado vivo de una partida. Solo se toca con {@link #candado} tomado (un escritor por partida). */
@@ -44,6 +46,13 @@ final class PartidaEnMemoria {
     String huella;
     long rondaId;
     Carta ultimaRobada;
+    /** Jugadores con todas sus sesiones cerradas. Al iniciar nadie esta aqui: se presume presencia (ADR-08b). */
+    final Set<String> desconectados = new HashSet<>();
+    /** Inicio del turno vigente (o de su reanudacion tras una pausa) y su hora limite; null = mesa en pausa. */
+    Instant inicioTurno;
+    Instant venceEn;
+    /** Cambia con cada programacion: un vencimiento de otra generacion ya no vale (ADR-08b). */
+    long generacion;
 
     PartidaEnMemoria(long id, ConfiguracionReglas cfg, List<Participante> jugadores) {
         this.id = id;
@@ -88,6 +97,19 @@ final class PartidaEnMemoria {
         Map<String, Integer> m = new LinkedHashMap<>();
         asientos.forEach(a -> m.put(a.id(), a.marcador));
         return m;
+    }
+
+    boolean conectado(String jugadorId) {
+        return !desconectados.contains(jugadorId);
+    }
+
+    /** Ningun jugador de la partida tiene una sesion abierta: la mesa se pausa. */
+    boolean mesaVacia() {
+        return asientos.stream().allMatch(a -> desconectados.contains(a.id()));
+    }
+
+    List<String> conectados() {
+        return asientos.stream().map(Asiento::id).filter(this::conectado).toList();
     }
 
     void registrar(String jugadorId, String accion, String carta, Instant cuando) {

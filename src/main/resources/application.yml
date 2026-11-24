@@ -23,6 +23,9 @@ logging:
   level:
     auditoria: INFO
 apuntado:
+  turno:
+    # ADR-08b: plazo del turno de un jugador sin conexion (el normal lo elige la sala).
+    segundos-ausente: ${TURNO_AUSENTE_SEGUNDOS:10}
   cors:
     origenes: ${CORS_ORIGENES:http://localhost:5173,http://localhost:8080}
   jwt:

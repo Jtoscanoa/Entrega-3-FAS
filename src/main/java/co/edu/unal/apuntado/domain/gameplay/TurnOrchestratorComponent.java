@@ -24,6 +24,7 @@ import co.edu.unal.apuntado.infrastructure.persistence.IMatchState.ReglasPersist
 import co.edu.unal.apuntado.infrastructure.persistence.LiquidacionDuplicadaException;
 import java.time.Clock;
 import java.time.Duration;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -39,6 +40,9 @@ import java.util.function.Function;
  */
 public final class TurnOrchestratorComponent implements ITurno {
 
+    /** Plazo del turno de un jugador sin conexion si no se configura otro (ADR-08b). */
+    public static final Duration TURNO_AUSENTE_POR_DEFECTO = Duration.ofSeconds(10);
+
     private final IEvaluadorMano evaluador;
     private final ILiquidacion liquidacion;
     private final IConfiguracion configuracion;
@@ -48,12 +52,21 @@ public final class TurnOrchestratorComponent implements ITurno {
     private final IEventosPartida eventos;
     private final ProgramadorTurnos programador;
     private final Clock reloj;
+    private final Duration turnoAusente;
     private final Map<Long, PartidaEnMemoria> partidas = new ConcurrentHashMap<>();
 
     public TurnOrchestratorComponent(IEvaluadorMano evaluador, ILiquidacion liquidacion,
                                      IConfiguracion configuracion, IMazo mazo, IAuditoriaReparto auditoria,
                                      IMatchState estadoPersistente, IEventosPartida eventos,
                                      ProgramadorTurnos programador, Clock reloj) {
+        this(evaluador, liquidacion, configuracion, mazo, auditoria, estadoPersistente, eventos, programador, reloj,
+                TURNO_AUSENTE_POR_DEFECTO);
+    }
+
+    public TurnOrchestratorComponent(IEvaluadorMano evaluador, ILiquidacion liquidacion,
+                                     IConfiguracion configuracion, IMazo mazo, IAuditoriaReparto auditoria,
+                                     IMatchState estadoPersistente, IEventosPartida eventos,
+                                     ProgramadorTurnos programador, Clock reloj, Duration turnoAusente) {
         this.evaluador = evaluador;
         this.liquidacion = liquidacion;
         this.configuracion = configuracion;
@@ -63,6 +76,7 @@ public final class TurnOrchestratorComponent implements ITurno {
         this.eventos = eventos;
         this.programador = programador;
         this.reloj = reloj;
+        this.turnoAusente = turnoAusente;
     }
 
     // ------------------------------------------------------------------ comandos
@@ -117,17 +131,59 @@ public final class TurnOrchestratorComponent implements ITurno {
     @Override
     public void vencerTurno(long partidaId, int numeroTurno) {
         conCandado(partidaId, p -> {
-            if (p.fase == Fase.FINALIZADA || p.fase == Fase.ENTRE_RONDAS || p.numeroTurno != numeroTurno) {
-                return null;
-            }
-            String jugador = p.asientoEnTurno().id();
-            if (p.fase == Fase.ESPERANDO_ROBO) {
-                aplicarRobo(p, jugador, false);
-            }
-            Carta porDefecto = p.ultimaRobada != null ? p.ultimaRobada : ultimaDeLaMano(p.asientoEnTurno());
-            aplicarDescarte(p, jugador, quitarDeLaMano(p, porDefecto));
+            jugarPorDefecto(p, numeroTurno);
             return null;
         });
+    }
+
+    /** Lo que dispara el temporizador: solo vale si nadie reprogramo el turno despues (ADR-08b). */
+    private void vencerProgramado(long partidaId, int numeroTurno, long generacion) {
+        conCandado(partidaId, p -> {
+            if (p.generacion == generacion) {
+                jugarPorDefecto(p, numeroTurno);
+            }
+            return null;
+        });
+    }
+
+    /** ADR-08: roba del mazo y descarta; nunca cierra por el jugador. Un vencimiento viejo no hace nada. */
+    private void jugarPorDefecto(PartidaEnMemoria p, int numeroTurno) {
+        if (!turnoEnJuego(p) || p.numeroTurno != numeroTurno) {
+            return;
+        }
+        String jugador = p.asientoEnTurno().id();
+        if (p.fase == Fase.ESPERANDO_ROBO) {
+            aplicarRobo(p, jugador, false);
+        }
+        Carta porDefecto = p.ultimaRobada != null ? p.ultimaRobada : ultimaDeLaMano(p.asientoEnTurno());
+        aplicarDescarte(p, jugador, quitarDeLaMano(p, porDefecto));
+    }
+
+    @Override
+    public void marcarConexion(long partidaId, String jugadorId, boolean conectado) {
+        conCandado(partidaId, p -> {
+            if (p.asientoDe(jugadorId) == null) {
+                return null;
+            }
+            boolean estabaEnPausa = p.mesaVacia();
+            boolean cambio = conectado ? p.desconectados.remove(jugadorId) : p.desconectados.add(jugadorId);
+            if (cambio && turnoEnJuego(p) && afectaAlPlazo(p, jugadorId, estabaEnPausa)) {
+                if (estabaEnPausa) {
+                    p.inicioTurno = reloj.instant();
+                }
+                programarVencimiento(p);
+            }
+            return null;
+        });
+    }
+
+    private static boolean turnoEnJuego(PartidaEnMemoria p) {
+        return p.fase == Fase.ESPERANDO_ROBO || p.fase == Fase.ESPERANDO_DESCARTE;
+    }
+
+    /** Cambia el plazo si cambia quien tiene el turno o si la mesa entra o sale de la pausa. */
+    private static boolean afectaAlPlazo(PartidaEnMemoria p, String jugadorId, boolean estabaEnPausa) {
+        return estabaEnPausa != p.mesaVacia() || p.asientoEnTurno().id().equals(jugadorId);
     }
 
     @Override
@@ -142,7 +198,7 @@ public final class TurnOrchestratorComponent implements ITurno {
             return new VistaPartida(p.id, p.numeroRonda, a.mano.stream().map(Carta::codigo).toList(), cima,
                     p.marcadorDeTodos(), p.fase == Fase.FINALIZADA ? null : p.asientoEnTurno().id(),
                     p.numeroTurno, p.huella, p.fase == Fase.FINALIZADA, p.fase.name(), p.cfg.modalidad(),
-                    p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados);
+                    p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados, p.conectados());
         });
     }
 
@@ -208,11 +264,25 @@ public final class TurnOrchestratorComponent implements ITurno {
     }
 
     private void anunciarTurno(PartidaEnMemoria p) {
-        Duration limite = Duration.ofSeconds(p.cfg.segundosPorTurno());
+        p.inicioTurno = reloj.instant();
+        programarVencimiento(p);
+    }
+
+    /**
+     * Fija la hora limite segun la presencia (PlazoTurno), la anuncia y programa el vencimiento de esta generacion.
+     * Si el plazo cambia a mitad de turno se vuelve a publicar TurnoAsignado con el mismo numero y el nuevo venceEn.
+     * Con la mesa vacia no se programa nada: la mesa queda en pausa (venceEn null).
+     */
+    private void programarVencimiento(PartidaEnMemoria p) {
+        Instant ahora = reloj.instant();
+        p.venceEn = PlazoTurno.vencimiento(p.inicioTurno, ahora, Duration.ofSeconds(p.cfg.segundosPorTurno()),
+                turnoAusente, !p.conectado(p.asientoEnTurno().id()), p.mesaVacia());
+        long generacion = ++p.generacion;
         int turno = p.numeroTurno;
-        eventos.publicar(new EventoDominio.TurnoAsignado(p.id, p.asientoEnTurno().id(), turno,
-                reloj.instant().plus(limite)));
-        programador.programar(limite, () -> vencerTurno(p.id, turno));
+        eventos.publicar(new EventoDominio.TurnoAsignado(p.id, p.asientoEnTurno().id(), turno, p.venceEn));
+        if (p.venceEn != null) {
+            programador.programar(Duration.between(ahora, p.venceEn), () -> vencerProgramado(p.id, turno, generacion));
+        }
     }
 
     private Carta quitarDeLaMano(PartidaEnMemoria p, Carta carta) {

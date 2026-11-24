@@ -23,6 +23,8 @@ export interface EstadoMesa {
   robarDelDescarte: boolean; eliminados: string[]; finalizada: boolean; venceEn: string | null; nueva: string | null;
   /** Momento local (ms) en que llego el TurnoAsignado vigente: base del reloj de turno. */
   turnoDesde: number | null;
+  /** Jugadores sin ninguna sesion abierta segun la presencia del servidor (RF17, ADR-08b). */
+  ausentes: string[];
 }
 
 export interface Liquidacion {

@@ -16,4 +16,10 @@ public interface ITurno {
     void vencerTurno(long partidaId, int numeroTurno);
 
     VistaPartida vistaDe(long partidaId, String jugadorId);
+
+    /**
+     * Presencia (RF17, ADR-08b): el adaptador de tiempo real avisa cuando un jugador abre su primera sesion o
+     * cierra la ultima. Solo ajusta el temporizador del turno; no cambia las reglas de juego.
+     */
+    void marcarConexion(long partidaId, String jugadorId, boolean conectado);
 }

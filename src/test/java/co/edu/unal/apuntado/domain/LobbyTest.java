@@ -30,6 +30,7 @@ class LobbyTest {
         @Override public ResultadoValidacion cerrar(long p, String j, String c, int n) { return null; }
         @Override public void vencerTurno(long p, int n) { }
         @Override public VistaPartida vistaDe(long p, String j) { return null; }
+        @Override public void marcarConexion(long p, String j, boolean c) { }
     }
 
     private static final OpcionesPartida APUNTADO =

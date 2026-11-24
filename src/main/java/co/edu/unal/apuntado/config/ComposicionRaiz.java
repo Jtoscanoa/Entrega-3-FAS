@@ -20,9 +20,11 @@ import co.edu.unal.apuntado.domain.rules.RoundScoringComponent;
 import co.edu.unal.apuntado.infrastructure.persistence.IMatchState;
 import java.security.SecureRandom;
 import java.time.Clock;
+import java.time.Duration;
 import java.util.random.RandomGenerator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.scheduling.TaskScheduler;
@@ -102,9 +104,10 @@ public class ComposicionRaiz {
     @Bean
     ITurno turnos(IEvaluadorMano evaluador, ILiquidacion liquidacion, IConfiguracion configuracion, IMazo mazo,
                   IAuditoriaReparto auditoria, IMatchState estado, IEventosPartida eventos,
-                  ProgramadorTurnos programador, Clock reloj) {
+                  ProgramadorTurnos programador, Clock reloj,
+                  @Value("${apuntado.turno.segundos-ausente:10}") long segundosAusente) {
         return new TurnOrchestratorComponent(evaluador, liquidacion, configuracion, mazo, auditoria, estado,
-                eventos, programador, reloj);
+                eventos, programador, reloj, Duration.ofSeconds(segundosAusente));
     }
 
     @Bean

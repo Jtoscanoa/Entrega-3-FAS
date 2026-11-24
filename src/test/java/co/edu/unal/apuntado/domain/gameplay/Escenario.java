@@ -130,12 +130,24 @@ final class Escenario {
 
     static final class ProgramadorManual implements ProgramadorTurnos {
         final List<Runnable> pendientes = new CopyOnWriteArrayList<>();
+        final List<Duration> esperas = new CopyOnWriteArrayList<>();
 
         @Override
         public void programar(Duration espera, Runnable accion) {
             pendientes.add(accion);
+            esperas.add(espera);
+        }
+
+        Runnable ultimo() {
+            return pendientes.get(pendientes.size() - 1);
+        }
+
+        Duration ultimaEspera() {
+            return esperas.get(esperas.size() - 1);
         }
     }
+
+    static final Instant AHORA = Instant.parse("2026-11-16T12:00:00Z");
 
     final List<EventoDominio> eventos = new CopyOnWriteArrayList<>();
     final EstadoFalso estado = new EstadoFalso();
@@ -150,7 +162,7 @@ final class Escenario {
         IEventosPartida colector = eventos::add;
         orquestador = new TurnOrchestratorComponent(new HandEvaluatorComponent(new RegistroReglas()),
                 new RoundScoringComponent(), new GameConfigurationComponent(), mazo, auditoria, estado, colector,
-                programador, Clock.fixed(Instant.parse("2026-11-16T12:00:00Z"), ZoneOffset.UTC));
+                programador, Clock.fixed(AHORA, ZoneOffset.UTC));
     }
 
     long iniciar(ConfiguracionReglas cfg, int jugadores) {

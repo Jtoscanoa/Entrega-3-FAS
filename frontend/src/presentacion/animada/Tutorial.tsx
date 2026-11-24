@@ -401,6 +401,7 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
       venceEn: null,
       nueva: st.nueva,
       turnoDesde: null,
+      ausentes: [],
     },
     conectado: true,
     nombre: (sub) => (sub ? NOMBRES[sub] ?? sub : ''),
