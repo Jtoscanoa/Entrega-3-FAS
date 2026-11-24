@@ -79,3 +79,26 @@ export interface VistaMesa {
   cerrarLiquidacion: () => void;
   salir: () => void;
 }
+
+/** Pantalla de entrada: el jugador escribe su apodo. */
+export interface VistaInicio {
+  apodo: string; setApodo: (v: string) => void; puedeEntrar: boolean; entrar: () => void; error: string;
+}
+
+/** Vestibulo: crear una sala o unirse con un codigo. */
+export interface VistaVestibulo {
+  apodo: string; codigo: string; setCodigo: (v: string) => void; puedeUnirse: boolean;
+  crear: () => void; unirse: () => void; cambiarApodo: () => void; error: string;
+}
+
+/** Sala de espera: quien llego y, para el anfitrion, la eleccion de modalidad. */
+export interface VistaSala {
+  codigo: string; yo: string; estado: EstadoSala | null; soyAnfitrion: boolean; opciones: OpcionesPartida;
+  cambiar: (o: Partial<OpcionesPartida>) => void; puedeIniciar: boolean; iniciar: () => void; salir: () => void;
+  error: string;
+}
+
+export type VistaPrevia =
+  | { pantalla: 'inicio'; inicio: VistaInicio }
+  | { pantalla: 'vestibulo'; vestibulo: VistaVestibulo }
+  | { pantalla: 'sala'; sala: VistaSala };

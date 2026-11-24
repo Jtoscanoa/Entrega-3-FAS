@@ -1,0 +1,7 @@
+/* Version animada (minima, fase 2). */
+.anim-mesa { min-height: 100vh; padding: 16px; color: #fff; }
+.anim-fieltro { border-radius: 28px; padding: 24px; background: radial-gradient(ellipse at center, #1f7a57 0%, #0d3b2b 75%); box-shadow: inset 0 0 60px rgba(0,0,0,.5); }
+.anim-mano { display: flex; flex-wrap: wrap; gap: 6px; margin: 16px 0; }
+.anim-carta { width: 54px; height: 78px; border-radius: 8px; background: #fffdf7; color: #1d2321; font-weight: 700; }
+.anim-carta.roja { color: #c0392b; }
+.anim-acciones { display: flex; gap: 8px; }
