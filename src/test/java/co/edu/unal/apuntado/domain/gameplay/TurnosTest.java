@@ -140,7 +140,7 @@ class TurnosTest {
     void alIniciarSePresumeQueTodosEstanConectados() {
         Escenario e = nuevo();
         long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
-        assertEquals(Duration.ofSeconds(30), e.programador.ultimaEspera(), "primer turno con el limite normal");
+        assertEquals(Duration.ofSeconds(ConfiguracionReglas.SEGUNDOS_POR_TURNO), e.programador.ultimaEspera(), "primer turno con el limite normal");
         assertEquals(List.of("sub-a", "sub-b"), e.orquestador.vistaDe(id, "sub-a").conectados());
     }
 
@@ -169,8 +169,8 @@ class TurnosTest {
         assertEquals(1, ultimoTurno(e).numeroTurno(), "mismo turno, nueva hora limite");
 
         e.orquestador.marcarConexion(id, "sub-a", true);
-        assertEquals(Duration.ofSeconds(30), e.programador.ultimaEspera(), "vuelve el limite normal");
-        assertEquals(Escenario.AHORA.plusSeconds(30), ultimoTurno(e).venceEn());
+        assertEquals(Duration.ofSeconds(ConfiguracionReglas.SEGUNDOS_POR_TURNO), e.programador.ultimaEspera(), "vuelve el limite normal");
+        assertEquals(Escenario.AHORA.plusSeconds(ConfiguracionReglas.SEGUNDOS_POR_TURNO), ultimoTurno(e).venceEn());
         int antes = e.eventos.size();
         vencimientoCorto.run();
         assertEquals(antes, e.eventos.size(), "el vencimiento reprogramado ya no vale aunque sea del mismo turno");

@@ -1,5 +1,6 @@
 // Version ligera de las pantallas previas: inicio, vestibulo y sala de espera, tal como eran.
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
+import { SEGUNDOS_POR_TURNO } from '../../mensajes';
 
 export default function PreviasLigeras({ vista }: { vista: VistaPrevia }) {
   if (vista.pantalla === 'inicio') return <Inicio v={vista.inicio} />;
@@ -74,9 +75,10 @@ function Sala({ v }: { v: VistaSala }) {
             </div>
             <label className="casilla"><input type="checkbox" checked={opciones.robarDelDescarte}
               onChange={(e) => cambiar({ robarDelDescarte: e.target.checked })} /> Permitir robar del pozo</label>
-            <label>Segundos por turno
-              <input type="number" min={15} max={300} value={opciones.segundosPorTurno}
-                onChange={(e) => cambiar({ segundosPorTurno: Number(e.target.value) })} /></label>
+            <label>Tiempo por turno
+              <select value={opciones.segundosPorTurno} onChange={(e) => cambiar({ segundosPorTurno: Number(e.target.value) })}>
+                {SEGUNDOS_POR_TURNO.map((s) => <option key={s} value={s}>{s} s</option>)}
+              </select></label>
             {opciones.modalidad === 'APUNTADO_101' && (
               <label>Puntos de eliminación
                 <input type="number" min={10} max={500} value={opciones.umbral ?? 101}

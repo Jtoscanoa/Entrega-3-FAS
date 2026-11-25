@@ -1,4 +1,6 @@
 // Traduccion de motivos del servidor a mensajes claros (RF16).
+import type { AvanceMano } from './estado/tipos';
+
 const MOTIVOS: Record<string, string> = {
   PARTIDA_INEXISTENTE: 'La partida ya no existe en el servidor (puede haberse reiniciado).',
   PARTIDA_FINALIZADA: 'La partida ya terminó.',
@@ -21,6 +23,12 @@ const MOTIVOS: Record<string, string> = {
   CHAT_MUY_RAPIDO: 'Vas muy rápido: espera unos segundos para volver a escribir.',
   CHAT_SIN_ASIENTO: 'Solo los jugadores de la mesa pueden escribir en el chat.',
 };
+
+/**
+ * Opciones del tiempo de turno en la sala: 60 s por defecto y 45 s como minimo. En la sesion S1 la mediana de un turno
+ * completo fue 22,6 s y el maximo 46,7 s; con 35 s vencieron 10 turnos con el jugador conectado.
+ */
+export const SEGUNDOS_POR_TURNO = [45, 60, 90, 120] as const;
 
 /** Largo maximo de un mensaje de chat; el servidor lo vuelve a comprobar. */
 export const LARGO_CHAT = 200;
@@ -56,6 +64,19 @@ export const MOTIVO_FIN: Record<string, string> = {
   ULTIMO_ACTIVO: 'solo quedó un jugador sin llegar al umbral',
   META_VICTORIA: 'un jugador alcanzó la meta de victoria',
 };
+
+/** "2/3 ternas · sobrante 12 pts" (Clasica: "Cuarta 0/1 · 1/2 ternas · sobrante 9 pts"); '' sin datos. */
+export function textoAvance(a: AvanceMano): string {
+  if (!a.ternasRequeridas) return '';
+  const partes = [`${a.ternasFormadas}/${a.ternasRequeridas} ternas`, `sobrante ${a.puntosSobrantes} pts`];
+  if (a.cuartasRequeridas) partes.unshift(`Cuarta ${a.cuartasFormadas}/${a.cuartasRequeridas}`);
+  return partes.join(' · ');
+}
+
+/** Pista cuando el servidor dice que la mano ya cierra. */
+export function pistaCierre(carta: string): string {
+  return `¡Puedes cerrar! Elige ${carta} y pulsa Cerrar.`;
+}
 
 export function ayudaCierre(modalidad: string): string {
   return modalidad === 'CLASICA_433'

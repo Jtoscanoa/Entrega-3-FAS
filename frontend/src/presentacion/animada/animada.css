@@ -50,6 +50,11 @@
 .a-boton:not(:disabled):active { transform: scale(0.975); }
 .a-boton.principal { background: linear-gradient(180deg, #d6b66f, #b48e48); border-color: #d6b66f; color: #1a1408; }
 .a-boton.cerrar { background: transparent; border-color: rgba(201, 164, 92, .55); color: var(--a-turno); }
+/* RF16: el servidor dice que la mano ya cierra; el boton se ve como accion principal */
+.a-boton.cerrar.listo { background: linear-gradient(180deg, #7fc79a, #4f9a6c); border-color: #9fdcb5; color: #08170e; box-shadow: 0 0 0 3px rgba(143, 220, 170, .28); }
+.a-avance { font-size: 13px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, .07); border: 1px solid var(--a-borde); color: var(--a-tinta); font-variant-numeric: tabular-nums; }
+.a-avance.listo { background: rgba(127, 199, 154, .18); border-color: rgba(159, 220, 181, .6); color: #c9f2d6; font-weight: 600; }
+.a-pista-cierre { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; margin: 4px 0 0; font-size: 14px; font-weight: 600; color: #c9f2d6; }
 .a-boton.suave { padding: 6px 12px; font-size: 13px; font-weight: 500; }
 .a-boton.fantasma { overflow: visible; background: none; border-color: transparent; color: var(--a-tenue); text-decoration: underline; padding: 6px 8px; }
 .a-raiz .a-boton:disabled { opacity: .38; cursor: not-allowed; }
@@ -503,9 +508,10 @@
 .a-tarjeta { width: 100%; display: flex; flex-direction: column; gap: 12px; padding: 20px; border-radius: 18px; border: 1px solid var(--a-borde);
   background: linear-gradient(180deg, rgba(20, 33, 28, .92), rgba(9, 15, 13, .92)); box-shadow: 0 24px 60px rgba(0, 0, 0, .45); }
 .a-campo { display: flex; flex-direction: column; gap: 6px; font-size: 13px; color: var(--a-tenue); margin: 0; }
-.a-raiz input { font: inherit; width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--a-borde);
+.a-raiz input, .a-raiz select { font: inherit; width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--a-borde);
   background: rgba(255, 255, 255, .05); color: var(--a-tinta); }
-.a-raiz input:focus-visible { outline: 2px solid var(--a-turno); outline-offset: 1px; }
+.a-raiz select option { background: #14211c; color: var(--a-tinta); }
+.a-raiz input:focus-visible, .a-raiz select:focus-visible { outline: 2px solid var(--a-turno); outline-offset: 1px; }
 .a-boton.ancho { width: 100%; }
 .a-error { color: #e07a71; font-size: 13.5px; }
 .a-nota { width: min(420px, 100%); margin: 0 0 14px; padding: 12px 14px; border-radius: 12px; font-size: 13.5px; line-height: 1.45; color: var(--a-tinta); background: rgba(12, 20, 17, .9); border: 1px solid var(--a-borde); }

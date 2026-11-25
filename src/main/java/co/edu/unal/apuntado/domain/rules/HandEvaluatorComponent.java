@@ -3,8 +3,10 @@ package co.edu.unal.apuntado.domain.rules;
 import co.edu.unal.apuntado.domain.rules.modelo.Agrupacion;
 import co.edu.unal.apuntado.domain.rules.modelo.Carta;
 import co.edu.unal.apuntado.domain.rules.modelo.ConfiguracionReglas;
+import co.edu.unal.apuntado.domain.rules.modelo.EvaluacionMano;
 import co.edu.unal.apuntado.domain.rules.modelo.MotivoRechazo;
 import co.edu.unal.apuntado.domain.rules.modelo.ResultadoValidacion;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -32,8 +34,31 @@ public final class HandEvaluatorComponent implements IEvaluadorMano {
 
     @Override
     public Agrupacion cartasSueltas(List<Carta> mano, ConfiguracionReglas cfg) {
+        return regla(cfg).cartasSueltas(mano, cfg);
+    }
+
+    /** Con 11 cartas prueba cada descarte con la propia regla y se queda con el mejor (EvaluacionMano#mejorQue). */
+    @Override
+    public EvaluacionMano evaluarMano(List<Carta> mano, ConfiguracionReglas cfg) {
+        ReglaJuego regla = regla(cfg);
+        if (mano.size() != CARTAS_AL_CERRAR + 1) {
+            return regla.evaluarAvance(mano, cfg);
+        }
+        EvaluacionMano mejor = null;
+        for (int i = 0; i < mano.size(); i++) {
+            List<Carta> resto = new ArrayList<>(mano);
+            resto.remove(i);
+            EvaluacionMano opcion = regla.evaluarAvance(resto, cfg)
+                    .conDescarte(i, regla.evaluarCierre(resto, cfg).valido());
+            if (mejor == null || opcion.mejorQue(mejor)) {
+                mejor = opcion;
+            }
+        }
+        return mejor;
+    }
+
+    private ReglaJuego regla(ConfiguracionReglas cfg) {
         return registro.obtener(cfg.modalidad())
-                .orElseThrow(() -> new IllegalArgumentException("Modalidad desconocida: " + cfg.modalidad()))
-                .cartasSueltas(mano, cfg);
+                .orElseThrow(() -> new IllegalArgumentException("Modalidad desconocida: " + cfg.modalidad()));
     }
 }

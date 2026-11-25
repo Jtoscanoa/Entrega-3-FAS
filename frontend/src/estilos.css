@@ -10,7 +10,7 @@ button:disabled { opacity: .45; cursor: not-allowed; }
 button.principal { background: var(--acento); border-color: var(--acento); color: #1d1400; font-weight: 600; }
 button.cerrar { background: #1d2321; color: #fff; border-color: #1d2321; font-weight: 600; }
 button.enlace { background: none; border: none; text-decoration: underline; color: inherit; padding: 4px; }
-input { font: inherit; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 8px; width: 100%; }
+input, select { font: inherit; padding: 8px 10px; border: 1px solid var(--borde); border-radius: 8px; width: 100%; }
 label { display: flex; flex-direction: column; gap: 4px; font-size: 14px; margin: 10px 0; }
 label.casilla { flex-direction: row; align-items: center; }
 label.casilla input { width: auto; }
@@ -67,6 +67,14 @@ h1 { margin: 0 0 4px; } h2 { font-size: 16px; margin: 16px 0 8px; }
 .monton.pozo .carta { cursor: inherit; }
 .monton:disabled { opacity: .8; }
 .monton.pozo:disabled .carta { opacity: 1; }
+/* RF16: avance de la mano segun el servidor y combinaciones marcadas con una franja de color por grupo */
+.avance { font-size: 13px; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,.12); }
+.avance.listo { background: var(--ok); font-weight: 700; }
+button.cerrar.listo { background: var(--ok); border-color: #7fd6a4; box-shadow: 0 0 0 3px rgba(127,214,164,.45); }
+.pista-cierre { margin: 6px 0 0; font-weight: 600; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.pista-cierre button { padding: 4px 10px; }
+.carta.en-grupo { border-bottom: 5px solid #2e8b57; }
+.carta.en-grupo.g1 { border-bottom-color: #2c6db5; } .carta.en-grupo.g2 { border-bottom-color: #8e44ad; } .carta.en-grupo.g3 { border-bottom-color: #c27c0e; }
 .acciones { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
 .bitacora { grid-area: bitacora; background: rgba(255,255,255,.08); border-radius: 16px; padding: 12px 16px; font-size: 14px; }
 .bitacora ul { padding-left: 18px; margin: 0; } .bitacora li { margin-bottom: 4px; }
