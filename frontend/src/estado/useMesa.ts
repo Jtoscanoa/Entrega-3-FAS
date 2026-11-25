@@ -46,6 +46,17 @@ function avanceDe(ev: any, mano: string[]): AvanceMano | null {
   };
 }
 const MAX_EVENTOS = 40;
+
+/**
+ * U01 (sesion S1): el orden elegido con "por pinta" o "por numero" se conserva cuando llega una carta. Mover o agrupar
+ * a mano lo desactiva hasta que el jugador vuelva a pulsar uno de los dos botones.
+ */
+type ModoOrden = 'pinta' | 'numero' | null;
+function aplicarModo(modo: ModoOrden, cartas: string[]): string[] {
+  if (modo === 'pinta') return ordenarPorPinta(cartas);
+  if (modo === 'numero') return ordenarPorValor(cartas);
+  return cartas;
+}
 const MAX_CHAT = 60;
 
 function quitarUna(cartas: string[], carta: string): string[] {
@@ -80,6 +91,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const alSalirRef = useRef(alSalir);
   alSalirRef.current = alSalir;
   const reintento = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modoOrden = useRef<ModoOrden>('pinta');
 
   const nombre = useCallback((sub: string | null) =>
     !sub ? '—' : sub === sesion.sub ? 'Tú' : nombresRef.current[sub] ?? 'Jugador', [sesion.sub]);
@@ -97,7 +109,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
     switch (m.tipo) {
       case 'VistaPartida':
         setE((s) => ({
-          ...s, ronda: d.numeroRonda, orden: reconciliar(s.orden, d.mano), cima: d.cimaDescarte, marcador: d.marcador,
+          ...s, ronda: d.numeroRonda, orden: aplicarModo(modoOrden.current, reconciliar(s.orden, d.mano)), cima: d.cimaDescarte, marcador: d.marcador,
           turnoDe: d.turnoDe, numeroTurno: d.numeroTurno, fase: d.fase, modalidad: d.modalidad, umbral: d.umbral,
           robarDelDescarte: d.robarDelDescarte, eliminados: d.eliminados, finalizada: d.finalizada,
           ausentes: Array.isArray(d.conectados)
@@ -121,6 +133,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         conexion.current?.reanudar();
         break;
       case 'ManoEntregada':
+        modoOrden.current = 'pinta';
         setE((s) => ({ ...s, orden: ordenarPorPinta(d.cartas) }));
         registrar({ tipo: 'reparto', cartas: d.cartas.length });
         break;
@@ -135,7 +148,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         conexion.current?.reanudar();
         break;
       case 'CartaRecibida':
-        setE((s) => ({ ...s, orden: [...s.orden, d.carta], nueva: d.carta, fase: 'ESPERANDO_DESCARTE' }));
+        setE((s) => ({ ...s, orden: aplicarModo(modoOrden.current, [...s.orden, d.carta]), nueva: d.carta,
+          fase: 'ESPERANDO_DESCARTE' }));
         registrar({ tipo: 'recibida', carta: d.carta, origen: ultimoRoboPropio.current });
         ultimoRoboPropio.current = null;
         break;
@@ -235,10 +249,14 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const avance = e.avance && e.avance.cartas === e.orden.length && !e.finalizada ? e.avance : null;
 
   const mover = useCallback((desde: number, hasta: number) => {
+    modoOrden.current = null;
     setE((s) => { const o = [...s.orden]; const [c] = o.splice(desde, 1); o.splice(hasta, 0, c); return { ...s, orden: o }; });
     setSeleccion(null);
   }, []);
-  const reordenar = useCallback((orden: string[]) => setE((s) => ({ ...s, orden })), []);
+  const reordenar = useCallback((orden: string[]) => {
+    modoOrden.current = null;
+    setE((s) => ({ ...s, orden }));
+  }, []);
   const salir = useCallback(() => { conexion.current?.cerrarConexion(); alSalir(); }, [alSalir]);
 
   return {
@@ -252,8 +270,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
     cerrar: () => { if (cartaSel) conexion.current?.cerrar(cartaSel, e.numeroTurno); },
     mover,
     reordenar,
-    ordenarPorPinta: () => setE((s) => ({ ...s, orden: ordenarPorPinta(s.orden) })),
-    ordenarPorValor: () => setE((s) => ({ ...s, orden: ordenarPorValor(s.orden) })),
+    ordenarPorPinta: () => { modoOrden.current = 'pinta'; setE((s) => ({ ...s, orden: ordenarPorPinta(s.orden) })); },
+    ordenarPorValor: () => { modoOrden.current = 'numero'; setE((s) => ({ ...s, orden: ordenarPorValor(s.orden) })); },
     cerrarLiquidacion: () => setLiquidacion(null),
     salir,
   };

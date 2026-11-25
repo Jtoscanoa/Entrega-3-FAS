@@ -82,6 +82,9 @@
 .a-esquina.arriba { top: 4.5%; left: 3.5%; }
 .a-esquina.abajo { bottom: 4.5%; right: 3.5%; transform: rotate(180deg); }
 .a-lienzo-carta { position: absolute; display: block; inset: 13% 24.5%; pointer-events: none; }
+/* U03: recuadro interior que separa los simbolos del centro del indice (valor + pinta) de las esquinas */
+.a-lienzo-carta.con-marco { inset: 11% 25.5%; border: 1px solid rgba(28, 24, 16, .42); border-radius: 4px; background: rgba(28, 24, 16, .035); }
+.a-cara.roja .a-lienzo-carta.con-marco { border-color: rgba(160, 40, 32, .45); background: rgba(160, 40, 32, .03); }
 .a-pip { position: absolute; display: block; width: calc(var(--cw) * .145); height: calc(var(--cw) * .145); }
 .a-as-centro { position: relative; display: grid; place-items: center; width: 100%; height: 100%; }
 .a-as-marco { position: absolute; inset: 4% 2%; width: 96%; height: 92%; opacity: .24; color: #9c7c3e; }

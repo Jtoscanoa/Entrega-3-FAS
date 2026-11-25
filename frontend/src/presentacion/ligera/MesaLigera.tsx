@@ -158,7 +158,9 @@ function Carta({ codigo, seleccionada, nueva, grupo = -1, onClick, onDragStart, 
       grupo >= 0 ? `en-grupo g${grupo % 4}` : ''].join(' ')}
       onClick={onClick} draggable={!!onDragStart} onDragStart={onDragStart}
       onDragOver={(ev) => ev.preventDefault()} onDrop={onDrop} title={`${c.puntos} puntos`}>
-      <span className="valor">{c.valor}</span><span className="pinta">{c.simbolo}</span>
+      {/* U03 (sesion S1): indice de esquina (valor + pinta) aparte del recuadro central con el simbolo */}
+      <span className="indice"><b>{c.valor}</b>{c.simbolo && <span>{c.simbolo}</span>}</span>
+      <span className="recuadro" aria-hidden="true">{c.simbolo || c.valor}</span>
     </div>
   );
 }
