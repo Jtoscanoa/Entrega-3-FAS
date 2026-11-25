@@ -62,7 +62,7 @@ export function useVestibulo(sesion: Sesion | null, alEntrarSala: (codigo: strin
 
 const OPCIONES_INICIALES: OpcionesPartida = {
   modalidad: 'APUNTADO_101', robarDelDescarte: true, umbral: 101, segundosPorTurno: 60,
-  comodines: false, cierreAPintas: false, segundoMazo: false,
+  comodines: false, cierreAPintas: false, segundoMazo: false, residuoMaximo: 4,
 };
 
 /** Sala de espera: consulta el estado cada 1,5 s mientras {@code codigo} no sea null. */
@@ -98,7 +98,9 @@ export function useSala(sesion: Sesion | null, codigo: string | null, alIniciar:
   const iniciar = async () => {
     if (!token || !codigo) return;
     try {
-      const cuerpo = { ...opciones, umbral: opciones.modalidad === 'APUNTADO_101' ? opciones.umbral : null };
+      const apuntado = opciones.modalidad === 'APUNTADO_101';
+      const cuerpo = { ...opciones, umbral: apuntado ? opciones.umbral : null,
+        residuoMaximo: apuntado ? opciones.residuoMaximo : null, cierreAPintas: apuntado && opciones.cierreAPintas };
       alIniciarRef.current((await api.iniciar(token, codigo, cuerpo)).partidaId);
     } catch (e) { setError(motivo(e)); }
   };

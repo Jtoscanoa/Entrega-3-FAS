@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, conectarMesa, ConexionMesa, ManejadoresMesa } from '../api';
 import { infoCarta, ordenarPorPinta, ordenarPorValor, reconciliar } from '../cartas';
 import { mensajeDe, PARTIDA_INTERRUMPIDA, rondaPendiente } from '../mensajes';
+import { verificarReparto } from './verificarReparto';
 import type {
   AvanceMano, Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo, Sesion, VistaMesa,
 } from './tipos';
@@ -31,8 +32,14 @@ const REINTENTO_RONDA_MS = 3000;
 const INICIAL: EstadoMesa = {
   ronda: 0, orden: [], cima: null, marcador: {}, turnoDe: null, numeroTurno: 0, fase: '', modalidad: '',
   umbral: 101, robarDelDescarte: false, eliminados: [], finalizada: false, venceEn: null, nueva: null, turnoDesde: null,
-  ausentes: [], avance: null,
+  ausentes: [], avance: null, huella: null,
 };
+
+/** RF13: rondas ya liquidadas segun el servidor (VistaPartida.historial); asi sobreviven a una recarga. */
+function historialDe(h: any[]): Liquidacion[] {
+  return h.map((r) => ({ ronda: r.numeroRonda, cerrador: r.cerradorId, tipoCierre: r.tipoCierre,
+    puntosRonda: r.puntosRonda, marcador: r.marcador, eliminados: [] }));
+}
 
 /** La evaluacion del servidor trae indices de su mano; aqui se pasan a codigos de carta. */
 function avanceDe(ev: any, mano: string[]): AvanceMano | null {
@@ -46,6 +53,17 @@ function avanceDe(ev: any, mano: string[]): AvanceMano | null {
   };
 }
 const MAX_EVENTOS = 40;
+
+/**
+ * U01 (sesion S1): el orden elegido con "por pinta" o "por numero" se conserva cuando llega una carta. Mover o agrupar
+ * a mano lo desactiva hasta que el jugador vuelva a pulsar uno de los dos botones.
+ */
+type ModoOrden = 'pinta' | 'numero' | null;
+function aplicarModo(modo: ModoOrden, cartas: string[]): string[] {
+  if (modo === 'pinta') return ordenarPorPinta(cartas);
+  if (modo === 'numero') return ordenarPorValor(cartas);
+  return cartas;
+}
 const MAX_CHAT = 60;
 
 function quitarUna(cartas: string[], carta: string): string[] {
@@ -80,6 +98,9 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const alSalirRef = useRef(alSalir);
   alSalirRef.current = alSalir;
   const reintento = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const modoOrden = useRef<ModoOrden>('pinta');
+  /** Huella anunciada al iniciar la ronda en curso: contra ella se verifica la revelacion (RF18). */
+  const huellaRef = useRef<string | null>(null);
 
   const nombre = useCallback((sub: string | null) =>
     !sub ? '—' : sub === sesion.sub ? 'Tú' : nombresRef.current[sub] ?? 'Jugador', [sesion.sub]);
@@ -97,13 +118,18 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
     switch (m.tipo) {
       case 'VistaPartida':
         setE((s) => ({
-          ...s, ronda: d.numeroRonda, orden: reconciliar(s.orden, d.mano), cima: d.cimaDescarte, marcador: d.marcador,
+          ...s, ronda: d.numeroRonda, orden: aplicarModo(modoOrden.current, reconciliar(s.orden, d.mano)), cima: d.cimaDescarte, marcador: d.marcador,
           turnoDe: d.turnoDe, numeroTurno: d.numeroTurno, fase: d.fase, modalidad: d.modalidad, umbral: d.umbral,
           robarDelDescarte: d.robarDelDescarte, eliminados: d.eliminados, finalizada: d.finalizada,
           ausentes: Array.isArray(d.conectados)
             ? Object.keys(d.marcador).filter((sub) => !d.conectados.includes(sub)) : s.ausentes,
-          avance: avanceDe(d.evaluacion, d.mano),
+          avance: avanceDe(d.evaluacion, d.mano), huella: d.huella ?? s.huella,
         }));
+        if (d.huella) huellaRef.current = d.huella;
+        if (Array.isArray(d.historial)) {
+          setHistorial((previo) => historialDe(d.historial).map((r) => ({
+            ...r, reparto: previo.find((x) => x.ronda === r.ronda)?.reparto })));
+        }
         break;
       case 'Presencia': {
         // Solo se anotan cambios reales: la primera llegada de un jugador no es un "volvió".
@@ -115,12 +141,14 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         break;
       }
       case 'RondaIniciada':
-        setE((s) => ({ ...s, ronda: d.numeroRonda, cima: d.cimaDescarte, nueva: null }));
+        huellaRef.current = d.huella ?? null;
+        setE((s) => ({ ...s, ronda: d.numeroRonda, cima: d.cimaDescarte, nueva: null, huella: d.huella ?? null }));
         setSeleccion(null);
         anotar(`Empieza la ronda ${d.numeroRonda}. ${quien(d.abridor, 'abre', 'abres')}.`);
         conexion.current?.reanudar();
         break;
       case 'ManoEntregada':
+        modoOrden.current = 'pinta';
         setE((s) => ({ ...s, orden: ordenarPorPinta(d.cartas) }));
         registrar({ tipo: 'reparto', cartas: d.cartas.length });
         break;
@@ -135,7 +163,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         conexion.current?.reanudar();
         break;
       case 'CartaRecibida':
-        setE((s) => ({ ...s, orden: [...s.orden, d.carta], nueva: d.carta, fase: 'ESPERANDO_DESCARTE' }));
+        setE((s) => ({ ...s, orden: aplicarModo(modoOrden.current, [...s.orden, d.carta]), nueva: d.carta,
+          fase: 'ESPERANDO_DESCARTE' }));
         registrar({ tipo: 'recibida', carta: d.carta, origen: ultimoRoboPropio.current });
         ultimoRoboPropio.current = null;
         break;
@@ -155,9 +184,16 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         break;
       case 'RondaLiquidada': {
         const l: Liquidacion = { ronda: d.numeroRonda, cerrador: d.cerradorId, tipoCierre: d.tipoCierre,
-          puntosRonda: d.puntosRonda, marcador: d.marcador, eliminados: d.eliminados ?? [] };
+          puntosRonda: d.puntosRonda, marcador: d.marcador, eliminados: d.eliminados ?? [],
+          reparto: { huella: huellaRef.current, estado: 'verificando' } };
+        const ronda = d.numeroRonda;
+        void verificarReparto(huellaRef.current, d.revelacion).catch(() => 'no-disponible' as const).then((estado) => {
+          const conEstado = (x: Liquidacion) => (x.ronda === ronda && x.reparto ? { ...x, reparto: { ...x.reparto, estado } } : x);
+          setLiquidacion((actual) => (actual ? conEstado(actual) : actual));
+          setHistorial((h) => h.map(conEstado));
+        });
         setLiquidacion(l);
-        setHistorial((h) => [...h, l]);
+        setHistorial((h) => (h.some((x) => x.ronda === l.ronda) ? h : [...h, l]));
         setE((s) => ({ ...s, marcador: { ...s.marcador, ...d.marcador },
           eliminados: Array.from(new Set([...s.eliminados, ...(d.eliminados ?? [])])) }));
         anotar(`${quien(d.cerradorId, 'cerró', 'cerraste')} la ronda ${d.numeroRonda}.`);
@@ -235,10 +271,14 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const avance = e.avance && e.avance.cartas === e.orden.length && !e.finalizada ? e.avance : null;
 
   const mover = useCallback((desde: number, hasta: number) => {
+    modoOrden.current = null;
     setE((s) => { const o = [...s.orden]; const [c] = o.splice(desde, 1); o.splice(hasta, 0, c); return { ...s, orden: o }; });
     setSeleccion(null);
   }, []);
-  const reordenar = useCallback((orden: string[]) => setE((s) => ({ ...s, orden })), []);
+  const reordenar = useCallback((orden: string[]) => {
+    modoOrden.current = null;
+    setE((s) => ({ ...s, orden }));
+  }, []);
   const salir = useCallback(() => { conexion.current?.cerrarConexion(); alSalir(); }, [alSalir]);
 
   return {
@@ -252,8 +292,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
     cerrar: () => { if (cartaSel) conexion.current?.cerrar(cartaSel, e.numeroTurno); },
     mover,
     reordenar,
-    ordenarPorPinta: () => setE((s) => ({ ...s, orden: ordenarPorPinta(s.orden) })),
-    ordenarPorValor: () => setE((s) => ({ ...s, orden: ordenarPorValor(s.orden) })),
+    ordenarPorPinta: () => { modoOrden.current = 'pinta'; setE((s) => ({ ...s, orden: ordenarPorPinta(s.orden) })); },
+    ordenarPorValor: () => { modoOrden.current = 'numero'; setE((s) => ({ ...s, orden: ordenarPorValor(s.orden) })); },
     cerrarLiquidacion: () => setLiquidacion(null),
     salir,
   };

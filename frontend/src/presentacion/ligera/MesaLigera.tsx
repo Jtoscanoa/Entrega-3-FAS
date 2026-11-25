@@ -3,9 +3,11 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
 import {
-  ayudaCierre, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance, TIPO_CIERRE,
+  ayudaCierre, CIERRE_CORTO, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance, TIPO_CIERRE,
+  VERIFICACION_REPARTO,
 } from '../../mensajes';
-import type { VistaMesa } from '../../estado/tipos';
+import { huellaCorta } from '../../estado/verificarReparto';
+import type { Liquidacion, VistaMesa } from '../../estado/tipos';
 
 export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
   const { e, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar, segundos, aviso, fin,
@@ -15,12 +17,16 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
   const grupos = useMemo(() => gruposEnOrden(e.orden, avance?.grupos ?? []), [e.orden, avance]);
   const puedeCerrar = debeDescartar && !!avance?.puedeCerrar;
   const sugerida = avance?.descarteSugerido ?? null;
+  const chat = useChatLigero(mesa);
 
   return (
     <main className="mesa">
       <header className="barra">
         <div><strong>{NOMBRE_MODALIDAD[e.modalidad] ?? 'Partida'}</strong> · Ronda {e.ronda} · Sala {mesa.codigo}</div>
         <div className={mesa.conectado ? 'estado ok' : 'estado caido'}>{mesa.conectado ? 'Conectado' : 'Reconectando…'}</div>
+        <button className="chat-boton" aria-expanded={chat.abierto} aria-controls="chat-mesa" onClick={chat.alternar}>
+          Chat{chat.sinLeer > 0 && <span className="insignia" aria-label={`${chat.sinLeer} sin leer`}>{chat.sinLeer}</span>}
+        </button>
         <button className="enlace" onClick={mesa.salir}>Salir</button>
       </header>
 
@@ -47,6 +53,10 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
             <small>{e.robarDelDescarte ? 'Robar del pozo' : 'Pozo'}</small>
           </button>
         </div>
+        {e.huella && (
+          <p className="huella" title={e.huella}>Huella del reparto: <code>{huellaCorta(e.huella)}</code>
+            <span className="tenue"> · se comprueba al liquidar</span></p>
+        )}
         <div className={miTurno ? 'instruccion mia' : 'instruccion'}>
           {mesa.instruccion}{miTurno && segundos !== null && <span className="reloj"> {segundos} s</span>}
         </div>
@@ -90,16 +100,18 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       <aside className="bitacora">
         <h2>Lo último</h2>
         <ul>{bitacora.map((t, i) => <li key={i}>{t}</li>)}</ul>
-        <ChatLigero mesa={mesa} />
+        <ChatLigero mesa={mesa} estado={chat} />
         {historial.length > 0 && (
           <>
             <h2>Historial de rondas</h2>
             <table>
-              <thead><tr><th>Ronda</th>{jugadores.map((s) => <th key={s}>{nombre(s)}</th>)}</tr></thead>
+              <thead><tr><th>Ronda</th><th>Cierre</th>{jugadores.map((s) => <th key={s}>{nombre(s)}</th>)}</tr></thead>
               <tbody>{historial.map((h) => (
-                <tr key={h.ronda}><td>{h.ronda}</td>{jugadores.map((s) => <td key={s}>{s === h.cerrador ? `${h.puntosRonda[s] ?? 0} ✓` : h.puntosRonda[s] ?? '—'}</td>)}</tr>
+                <tr key={h.ronda}><td>{h.ronda}</td><td>{CIERRE_CORTO[h.tipoCierre] ?? h.tipoCierre}</td>
+                  {jugadores.map((s) => <td key={s}><CeldaRonda h={h} sub={s} /></td>)}</tr>
               ))}</tbody>
             </table>
+            <p className="tenue pequeno">Puntos de la ronda y, entre paréntesis, el total. ✓ = cerró.</p>
           </>
         )}
       </aside>
@@ -117,6 +129,7 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
               </tr>))}</tbody>
           </table>
           <p className="tenue pequeno">Cada perdedor suma sus cartas sueltas con la agrupación que menos puntos le deja.</p>
+          <Verificacion l={liquidacion} />
           <button className="principal" onClick={mesa.cerrarLiquidacion}>Seguir jugando</button>
         </div></div>
       )}
@@ -129,11 +142,29 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
             <thead><tr><th>Jugador</th><th>Total</th></tr></thead>
             <tbody>{Object.entries(e.marcador).map(([s, p]) => <tr key={s}><td>{nombre(s)}</td><td>{p}</td></tr>)}</tbody>
           </table>
+          {historial.length > 0 && <Verificacion l={historial[historial.length - 1]} />}
           <button className="principal" onClick={mesa.salir}>Volver al inicio</button>
         </div></div>
       )}
     </main>
   );
+}
+
+/** RF18: SHA-256(orden + sal) recalculado en este navegador frente a la huella anunciada al iniciar la ronda. */
+function Verificacion({ l }: { l: Liquidacion }) {
+  if (!l.reparto) return null;
+  return (
+    <div className={`verificacion ${l.reparto.estado}`} role="status">
+      {VERIFICACION_REPARTO[l.reparto.estado]}
+      {l.reparto.huella && <code className="pequeno">{l.reparto.huella}</code>}
+    </div>
+  );
+}
+
+/** Puntos de la ronda y total acumulado del jugador (RF13). */
+function CeldaRonda({ h, sub }: { h: Liquidacion; sub: string }) {
+  if (h.puntosRonda[sub] === undefined) return <>—</>;
+  return <>{h.puntosRonda[sub]}{sub === h.cerrador && ' ✓'} <small className="tenue">({h.marcador[sub] ?? '—'})</small></>;
 }
 
 /** Senal tachada: el jugador no tiene ninguna sesion abierta (RF17). */
@@ -158,23 +189,47 @@ function Carta({ codigo, seleccionada, nueva, grupo = -1, onClick, onDragStart, 
       grupo >= 0 ? `en-grupo g${grupo % 4}` : ''].join(' ')}
       onClick={onClick} draggable={!!onDragStart} onDragStart={onDragStart}
       onDragOver={(ev) => ev.preventDefault()} onDrop={onDrop} title={`${c.puntos} puntos`}>
-      <span className="valor">{c.valor}</span><span className="pinta">{c.simbolo}</span>
+      {/* U03 (sesion S1): indice de esquina (valor + pinta) aparte del recuadro central con el simbolo */}
+      <span className="indice"><b>{c.valor}</b>{c.simbolo && <span>{c.simbolo}</span>}</span>
+      <span className="recuadro" aria-hidden="true">{c.simbolo || c.valor}</span>
     </div>
   );
 }
 
+interface EstadoChat { abierto: boolean; sinLeer: number; alternar: () => void; cerrar: () => void }
+
+/**
+ * Estado del chat ligero. En el telefono el chat es una hoja que se abre con el boton de la barra (con los mensajes
+ * sin leer de los demas); en escritorio va siempre a la vista en el lateral. Sin dependencias de la piel animada.
+ */
+function useChatLigero(mesa: VistaMesa): EstadoChat {
+  const [abierto, setAbierto] = useState(false);
+  const [leidoHasta, setLeidoHasta] = useState(0);
+  const ultimo = mesa.chat[mesa.chat.length - 1];
+  useEffect(() => { if (abierto && ultimo) setLeidoHasta(ultimo.id); }, [abierto, ultimo]);
+  const sinLeer = abierto ? 0 : mesa.chat.filter((m) => m.id > leidoHasta && m.jugadorId !== mesa.yo).length;
+  return { abierto, sinLeer, alternar: () => setAbierto((v) => !v), cerrar: () => setAbierto(false) };
+}
+
 /** Chat en vivo de la mesa, sin animaciones: lista con desplazamiento y un campo para escribir. */
-function ChatLigero({ mesa }: { mesa: VistaMesa }) {
+function ChatLigero({ mesa, estado }: { mesa: VistaMesa; estado: EstadoChat }) {
   const [texto, setTexto] = useState('');
   const lista = useRef<HTMLUListElement>(null);
-  useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }); }, [mesa.chat.length]);
+  useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }); }, [mesa.chat.length, estado.abierto]);
   const enviar = (ev: FormEvent) => { ev.preventDefault(); mesa.enviarChat(texto); setTexto(''); };
   return (
-    <section className="chat" aria-label="Chat de la mesa">
-      <h2>Chat</h2>
+    <section id="chat-mesa" className={estado.abierto ? 'chat abierto' : 'chat'} aria-label="Chat de la mesa">
+      <div className="chat-cabecera">
+        <h2>Chat</h2>
+        <button className="enlace chat-cerrar" onClick={estado.cerrar}>Cerrar</button>
+      </div>
       <ul ref={lista} className="chat-lista" aria-live="polite">
         {mesa.chat.length === 0 && <li className="tenue">Nadie ha escrito todavía.</li>}
-        {mesa.chat.map((m) => <li key={m.id}><b>{m.jugadorId === mesa.yo ? 'Tú' : mesa.nombre(m.jugadorId)}:</b> {m.texto}</li>)}
+        {mesa.chat.map((m) => (
+          <li key={m.id} className={m.jugadorId === mesa.yo ? 'mio' : ''}>
+            <b>{m.jugadorId === mesa.yo ? 'Tú' : mesa.nombre(m.jugadorId)}</b> {m.texto}
+          </li>
+        ))}
       </ul>
       <form className="fila" onSubmit={enviar}>
         <input aria-label="Mensaje para la mesa" placeholder="Escribe a la mesa" maxLength={LARGO_CHAT} value={texto}

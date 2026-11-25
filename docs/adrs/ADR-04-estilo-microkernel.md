@@ -25,6 +25,7 @@ Opción (b), con un solo cuanto. TurnOrchestratorComponent depende solo de `IEva
 - FF-08 (métricas de acoplamiento).
 - FF-13 (`ExtensibilidadVarianteTest` y `git diff` en los pull requests con etiqueta "variante").
 - Enmienda (24-nov-2026, bitácora E3-2 y E3-17): FF-01c filtra por el dueño del método con `DescribedPredicate.and(targetOwner(...), target(...))` e incluye `Agrupacion` entre los dueños vigilados; la regla misma se prueba en `FF01cReglaTest`.
+- Enmienda (25-nov-2026, bitácora E3-18a y E3-18b): el motivo de un rechazo y el avance de la mano (`ReglaJuego.evaluarAvance`, `IEvaluadorMano.evaluarMano`) también los calculan los plug-ins; la SPA ya no detecta combinaciones (se eliminó `agrupacionVisual.ts`) y solo muestra los grupos que trae `VistaPartida` (RD4). Una variante que no implemente `evaluarAvance` sigue funcionando: el método tiene una implementación por defecto sin detalle (FF-13).
 
 ## Notas
 

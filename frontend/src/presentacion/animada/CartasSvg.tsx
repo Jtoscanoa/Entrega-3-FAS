@@ -85,7 +85,8 @@ export function CaraCarta({ codigo }: { codigo: string }) {
         {!comodin && <PaloSvg pinta={c.pinta} className="a-palo-esquina" />}
       </span>
 
-      <span className="a-lienzo-carta" aria-hidden="true">
+      {/* U03 (sesion S1): el area de simbolos lleva su propio recuadro, aparte del indice de la esquina */}
+      <span className={['a-lienzo-carta', pips || esAs ? 'con-marco' : ''].join(' ')} aria-hidden="true">
         {comodin && (
           <span className="a-comodin-centro">
             <PaloSvg pinta="*" className="a-palo-comodin" />

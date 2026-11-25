@@ -97,7 +97,8 @@ public final class LobbyPartyComponent implements ILobby {
                 .conCierreAPintas(Boolean.TRUE.equals(o.cierreAPintas()))
                 .conSegundoMazo(Boolean.TRUE.equals(o.segundoMazo()))
                 .conUmbral(o.umbral() == null ? base.umbralEliminacion() : o.umbral())
-                .conSegundosPorTurno(o.segundosPorTurno() == null ? base.segundosPorTurno() : o.segundosPorTurno());
+                .conSegundosPorTurno(o.segundosPorTurno() == null ? base.segundosPorTurno() : o.segundosPorTurno())
+                .conResiduoMaximo(o.residuoMaximo() == null ? base.residuoMaximo() : o.residuoMaximo());
     }
 
     private Sala obtener(String codigo) {

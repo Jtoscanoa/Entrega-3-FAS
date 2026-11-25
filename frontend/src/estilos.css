@@ -30,6 +30,10 @@ h1 { margin: 0 0 4px; } h2 { font-size: 16px; margin: 16px 0 8px; }
 .modalidades { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .modalidad { text-align: left; display: flex; flex-direction: column; gap: 4px; background: #fff; }
 .modalidad span { font-size: 13px; color: var(--tenue); }
+/* RF09: opciones avanzadas plegadas */
+.avanzadas { margin: 12px 0; border: 1px solid var(--borde); border-radius: 10px; padding: 8px 12px; }
+.avanzadas summary { cursor: pointer; font-weight: 600; }
+.avanzadas label.casilla { gap: 8px; }
 .modalidad.activa { border: 2px solid var(--acento); background: #fff9ea; }
 
 .mesa { display: grid; grid-template-columns: 1fr 300px; grid-template-areas: "barra barra" "marcador marcador" "centro bitacora" "aviso bitacora" "mano bitacora"; gap: 12px; padding: 12px; max-width: 1280px; margin: 0 auto; color: #fff; }
@@ -59,9 +63,13 @@ h1 { margin: 0 0 4px; } h2 { font-size: 16px; margin: 16px 0 8px; }
 .mano-cabecera { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
 .mano-cabecera h2 { margin: 0; }
 .cartas { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 6px; min-height: 96px; }
-.carta { width: 62px; height: 90px; background: #fff; color: #1d2321; border-radius: 8px; border: 1px solid #c9cfcc; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; user-select: none; transition: transform .1s; }
+.carta { position: relative; flex: none; width: 62px; height: 90px; background: #fff; color: #1d2321; border-radius: 8px; border: 1px solid #c9cfcc; cursor: pointer; user-select: none; transition: transform .1s; }
 .carta.roja { color: var(--rojo); }
-.carta .valor { font-size: 22px; font-weight: 700; line-height: 1; } .carta .pinta { font-size: 26px; line-height: 1; }
+/* U03: el indice (valor + pinta) va en la esquina; el simbolo grande, en un recuadro interior aparte */
+.carta .indice { position: absolute; top: 4px; left: 3px; width: 18px; display: flex; flex-direction: column; align-items: center; line-height: 1; }
+.carta .indice b { font-size: 17px; letter-spacing: -.04em; } .carta .indice span { font-size: 14px; margin-top: 1px; }
+.carta .recuadro { position: absolute; top: 9px; right: 6px; bottom: 9px; left: 23px; display: grid; place-items: center; font-size: 26px; line-height: 1; border: 1px solid rgba(29,35,33,.28); border-radius: 4px; background: rgba(29,35,33,.03); }
+.carta.roja .recuadro { border-color: rgba(192,57,43,.35); background: rgba(192,57,43,.04); }
 .carta.sel { transform: translateY(-12px); box-shadow: 0 0 0 3px var(--acento); }
 .carta.nueva { box-shadow: 0 0 0 3px #5dade2; }
 .monton.pozo .carta { cursor: inherit; }
@@ -79,14 +87,27 @@ button.cerrar.listo { background: var(--ok); border-color: #7fd6a4; box-shadow: 
 .bitacora { grid-area: bitacora; background: rgba(255,255,255,.08); border-radius: 16px; padding: 12px 16px; font-size: 14px; }
 .bitacora ul { padding-left: 18px; margin: 0; } .bitacora li { margin-bottom: 4px; }
 .bitacora table, table.liquidacion { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* Chat de la mesa (piel ligera): en escritorio, dentro del lateral; en el telefono, hoja que abre el boton de la barra */
 .chat { margin-top: 14px; border-top: 1px solid rgba(255,255,255,.2); padding-top: 10px; }
-.chat-lista { list-style: none; padding: 0; margin: 0 0 8px; max-height: 220px; overflow-y: auto; overflow-wrap: anywhere; }
-.chat-lista li { margin-bottom: 4px; }
+.chat-cabecera { display: flex; justify-content: space-between; align-items: center; }
+.chat-cabecera h2 { margin: 0 0 8px; }
+.chat-cerrar, .chat-boton { display: none; }
+.bitacora .chat-lista, .chat-lista { list-style: none; padding: 0; margin: 0 0 8px; max-height: 220px; overflow-y: auto; overflow-wrap: anywhere; }
+.chat-lista li { margin-bottom: 6px; line-height: 1.35; }
+.chat-lista li b { display: block; font-size: 12px; color: var(--acento); }
+.chat-lista li.mio b { color: #9fdcb5; }
 .chat .fila { flex-wrap: nowrap; }
 .chat .fila input { flex: 1; width: auto; min-width: 0; }
+.insignia { display: inline-block; min-width: 18px; margin-left: 6px; padding: 1px 5px; border-radius: 9px; background: var(--rojo); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
 .bitacora th, .bitacora td { border-bottom: 1px solid rgba(255,255,255,.2); padding: 4px; text-align: center; }
 table.liquidacion th, table.liquidacion td { border-bottom: 1px solid var(--borde); padding: 6px; text-align: left; }
 tr.eliminado td { color: var(--rojo); }
+/* RF18 */
+.huella { margin: 0; font-size: 12px; opacity: .85; overflow-wrap: anywhere; text-align: center; }
+.verificacion { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--borde); font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.verificacion code { color: var(--tenue); overflow-wrap: anywhere; }
+.verificacion.verificado { border-color: var(--ok); background: #eef8f2; }
+.verificacion.no-coincide { border-color: var(--rojo); background: #fdeeee; }
 .velo { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 16px; z-index: 10; }
 /* Escritorio ancho: la mesa en el centro de la pantalla y la bitacora en el margen derecho. */
 @media (min-width: 1280px) {
@@ -96,7 +117,18 @@ tr.eliminado td { color: var(--rojo); }
 }
 @media (max-width: 860px) {
   .mesa { grid-template-columns: 1fr; grid-template-areas: "barra" "marcador" "centro" "aviso" "mano" "bitacora"; }
-  .carta { width: 50px; height: 74px; } .carta .valor { font-size: 18px; } .carta .pinta { font-size: 20px; }
+  .barra { flex-wrap: wrap; }
+  .chat-boton { display: inline-flex; align-items: center; padding: 6px 12px; background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
+  .chat { display: none; }
+  .chat.abierto { display: flex; flex-direction: column; position: fixed; left: 8px; right: 8px; bottom: calc(60px + env(safe-area-inset-bottom)); z-index: 20;
+    max-height: min(70vh, 460px); margin: 0; padding: 10px 12px 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 14px;
+    background: #0b2f23; color: #fff; box-shadow: 0 -8px 30px rgba(0,0,0,.45); }
+  .chat.abierto .chat-cerrar { display: inline; color: #fff; }
+  .chat.abierto .chat-lista { flex: 1; max-height: none; min-height: 90px; }
+  .chat .fila input { font-size: 16px; }
+  .carta { width: 50px; height: 74px; }
+  .carta .indice { width: 15px; } .carta .indice b { font-size: 15px; } .carta .indice span { font-size: 12px; }
+  .carta .recuadro { left: 19px; right: 4px; top: 7px; bottom: 7px; font-size: 20px; }
 }
 
 /* Selector de version (fijo al fondo, comun a las dos versiones). */

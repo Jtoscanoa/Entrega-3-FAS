@@ -1,5 +1,8 @@
 // Tipos compartidos entre el estado (src/estado) y las dos pieles (src/presentacion).
 // Las pieles importan tipos desde aqui y nunca desde api.ts (FF-19).
+import type { VerificacionReparto } from './verificarReparto';
+
+export type { EstadoVerificacion, VerificacionReparto } from './verificarReparto';
 
 export interface Sesion { token: string; sub: string; apodo: string; venceEn: string }
 export interface Participante { sub: string; alias: string }
@@ -12,6 +15,8 @@ export interface OpcionesPartida {
   comodines: boolean;
   cierreAPintas: boolean;
   segundoMazo: boolean;
+  /** Apuntado: el sobrante debe ser menor o igual a este valor (0 a 4; 4 = "menor a 5"). */
+  residuoMaximo: number | null;
 }
 /** Sobre de los mensajes STOMP salientes del servidor: {tipo, datos}. */
 export interface Mensaje { tipo: string; datos: any }
@@ -39,6 +44,8 @@ export interface EstadoMesa {
   turnoDesde: number | null;
   /** Jugadores sin ninguna sesion abierta segun la presencia del servidor (RF17, ADR-08b). */
   ausentes: string[];
+  /** Huella SHA-256 del reparto de la ronda en curso, anunciada al iniciarla (RF18, ADR-03). */
+  huella: string | null;
   /** Avance de la mano propia segun el servidor; null si aun no llega (RF16). */
   avance: AvanceMano | null;
 }
@@ -46,6 +53,8 @@ export interface EstadoMesa {
 export interface Liquidacion {
   ronda: number; cerrador: string; tipoCierre: string; puntosRonda: Record<string, number>;
   marcador: Record<string, number>; eliminados: string[];
+  /** RF18: resultado de recalcular en el navegador la huella del reparto de esta ronda (solo si se vio liquidar). */
+  reparto?: VerificacionReparto;
 }
 
 export interface FinPartida { ganador: string; motivo: string }

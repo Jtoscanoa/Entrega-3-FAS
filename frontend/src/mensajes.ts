@@ -30,6 +30,15 @@ const MOTIVOS: Record<string, string> = {
  */
 export const SEGUNDOS_POR_TURNO = [45, 60, 90, 120] as const;
 
+/** RF09: residuos permitidos (el servidor valida 0 a 4; 4 = "sobrante menor a 5", la regla del caso). */
+export const RESIDUOS = [4, 3, 2, 1, 0] as const;
+export function textoResiduo(r: number): string {
+  return r === 4 ? 'Menos de 5 puntos (regla del caso)' : `Hasta ${r} ${r === 1 ? 'punto' : 'puntos'}`;
+}
+export const AYUDA_AVANZADAS = 'Vienen como dice el caso de estudio: las reglas extra están apagadas. '
+  + 'El servidor valida cada opción al iniciar.';
+export const AVISO_SEGUNDO_MAZO = 'Con 5 o 6 jugadores hace falta el segundo mazo; el servidor no iniciará sin él.';
+
 /** Largo maximo de un mensaje de chat; el servidor lo vuelve a comprobar. */
 export const LARGO_CHAT = 200;
 
@@ -56,6 +65,20 @@ export const TIPO_CIERRE: Record<string, string> = {
   APUNTADO: 'Apuntado (3 ternas + sobrante < 5)',
   COMPLETO: 'Completo',
   A_PINTAS: 'A pintas',
+};
+
+/** RF18: resultado de verificar el reparto en el navegador. */
+export const VERIFICACION_REPARTO: Record<string, string> = {
+  verificando: 'Verificando el reparto…',
+  verificado: '✓ Reparto verificado: SHA-256(orden + sal) coincide con la huella del inicio.',
+  'no-coincide': '✗ La huella no coincide: el orden revelado no es el que se anunció al iniciar.',
+  'sin-huella': 'No se pudo verificar: no se vio la huella al iniciar esta ronda.',
+  'no-disponible': 'Este navegador no permite verificar (Web Crypto requiere https).',
+};
+
+/** Nombre corto del tipo de cierre para la tabla del historial (RF13). */
+export const CIERRE_CORTO: Record<string, string> = {
+  CLASICO_433: 'Clásico', APUNTADO: 'Apuntado', COMPLETO: 'Completo', A_PINTAS: 'A pintas',
 };
 
 export const MOTIVO_FIN: Record<string, string> = {

@@ -2,7 +2,6 @@ package co.edu.unal.apuntado.domain.gameplay;
 
 import co.edu.unal.apuntado.domain.gameplay.EventoDominio.Origen;
 import co.edu.unal.apuntado.domain.gameplay.PartidaEnMemoria.Asiento;
-import co.edu.unal.apuntado.domain.gameplay.PartidaEnMemoria.Fase;
 import co.edu.unal.apuntado.domain.gameplay.auditoria.IAuditoriaReparto;
 import co.edu.unal.apuntado.domain.gameplay.auditoria.RevelacionReparto;
 import co.edu.unal.apuntado.domain.gameplay.mazo.IMazo;
@@ -94,11 +93,13 @@ public final class TurnOrchestratorComponent implements ITurno {
         return id;
     }
 
+    // Cada comando valida turno y jugador; el estado de la FSM decide si la fase lo admite (patron State).
+
     @Override
     public void robar(long partidaId, String jugadorId, boolean delDescarte, int numeroTurno) {
         conCandado(partidaId, p -> {
-            validarTurno(p, jugadorId, numeroTurno, Fase.ESPERANDO_ROBO);
-            aplicarRobo(p, jugadorId, delDescarte);
+            validarTurno(p, jugadorId, numeroTurno);
+            p.estado.robar(new Acciones(p, jugadorId), delDescarte);
             return null;
         });
     }
@@ -106,8 +107,8 @@ public final class TurnOrchestratorComponent implements ITurno {
     @Override
     public void descartar(long partidaId, String jugadorId, String codigoCarta, int numeroTurno) {
         conCandado(partidaId, p -> {
-            validarTurno(p, jugadorId, numeroTurno, Fase.ESPERANDO_DESCARTE);
-            aplicarDescarte(p, jugadorId, quitarDeLaMano(p, Carta.deCodigo(codigoCarta)));
+            validarTurno(p, jugadorId, numeroTurno);
+            p.estado.descartar(new Acciones(p, jugadorId), codigoCarta);
             return null;
         });
     }
@@ -115,17 +116,64 @@ public final class TurnOrchestratorComponent implements ITurno {
     @Override
     public ResultadoValidacion cerrar(long partidaId, String jugadorId, String codigoCarta, int numeroTurno) {
         return conCandado(partidaId, p -> {
-            validarTurno(p, jugadorId, numeroTurno, Fase.ESPERANDO_DESCARTE);
-            Carta descarte = Carta.deCodigo(codigoCarta);
-            List<Carta> resto = restoSinCarta(p.asientoEnTurno(), descarte);
-            ResultadoValidacion cierre = evaluador.validarCierre(resto, p.cfg);
-            if (!cierre.valido()) {
-                eventos.publicar(new EventoDominio.CierreRechazado(p.id, jugadorId, cierre.mensaje()));
-                return cierre;
-            }
-            liquidarCierre(p, jugadorId, descarte, resto, cierre);
-            return cierre;
+            validarTurno(p, jugadorId, numeroTurno);
+            return p.estado.cerrar(new Acciones(p, jugadorId), codigoCarta);
         });
+    }
+
+    /**
+     * Operaciones que los estados invocan sobre la partida en turno. Solo delega en metodos del orquestador, para que
+     * FF-01c (que vigila la clase TurnOrchestratorComponent) siga cubriendo toda la secuencia.
+     */
+    private final class Acciones implements AccionesTurno {
+        private final PartidaEnMemoria p;
+        private final String jugadorId;
+
+        Acciones(PartidaEnMemoria p, String jugadorId) {
+            this.p = p;
+            this.jugadorId = jugadorId;
+        }
+
+        @Override
+        public void robar(boolean delDescarte) {
+            aplicarRobo(p, jugadorId, delDescarte);
+        }
+
+        @Override
+        public void descartar(String carta) {
+            descartarCarta(p, jugadorId, carta);
+        }
+
+        @Override
+        public ResultadoValidacion cerrar(String carta) {
+            return intentarCierre(p, jugadorId, carta);
+        }
+
+        @Override
+        public void descartarPorDefecto() {
+            descartarPorDefectoEn(p, jugadorId);
+        }
+    }
+
+    private void descartarCarta(PartidaEnMemoria p, String jugadorId, String codigoCarta) {
+        aplicarDescarte(p, jugadorId, quitarDeLaMano(p, Carta.deCodigo(codigoCarta)));
+    }
+
+    private ResultadoValidacion intentarCierre(PartidaEnMemoria p, String jugadorId, String codigoCarta) {
+        Carta descarte = Carta.deCodigo(codigoCarta);
+        List<Carta> resto = restoSinCarta(p.asientoEnTurno(), descarte);
+        ResultadoValidacion cierre = evaluador.validarCierre(resto, p.cfg);
+        if (!cierre.valido()) {
+            eventos.publicar(new EventoDominio.CierreRechazado(p.id, jugadorId, cierre.mensaje()));
+            return cierre;
+        }
+        liquidarCierre(p, jugadorId, descarte, resto, cierre);
+        return cierre;
+    }
+
+    private void descartarPorDefectoEn(PartidaEnMemoria p, String jugadorId) {
+        Carta porDefecto = p.ultimaRobada != null ? p.ultimaRobada : ultimaDeLaMano(p.asientoEnTurno());
+        aplicarDescarte(p, jugadorId, quitarDeLaMano(p, porDefecto));
     }
 
     @Override
@@ -146,17 +194,12 @@ public final class TurnOrchestratorComponent implements ITurno {
         });
     }
 
-    /** ADR-08: roba del mazo y descarta; nunca cierra por el jugador. Un vencimiento viejo no hace nada. */
+    /** ADR-08: el estado decide la jugada por defecto; nunca cierra por el jugador. Un vencimiento viejo no hace nada. */
     private void jugarPorDefecto(PartidaEnMemoria p, int numeroTurno) {
-        if (!turnoEnJuego(p) || p.numeroTurno != numeroTurno) {
+        if (!p.estado.turnoEnJuego() || p.numeroTurno != numeroTurno) {
             return;
         }
-        String jugador = p.asientoEnTurno().id();
-        if (p.fase == Fase.ESPERANDO_ROBO) {
-            aplicarRobo(p, jugador, false);
-        }
-        Carta porDefecto = p.ultimaRobada != null ? p.ultimaRobada : ultimaDeLaMano(p.asientoEnTurno());
-        aplicarDescarte(p, jugador, quitarDeLaMano(p, porDefecto));
+        p.estado.vencer(new Acciones(p, p.asientoEnTurno().id()));
     }
 
     @Override
@@ -167,7 +210,7 @@ public final class TurnOrchestratorComponent implements ITurno {
             }
             boolean estabaEnPausa = p.mesaVacia();
             boolean cambio = conectado ? p.desconectados.remove(jugadorId) : p.desconectados.add(jugadorId);
-            if (cambio && turnoEnJuego(p) && afectaAlPlazo(p, jugadorId, estabaEnPausa)) {
+            if (cambio && p.estado.turnoEnJuego() && afectaAlPlazo(p, jugadorId, estabaEnPausa)) {
                 if (estabaEnPausa) {
                     p.inicioTurno = reloj.instant();
                 }
@@ -175,10 +218,6 @@ public final class TurnOrchestratorComponent implements ITurno {
             }
             return null;
         });
-    }
-
-    private static boolean turnoEnJuego(PartidaEnMemoria p) {
-        return p.fase == Fase.ESPERANDO_ROBO || p.fase == Fase.ESPERANDO_DESCARTE;
     }
 
     /** Cambia el plazo si cambia quien tiene el turno o si la mesa entra o sale de la pausa. */
@@ -196,10 +235,10 @@ public final class TurnOrchestratorComponent implements ITurno {
             String cima = p.claveMazo == null ? null : mazo.cimaDescarte(p.claveMazo).map(Carta::codigo).orElse(null);
             List<String> eliminados = p.asientos.stream().filter(x -> !x.activo).map(Asiento::id).toList();
             return new VistaPartida(p.id, p.numeroRonda, a.mano.stream().map(Carta::codigo).toList(), cima,
-                    p.marcadorDeTodos(), p.fase == Fase.FINALIZADA ? null : p.asientoEnTurno().id(),
-                    p.numeroTurno, p.huella, p.fase == Fase.FINALIZADA, p.fase.name(), p.cfg.modalidad(),
+                    p.marcadorDeTodos(), p.estado.finalizada() ? null : p.asientoEnTurno().id(),
+                    p.numeroTurno, p.huella, p.estado.finalizada(), p.estado.nombre(), p.cfg.modalidad(),
                     p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados, p.conectados(),
-                    evaluador.evaluarMano(a.mano, p.cfg));
+                    evaluador.evaluarMano(a.mano, p.cfg), List.copyOf(p.historial));
         });
     }
 
@@ -218,8 +257,9 @@ public final class TurnOrchestratorComponent implements ITurno {
         }
     }
 
-    private void validarTurno(PartidaEnMemoria p, String jugadorId, int numeroTurno, Fase esperada) {
-        if (p.fase == Fase.FINALIZADA) {
+    /** Mismo orden de rechazos que antes: finalizada, turno viejo, fuera de turno; la fase la juzga el estado. */
+    private void validarTurno(PartidaEnMemoria p, String jugadorId, int numeroTurno) {
+        if (p.estado.finalizada()) {
             throw new ComandoInvalidoException(MotivoComando.PARTIDA_FINALIZADA);
         }
         if (numeroTurno != p.numeroTurno) {
@@ -228,15 +268,12 @@ public final class TurnOrchestratorComponent implements ITurno {
         if (!p.asientoEnTurno().id().equals(jugadorId)) {
             throw new ComandoInvalidoException(MotivoComando.FUERA_DE_TURNO);
         }
-        if (p.fase != esperada) {
-            throw new ComandoInvalidoException(MotivoComando.FASE_INCORRECTA);
-        }
     }
 
     private void aplicarRobo(PartidaEnMemoria p, String jugadorId, boolean delDescarte) {
         Robo robo = delDescarte ? tomarDeLaPila(p) : mazo.robarDelMazo(p.claveMazo);
         p.asientoEnTurno().mano.add(robo.carta());
-        p.fase = Fase.ESPERANDO_DESCARTE;
+        p.estado = EstadoTurno.ESPERANDO_DESCARTE;
         p.ultimaRobada = robo.carta();
         p.registrar(jugadorId, delDescarte ? "ROBAR_POZO" : "ROBAR_MAZO", robo.carta().codigo(), reloj.instant());
         robo.huellaReposicion().ifPresent(h -> eventos.publicar(new EventoDominio.MazoRepuesto(p.id, h)));
@@ -260,7 +297,7 @@ public final class TurnOrchestratorComponent implements ITurno {
         p.ultimaRobada = null;
         p.indiceTurno = p.siguienteActivo(p.indiceTurno);
         p.numeroTurno++;
-        p.fase = Fase.ESPERANDO_ROBO;
+        p.estado = EstadoTurno.ESPERANDO_ROBO;
         anunciarTurno(p);
     }
 
@@ -349,7 +386,7 @@ public final class TurnOrchestratorComponent implements ITurno {
     @Override
     public void reanudarRonda(long partidaId, String jugadorId) {
         conCandado(partidaId, p -> {
-            if (p.fase == Fase.ENTRE_RONDAS && p.numeroRonda > 0 && p.asientoDe(jugadorId) != null) {
+            if (p.estado instanceof EstadoTurno.EntreRondas && p.numeroRonda > 0 && p.asientoDe(jugadorId) != null) {
                 abrirSiguienteRonda(p);
             }
             return null;
@@ -365,7 +402,7 @@ public final class TurnOrchestratorComponent implements ITurno {
         }
         p.indiceTurno = p.indiceAbridor;
         p.numeroTurno++;
-        p.fase = Fase.ESPERANDO_DESCARTE;
+        p.estado = EstadoTurno.ESPERANDO_DESCARTE;
         String cima = mazo.cimaDescarte(p.claveMazo).map(Carta::codigo).orElse(null);
         eventos.publicar(new EventoDominio.RondaIniciada(p.id, p.numeroRonda, p.huella, cima,
                 p.asientoEnTurno().id()));
@@ -392,6 +429,8 @@ public final class TurnOrchestratorComponent implements ITurno {
             return;
         }
         aplicarEnMemoria(p, descarte, liq);
+        p.historial.add(new RondaHistorial(p.numeroRonda, cerrador, cierre.tipo().name(), liq.puntosRonda(),
+                liq.marcador()));
         eventos.publicar(new EventoDominio.RondaLiquidada(p.id, p.numeroRonda, cerrador, cierre.tipo().name(),
                 liq.puntosRonda(), liq.marcador(), liq.eliminados(), revelacion));
         terminarRonda(p, liq);
@@ -416,13 +455,13 @@ public final class TurnOrchestratorComponent implements ITurno {
                 a.activo = !liq.eliminados().contains(a.id());
             }
         });
-        p.fase = Fase.ENTRE_RONDAS;
+        p.estado = EstadoTurno.ENTRE_RONDAS;
     }
 
     private void terminarRonda(PartidaEnMemoria p, ResultadoLiquidacion liq) {
         mazo.liberar(p.claveMazo);
         if (liq.finPartida()) {
-            p.fase = Fase.FINALIZADA;
+            p.estado = EstadoTurno.FINALIZADA;
             eventos.publicar(new EventoDominio.PartidaFinalizada(p.id, liq.ganador().orElseThrow(),
                     liq.motivoFin().orElseThrow().name()));
             return;
