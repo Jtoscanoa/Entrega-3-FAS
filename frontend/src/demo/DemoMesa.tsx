@@ -3,7 +3,7 @@
 // No valida reglas: decide a mano que pasa, como un guion. Vite lo elimina del build de produccion.
 import { useMemo, useRef } from 'react';
 import type { ManejadoresMesa } from '../api';
-import type { Mensaje, Sesion } from '../estado/tipos';
+import type { AvatarId, Mensaje, Sesion, TipoReaccion } from '../estado/tipos';
 import { ConectorMesa, useMesa } from '../estado/useMesa';
 import type { Version } from '../preferencias';
 import { PielMesa } from '../presentacion/Pieles';
@@ -11,6 +11,7 @@ import { PielMesa } from '../presentacion/Pieles';
 const YO = 'demo-ana';
 const RIVALES = ['demo-beto', 'demo-caro', 'demo-dani'];
 const NOMBRES: Record<string, string> = { [YO]: 'Ana Toro', 'demo-beto': 'Beto', 'demo-caro': 'Carolina', 'demo-dani': 'Dani Ruiz' };
+const AVATARES: Record<string, AvatarId> = { [YO]: 'tia', 'demo-beto': 'taxista', 'demo-caro': 'abuela', 'demo-dani': 'galan' };
 const VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const PINTAS = ['C', 'D', 'T', 'P'];
 
@@ -123,16 +124,20 @@ class Simulador {
   terminar() { this.emitir('PartidaFinalizada', { ganadorId: YO, motivo: 'TODOS_SUPERARON_UMBRAL' }); }
 }
 
-export default function DemoMesa({ version }: { version: Version }) {
+export default function DemoMesa({ version, silenciado, alternarSilencio }:
+  { version: Version; silenciado: boolean; alternarSilencio: () => void }) {
   const sim = useRef(new Simulador()).current;
   const conector = useMemo<ConectorMesa>(() => ({
     nombres: async () => NOMBRES,
+    perfiles: async () => ({ nombres: NOMBRES, avatares: AVATARES }),
     conectar: (_t: string, _p: number, h: ManejadoresMesa) => {
       sim.h = h;
       setTimeout(() => { h.alConectar(); }, 50);
       return {
         reanudar: () => { setTimeout(() => sim.vista(), 40); },
         chatear: (texto: string) => sim.emitir('Chat', { jugadorId: YO, texto, hora: new Date().toISOString() }),
+        reaccionar: (para: string, tipo: TipoReaccion) =>
+          sim.emitir('Reaccion', { partidaId: 1, de: YO, para, tipo, hora: new Date().toISOString() }),
         robar: (d: boolean) => sim.robar(d),
         descartar: (c: string) => sim.descartar(c),
         cerrar: () => sim.rechazar(),
@@ -141,7 +146,10 @@ export default function DemoMesa({ version }: { version: Version }) {
     },
   }), [sim]);
   const sesion: Sesion = { token: 'demo', sub: YO, apodo: 'Ana Toro', venceEn: '2999-01-01T00:00:00Z' };
-  const mesa = useMesa({ sesion, codigo: 'DEMO01', partidaId: 1, alSalir: () => { location.search = ''; } }, conector);
+  const mesa = useMesa({
+    sesion, codigo: 'DEMO01', partidaId: 1, silenciado, alternarSilencio,
+    alSalir: () => { location.search = ''; },
+  }, conector);
   const boton = (texto: string, accion: () => void) => (
     <button type="button" onClick={accion} style={{ padding: '4px 8px', fontSize: 12 }}>{texto}</button>
   );
@@ -157,6 +165,7 @@ export default function DemoMesa({ version }: { version: Version }) {
         {boton('Al borde', () => sim.alBorde())}
         {boton('Revelar mal', () => { sim.revelarMal = !sim.revelarMal; })}
         {boton('Chat de Beto', () => sim.emitir('Chat', { jugadorId: 'demo-beto', texto: '¿Quién va ganando?', hora: new Date().toISOString() }))}
+        {boton('Reacción de Beto', () => sim.emitir('Reaccion', { partidaId: 1, de: 'demo-beto', para: YO, tipo: 'tomate', hora: new Date().toISOString() }))}
         {boton('Liquidar', () => sim.liquidar())}
         {boton('Fin', () => sim.terminar())}
         {boton('Cortar red 3 s', () => { sim.h?.alDesconectar(); setTimeout(() => sim.h?.alConectar(), 3000); })}

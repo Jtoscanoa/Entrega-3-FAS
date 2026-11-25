@@ -6,6 +6,7 @@ import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../
 import {
   AVISO_SEGUNDO_MAZO, AYUDA_AVANZADAS, RESIDUOS, SEGUNDOS_POR_TURNO, textoResiduo,
 } from '../../mensajes';
+import { CATALOGO_AVATARES, RetratoAvatar } from '../AvataresSvg';
 import { Avatar, Carta, ContadorVivo, usePanoMesa } from './comun';
 import { PartidaTutorial } from './MesaAnimada';
 import './tema';
@@ -108,6 +109,21 @@ function Vestibulo({ v, abrirTutorial }: { v: VistaVestibulo; abrirTutorial: () 
       <h1 className="a-titulo pequeno">Hola, {v.apodo}</h1>
       {v.aviso && <p className="a-nota" role="status">{v.aviso}</p>}
       <div className="a-tarjeta">
+        <div className="a-campo">Elige tu avatar
+          <div className="a-avatares-vestibulo" role="radiogroup" aria-label="Elige tu avatar">
+            {CATALOGO_AVATARES.map((a) => {
+              const activo = v.avatar === a.id;
+              return (
+                <button key={a.id} type="button" role="radio" aria-checked={activo}
+                  className={['a-avatar-opcion', activo ? 'activo' : ''].join(' ')}
+                  title={a.detalle} onClick={() => v.setAvatar(a.id)}>
+                  <RetratoAvatar id={a.id} tam={44} className="a-avatar-svg" />
+                  <span>{a.nombre}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <motion.button type="button" className="a-boton principal ancho" onClick={v.crear} whileTap={{ scale: 0.97 }}>
           Crear una sala
         </motion.button>
@@ -155,7 +171,7 @@ function Sala({ v, abrirTutorial }: { v: VistaSala; abrirTutorial: () => void })
           <AnimatePresence initial={false}>
             {jugadores.map((j) => (
               <motion.li key={j.sub} layout initial={{ opacity: 0, x: -14 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 14 }}>
-                <Avatar sub={j.sub} nombre={j.alias} enTurno={false} tam={34} />
+                <Avatar sub={j.sub} nombre={j.alias} avatar={estado?.avatares?.[j.sub] ?? null} enTurno={false} tam={34} />
                 <span>{j.alias}</span>
                 {j.sub === estado?.anfitrion && <span className="a-insignia">anfitrión</span>}
                 {j.sub === v.yo && <span className="a-insignia tu">tú</span>}

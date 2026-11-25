@@ -3,6 +3,8 @@
 import { motion, useReducedMotion } from 'motion/react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { infoCarta } from '../../cartas';
+import type { AvatarId } from '../../estado/tipos';
+import { RetratoAvatar } from '../AvataresSvg';
 import { CaraCarta, DorsoCarta } from './CartasSvg';
 
 export { CaraCarta, DorsoCarta };
@@ -72,8 +74,9 @@ export function iniciales(nombre: string): string {
   return (partes.length === 1 ? partes[0].slice(0, 2) : partes[0][0] + partes[1][0]).toUpperCase();
 }
 
-/** Avatar con iniciales y anillo de turno que gira y brilla en quien juega. */
-export function Avatar({ sub, nombre, enTurno, tam = 48 }: { sub: string; nombre: string; enTurno: boolean; tam?: number }) {
+/** Avatar con retrato vectorial propio (o iniciales de respaldo) y anillo giratorio de turno. */
+export function Avatar({ sub, nombre, avatar = null, enTurno, tam = 48 }:
+  { sub: string; nombre: string; avatar?: AvatarId | null; enTurno: boolean; tam?: number }) {
   const reducido = useReducedMotion();
   return (
     <span className="a-avatar" style={{ width: tam, height: tam, ['--tono' as string]: tono(sub) }}>
@@ -81,7 +84,9 @@ export function Avatar({ sub, nombre, enTurno, tam = 48 }: { sub: string; nombre
         animate={{ opacity: enTurno ? 1 : 0, rotate: enTurno && !reducido ? 360 : 0 }}
         transition={{ opacity: { duration: 0.3 }, rotate: enTurno && !reducido
           ? { duration: 4, ease: 'linear', repeat: Infinity } : { duration: 0 } }} />
-      <span className="a-iniciales">{iniciales(nombre)}</span>
+      {avatar
+        ? <RetratoAvatar id={avatar} tam={tam} className="a-avatar-svg" />
+        : <span className="a-iniciales">{iniciales(nombre)}</span>}
     </span>
   );
 }

@@ -1,6 +1,6 @@
 // Cliente REST y STOMP. La SPA no valida reglas: el servidor es la fuente de verdad (RD4).
 import { Client, IMessage } from '@stomp/stompjs';
-import type { EstadoSala, Mensaje, OpcionesPartida, Sesion } from './estado/tipos';
+import type { AvatarId, EstadoSala, Mensaje, OpcionesPartida, Sesion, TipoReaccion } from './estado/tipos';
 
 export type { EstadoSala, Mensaje, OpcionesPartida, Participante, Sesion } from './estado/tipos';
 
@@ -22,8 +22,9 @@ async function llamar<T>(metodo: string, ruta: string, token: string | null, cue
 
 export const api = {
   abrirSesion: (apodo: string) => llamar<Sesion>('POST', '/api/sesion', null, { apodo }),
-  crearSala: (t: string) => llamar<{ codigo: string }>('POST', '/api/salas', t),
-  unirse: (t: string, codigo: string) => llamar<{ jugadores: string[] }>('POST', `/api/salas/${codigo}/unirse`, t),
+  crearSala: (t: string, avatar?: AvatarId) => llamar<{ codigo: string }>('POST', '/api/salas', t, avatar ? { avatar } : undefined),
+  unirse: (t: string, codigo: string, avatar?: AvatarId) =>
+    llamar<{ jugadores: string[] }>('POST', `/api/salas/${codigo}/unirse`, t, avatar ? { avatar } : undefined),
   estadoSala: (t: string, codigo: string) => llamar<EstadoSala>('GET', `/api/salas/${codigo}`, t),
   iniciar: (t: string, codigo: string, o: OpcionesPartida) =>
     llamar<{ partidaId: number }>('POST', `/api/salas/${codigo}/iniciar`, t, o),
@@ -62,6 +63,7 @@ export function conectarMesa(token: string, partidaId: number, h: ManejadoresMes
   return {
     reanudar: () => enviar('reanudar'),
     chatear: (texto: string) => enviar('chat', { texto }),
+    reaccionar: (para: string, tipo: TipoReaccion) => enviar('reaccion', { para, tipo }),
     robar: (delDescarte: boolean, numeroTurno: number) => enviar('robar', { delDescarte, numeroTurno }),
     descartar: (carta: string, numeroTurno: number) => enviar('descartar', { carta, numeroTurno }),
     cerrar: (carta: string, numeroTurno: number) => enviar('cerrar', { carta, numeroTurno }),

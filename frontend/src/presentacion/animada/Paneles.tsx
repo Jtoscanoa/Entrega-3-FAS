@@ -43,7 +43,7 @@ function FilaLiquidacion({ mesa, sub, l, indice }: { mesa: VistaMesa; sub: strin
           initial={{ opacity: 0 }} animate={{ opacity: [0, 0.45, 0.14] }}
           transition={{ duration: 0.7, delay: retraso + 1.22, times: [0, 0.28, 1] }} />
       )}
-      <Avatar sub={sub} nombre={mesa.alias(sub)} enTurno={false} tam={36} />
+      <Avatar sub={sub} nombre={mesa.alias(sub)} avatar={mesa.avatar(sub)} enTurno={false} tam={36} />
       <span className="a-liq-nombre">{mesa.nombre(sub)}{sub === l.cerrador && <small>cerró</small>}</span>
       <span className="a-liq-ronda"><Contador desde={0} hasta={puntos} retraso={retraso} signo /></span>
       <span className="a-liq-total"><Contador desde={previo} hasta={total} retraso={retraso + 0.2} /></span>
@@ -180,7 +180,7 @@ export function PanelFin({ mesa, fin }: { mesa: VistaMesa; fin: FinPartida }) {
               <motion.div className="a-podio-jugador" initial={{ opacity: 0, y: -18 }} animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7 + i * 0.18, duration: 0.4 }}>
                 {puesto === 1 && <CoronaGanador />}
-                <Avatar sub={s} nombre={mesa.alias(s)} enTurno={puesto === 1} tam={puesto === 1 ? 56 : 44} />
+                <Avatar sub={s} nombre={mesa.alias(s)} avatar={mesa.avatar(s)} enTurno={puesto === 1} tam={puesto === 1 ? 56 : 44} />
                 <span>{mesa.nombre(s)}</span>
                 <small>{mesa.e.marcador[s] ?? 0} pts</small>
               </motion.div>

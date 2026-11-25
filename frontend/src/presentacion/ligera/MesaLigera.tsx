@@ -3,28 +3,38 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
 import {
-  ayudaCierre, CIERRE_CORTO, LARGO_CHAT, llenadoProyeccion, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance,
-  textoProyeccion, TIPO_CIERRE,
-  VERIFICACION_REPARTO,
+  ayudaCierre, CIERRE_CORTO, emojiReaccion, LARGO_CHAT, llenadoProyeccion, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre,
+  REACCIONES, textoAvance, textoProyeccion, TIPO_CIERRE, VERIFICACION_REPARTO,
 } from '../../mensajes';
 import { huellaCorta } from '../../estado/verificarReparto';
-import type { Liquidacion, VistaMesa } from '../../estado/tipos';
+import type { Liquidacion, TipoReaccion, VistaMesa } from '../../estado/tipos';
+import { RetratoAvatar } from '../AvataresSvg';
 
 export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
   const { e, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar, segundos, aviso, fin,
     liquidacion, historial, bitacora, avance } = mesa;
   const arrastrada = useRef<number | null>(null);
+  const [reaccionPara, setReaccionPara] = useState<string | null>(null);
   // Grupos y avance calculados por el servidor (RF16, RD4): aqui solo se muestran.
   const grupos = useMemo(() => gruposEnOrden(e.orden, avance?.grupos ?? []), [e.orden, avance]);
   const puedeCerrar = debeDescartar && !!avance?.puedeCerrar;
   const sugerida = avance?.descarteSugerido ?? null;
   const chat = useChatLigero(mesa);
+  const enviarReaccion = (para: string, tipo: TipoReaccion) => {
+    mesa.reaccionar(para, tipo);
+    setReaccionPara(null);
+  };
 
   return (
     <main className="mesa">
       <header className="barra">
         <div><strong>{NOMBRE_MODALIDAD[e.modalidad] ?? 'Partida'}</strong> · Ronda {e.ronda} · Sala {mesa.codigo}</div>
         <div className={mesa.conectado ? 'estado ok' : 'estado caido'}>{mesa.conectado ? 'Conectado' : 'Reconectando…'}</div>
+        <button type="button" className="sonido-boton" aria-pressed={!mesa.silenciado}
+          aria-label={mesa.silenciado ? 'Activar efectos de sonido' : 'Silenciar efectos de sonido'}
+          onClick={mesa.alternarSilencio}>
+          {mesa.silenciado ? '🔇 Silencio' : '🔊 Sonido'}
+        </button>
         <button className="chat-boton" aria-expanded={chat.abierto} aria-controls="chat-mesa" onClick={chat.alternar}>
           Chat{chat.sinLeer > 0 && <span className="insignia" aria-label={`${chat.sinLeer} sin leer`}>{chat.sinLeer}</span>}
         </button>
@@ -32,15 +42,43 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       </header>
 
       <section className="marcador">
-        {jugadores.map((sub) => (
-          <div key={sub} className={['jugador', sub === e.turnoDe ? 'en-turno' : '', e.eliminados.includes(sub) ? 'eliminado' : '',
-            e.ausentes.includes(sub) ? 'sin-conexion' : ''].join(' ')}>
-            <span className="nombre">{e.ausentes.includes(sub) && <IconoSinConexion />}{nombre(sub)}</span>
-            <span className="puntos">{e.marcador[sub] ?? 0}{e.modalidad === 'APUNTADO_101' && <small> / {e.umbral}</small>}</span>
-            {e.eliminados.includes(sub) && <span className="etiqueta">eliminado</span>}
-            {e.ausentes.includes(sub) && <span className="etiqueta">sin conexión</span>}
-          </div>
-        ))}
+        {jugadores.map((sub) => {
+          const av = mesa.avatar(sub);
+          const ultima = [...mesa.reacciones].reverse().find((r) => r.para === sub);
+          const abierto = reaccionPara === sub && !e.finalizada;
+          return (
+            <div key={sub} className={['jugador', sub === e.turnoDe ? 'en-turno' : '', e.eliminados.includes(sub) ? 'eliminado' : '',
+              e.ausentes.includes(sub) ? 'sin-conexion' : ''].join(' ')}>
+              {av && <RetratoAvatar id={av} tam={24} className="avatar-ligero" />}
+              <span className="nombre">{e.ausentes.includes(sub) && <IconoSinConexion />}{nombre(sub)}</span>
+              <span className="puntos">{e.marcador[sub] ?? 0}{e.modalidad === 'APUNTADO_101' && <small> / {e.umbral}</small>}</span>
+              {e.eliminados.includes(sub) && <span className="etiqueta">eliminado</span>}
+              {e.ausentes.includes(sub) && <span className="etiqueta">sin conexión</span>}
+              {ultima && (
+                <span className="reaccion-temporal" role="status" aria-label={`Reacción para ${nombre(sub)}: ${ultima.tipo}`}>
+                  {emojiReaccion(ultima.tipo)}
+                </span>
+              )}
+              {sub !== mesa.yo && !e.finalizada && (
+                <button type="button" className="reaccion-boton" aria-expanded={abierto}
+                  aria-label={`Enviar reacción a ${nombre(sub)}`}
+                  onClick={() => setReaccionPara(abierto ? null : sub)}>
+                  😊
+                </button>
+              )}
+              {abierto && (
+                <div className="tira-reacciones" role="group" aria-label={`Reacciones para ${nombre(sub)}`}>
+                  {REACCIONES.map((r) => (
+                    <button key={r.tipo} type="button" title={r.etiqueta} aria-label={`${r.etiqueta} para ${nombre(sub)}`}
+                      onClick={() => enviarReaccion(sub, r.tipo)}>
+                      {r.emoji}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </section>
 
       <section className="centro-mesa">

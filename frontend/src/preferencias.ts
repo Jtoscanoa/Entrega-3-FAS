@@ -36,3 +36,45 @@ export function versionInicial(): Version {
 export function guardarVersion(v: Version): void {
   try { localStorage.setItem(CLAVE, v); } catch { /* almacenamiento no disponible: la eleccion dura la sesion */ }
 }
+
+const CLAVE_SILENCIO = 'mesa101.silencio';
+
+export function silencioGuardado(): boolean | null {
+  try {
+    const v = localStorage.getItem(CLAVE_SILENCIO);
+    return v === '1' ? true : v === '0' ? false : null;
+  } catch {
+    return null;
+  }
+}
+
+/** En la version ligera los efectos de sonido vienen apagados por defecto (recursos limitados). */
+export function silencioInicial(version: Version): boolean {
+  return silencioGuardado() ?? (version === 'ligera');
+}
+
+export function guardarSilencio(silenciado: boolean): void {
+  try { localStorage.setItem(CLAVE_SILENCIO, silenciado ? '1' : '0'); } catch { /* almacenamiento no disponible */ }
+}
+
+export const AVATAR_IDS = ['tendero', 'tia', 'taxista', 'abuela', 'galan'] as const;
+export type AvatarId = typeof AVATAR_IDS[number];
+
+const CLAVE_AVATAR = 'mesa101.avatar';
+
+export function esAvatarValido(v: unknown): v is AvatarId {
+  return typeof v === 'string' && (AVATAR_IDS as readonly string[]).includes(v);
+}
+
+export function avatarInicial(): AvatarId {
+  try {
+    const v = localStorage.getItem(CLAVE_AVATAR);
+    return esAvatarValido(v) ? v : 'tendero';
+  } catch {
+    return 'tendero';
+  }
+}
+
+export function guardarAvatar(a: AvatarId): void {
+  try { localStorage.setItem(CLAVE_AVATAR, a); } catch { /* almacenamiento no disponible */ }
+}

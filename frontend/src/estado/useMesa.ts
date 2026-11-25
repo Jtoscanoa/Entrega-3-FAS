@@ -4,15 +4,19 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, conectarMesa, ConexionMesa, ManejadoresMesa } from '../api';
 import { infoCarta, ordenarPorPinta, ordenarPorValor, reconciliar } from '../cartas';
 import { mensajeDe, PARTIDA_INTERRUMPIDA, rondaPendiente } from '../mensajes';
+import { avatarInicial, esAvatarValido } from '../preferencias';
+import { useSonidosMesa } from '../sonidos';
 import { verificarReparto } from './verificarReparto';
 import type {
-  AvanceMano, Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo, Sesion, VistaMesa,
+  AvatarId, AvanceMano, Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo,
+  ReaccionActiva, Sesion, TipoReaccion, VistaMesa,
 } from './tipos';
 
 /** Puertos hacia el servidor. Se inyectan para poder ejercitar el hook sin red (modo demostracion). */
 export interface ConectorMesa {
   conectar: (token: string, partidaId: number, h: ManejadoresMesa) => ConexionMesa;
   nombres: (token: string, codigo: string) => Promise<Record<string, string>>;
+  perfiles?: (token: string, codigo: string) => Promise<{ nombres: Record<string, string>; avatares: Record<string, AvatarId> }>;
 }
 
 export const conectorServidor: ConectorMesa = {
@@ -21,10 +25,20 @@ export const conectorServidor: ConectorMesa = {
     const s = await api.estadoSala(token, codigo);
     return Object.fromEntries(s.jugadores.map((j) => [j.sub, j.alias]));
   },
+  perfiles: async (token, codigo) => {
+    const s = await api.estadoSala(token, codigo);
+    return {
+      nombres: Object.fromEntries(s.jugadores.map((j) => [j.sub, j.alias])),
+      avatares: s.avatares ?? {},
+    };
+  },
 };
 
 /** {@code alSalir} recibe un aviso opcional para mostrar en el vestibulo. */
-export interface ParametrosMesa { sesion: Sesion; codigo: string; partidaId: number; alSalir: (aviso?: string) => void }
+export interface ParametrosMesa {
+  sesion: Sesion; codigo: string; partidaId: number; alSalir: (aviso?: string) => void;
+  silenciado?: boolean; alternarSilencio?: () => void;
+}
 
 /** Espera antes de pedir de nuevo la ronda que el servidor no pudo abrir (D9). */
 const REINTENTO_RONDA_MS = 3000;
@@ -73,10 +87,15 @@ function quitarUna(cartas: string[], carta: string): string[] {
   return i < 0 ? cartas : [...cartas.slice(0, i), ...cartas.slice(i + 1)];
 }
 
-export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
+function esTipoReaccion(v: unknown): v is TipoReaccion {
+  return v === 'tomate' || v === 'burro' || v === 'aplauso' || v === 'risa';
+}
+
+export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false, alternarSilencio }: ParametrosMesa,
                         conector: ConectorMesa = conectorServidor): VistaMesa {
   const [e, setE] = useState<EstadoMesa>(INICIAL);
   const [nombres, setNombres] = useState<Record<string, string>>({});
+  const [avatares, setAvatares] = useState<Record<string, AvatarId>>({});
   const [conectado, setConectado] = useState(false);
   const [seleccion, setSeleccion] = useState<number | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
@@ -86,11 +105,16 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   const [fin, setFin] = useState<FinPartida | null>(null);
   const [eventos, setEventos] = useState<EventoMesa[]>([]);
   const [chat, setChat] = useState<MensajeChat[]>([]);
+  const [reacciones, setReacciones] = useState<ReaccionActiva[]>([]);
   const siguienteChat = useRef(1);
+  const siguienteReaccion = useRef(1);
+  const reaccionTimers = useRef<Set<ReturnType<typeof setTimeout>>>(new Set());
   const [ahora, setAhora] = useState(Date.now());
   const conexion = useRef<ConexionMesa | null>(null);
   const nombresRef = useRef(nombres);
   nombresRef.current = nombres;
+  const avataresRef = useRef(avatares);
+  avataresRef.current = avatares;
   const siguienteEvento = useRef(1);
   const ultimoRoboPropio = useRef<OrigenRobo | null>(null);
   const ausentesRef = useRef<string[]>([]);
@@ -214,6 +238,18 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         setChat((l) => [...l, { id: siguienteChat.current++, jugadorId: d.jugadorId, texto: d.texto, hora: d.hora }]
           .slice(-MAX_CHAT));
         break;
+      case 'Reaccion': {
+        if (!esTipoReaccion(d?.tipo)) break;
+        const id = siguienteReaccion.current++;
+        setReacciones((l) => [...l, { id, de: d.de, para: d.para, tipo: d.tipo, hora: d.hora }].slice(-12));
+        const t = setTimeout(() => {
+          reaccionTimers.current.delete(t);
+          setReacciones((l) => l.filter((x) => x.id !== id));
+        }, 2400);
+        reaccionTimers.current.add(t);
+        registrar({ tipo: 'reaccion', de: d.de, para: d.para, reaccion: d.tipo });
+        break;
+      }
       case 'PartidaFinalizada':
         setFin({ ganador: d.ganadorId, motivo: d.motivo });
         setE((s) => ({ ...s, finalizada: true, turnoDe: null }));
@@ -225,7 +261,14 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   }, [anotar, nombre, quien, registrar, sesion.sub]);
 
   useEffect(() => {
-    conector.nombres(sesion.token, codigo).then(setNombres).catch(() => undefined);
+    if (conector.perfiles) {
+      conector.perfiles(sesion.token, codigo).then((p) => {
+        setNombres(p.nombres);
+        setAvatares(p.avatares);
+      }).catch(() => undefined);
+    } else {
+      conector.nombres(sesion.token, codigo).then(setNombres).catch(() => undefined);
+    }
     const c = conector.conectar(sesion.token, partidaId, {
       alMensaje,
       alError: (motivo) => {
@@ -245,6 +288,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
       c.cerrarConexion();
       if (reintento.current) clearTimeout(reintento.current);
       reintento.current = null;
+      reaccionTimers.current.forEach((t) => clearTimeout(t));
+      reaccionTimers.current.clear();
     };
   }, [sesion.token, codigo, partidaId, alMensaje, conector]);
 
@@ -252,6 +297,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   useEffect(() => { if (!aviso) return; const t = setTimeout(() => setAviso(null), 6000); return () => clearTimeout(t); }, [aviso]);
 
   const miTurno = e.turnoDe === sesion.sub && !e.finalizada;
+  useSonidosMesa(eventos, miTurno, e.numeroTurno, e.finalizada, silenciado);
   const debeRobar = miTurno && e.fase === 'ESPERANDO_ROBO';
   const debeDescartar = miTurno && e.fase === 'ESPERANDO_DESCARTE';
   const cartaSel = seleccion !== null ? e.orden[seleccion] ?? null : null;
@@ -285,9 +331,16 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
 
   return {
     yo: sesion.sub, codigo, e, conectado, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar,
-    segundos, instruccion, avance, aviso, bitacora, liquidacion, historial, fin, eventos, chat,
+    segundos, instruccion, avance, aviso, bitacora, liquidacion, historial, fin, eventos, chat, reacciones,
+    silenciado,
+    alternarSilencio: alternarSilencio ?? (() => undefined),
     enviarChat: (texto) => { if (texto.trim()) conexion.current?.chatear(texto); },
+    reaccionar: (para, tipo) => conexion.current?.reaccionar(para, tipo),
     alias: (sub) => nombresRef.current[sub] ?? (sub === sesion.sub ? 'Tú' : 'Jugador'),
+    avatar: (sub) => {
+      const a = avataresRef.current[sub];
+      return esAvatarValido(a) ? a : sub === sesion.sub ? avatarInicial() : null;
+    },
     seleccionar: setSeleccion,
     robar: (delDescarte) => conexion.current?.robar(delDescarte, e.numeroTurno),
     descartar: () => { if (cartaSel) conexion.current?.descartar(cartaSel, e.numeroTurno); },

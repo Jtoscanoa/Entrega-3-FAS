@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { infoCarta, ordenarPorGrupos } from '../../cartas';
-import type { AvanceMano, Aviso, EventoMesa, Liquidacion, VistaMesa } from '../../estado/tipos';
+import type { AvanceMano, AvatarId, Aviso, EventoMesa, Liquidacion, VistaMesa } from '../../estado/tipos';
 import { nombreCarta } from './comun';
 
 const YO = 'tut-yo';
@@ -13,6 +13,11 @@ const NOMBRES: Record<string, string> = {
   [YO]: 'Tú',
   'tut-beto': 'Beto',
   'tut-caro': 'Carolina',
+};
+const AVATARES_TUT: Record<string, AvatarId> = {
+  [YO]: 'tendero',
+  'tut-beto': 'taxista',
+  'tut-caro': 'abuela',
 };
 
 const MANO_INICIAL = ['7C', '4D', '7P', 'KC', '5D', '2D', '7T', 'KD', '2C', '9T'];
@@ -430,6 +435,7 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
     conectado: true,
     nombre: (sub) => (sub ? NOMBRES[sub] ?? sub : ''),
     alias: (sub) => NOMBRES[sub] ?? sub,
+    avatar: (sub) => AVATARES_TUT[sub] ?? 'tendero',
     jugadores: JUGADORES,
     seleccion: st.seleccion,
     cartaSel,
@@ -447,6 +453,10 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
     eventos: st.eventos,
     chat: [],
     enviarChat: () => undefined,
+    reacciones: [],
+    reaccionar: () => undefined,
+    silenciado: true,
+    alternarSilencio: () => undefined,
     seleccionar,
     robar,
     descartar,
