@@ -15,8 +15,6 @@ import java.util.concurrent.locks.ReentrantLock;
 /** Estado vivo de una partida. Solo se toca con {@link #candado} tomado (un escritor por partida). */
 final class PartidaEnMemoria {
 
-    enum Fase { ESPERANDO_ROBO, ESPERANDO_DESCARTE, ENTRE_RONDAS, FINALIZADA }
-
     static final class Asiento {
         final Participante participante;
         final List<Carta> mano = new ArrayList<>();
@@ -39,7 +37,8 @@ final class PartidaEnMemoria {
     final List<JugadaRegistrada> jugadas = new ArrayList<>();
     /** Rondas liquidadas en orden (RF13); se agrega despues del commit de cada liquidacion. */
     final List<RondaHistorial> historial = new ArrayList<>();
-    Fase fase = Fase.ENTRE_RONDAS;
+    /** Estado de la FSM (patron State): decide que comandos admite la partida y que hace un vencimiento. */
+    EstadoTurno estado = EstadoTurno.ENTRE_RONDAS;
     int indiceAbridor = -1;
     int indiceTurno;
     int numeroTurno;
