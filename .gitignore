@@ -16,6 +16,8 @@ src/main/resources/static/
 .DS_Store
 Thumbs.db
 tsconfig.tsbuildinfo
+# Resumenes de k6 (FF-14, FF-15): evidencia local, se adjunta al informe y no se versiona
+resumen-*.json
 
 # Archivos locales de trabajo (no se versionan)
 CLAUDE.md

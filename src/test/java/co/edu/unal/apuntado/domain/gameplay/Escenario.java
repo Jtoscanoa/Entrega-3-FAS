@@ -7,6 +7,7 @@ import co.edu.unal.apuntado.domain.gameplay.mazo.IMazo;
 import co.edu.unal.apuntado.domain.gameplay.mazo.Robo;
 import co.edu.unal.apuntado.domain.rules.GameConfigurationComponent;
 import co.edu.unal.apuntado.domain.rules.HandEvaluatorComponent;
+import co.edu.unal.apuntado.domain.rules.IEvaluadorMano;
 import co.edu.unal.apuntado.domain.rules.RegistroReglas;
 import co.edu.unal.apuntado.domain.rules.RoundScoringComponent;
 import co.edu.unal.apuntado.domain.rules.modelo.Carta;
@@ -166,11 +167,16 @@ final class Escenario {
     final TurnOrchestratorComponent orquestador;
 
     Escenario(IMazo mazo) {
+        this(mazo, new HandEvaluatorComponent(new RegistroReglas()));
+    }
+
+    /** Con otro evaluador (p. ej. un registro con una variante de prueba, FF-13). */
+    Escenario(IMazo mazo, IEvaluadorMano evaluador) {
         if (mazo instanceof MazoFalso falso) {
             falso.auditoria = auditoria;
         }
         IEventosPartida colector = eventos::add;
-        orquestador = new TurnOrchestratorComponent(new HandEvaluatorComponent(new RegistroReglas()),
+        orquestador = new TurnOrchestratorComponent(evaluador,
                 new RoundScoringComponent(), new GameConfigurationComponent(), mazo, auditoria, estado, colector,
                 programador, Clock.fixed(AHORA, ZoneOffset.UTC));
     }

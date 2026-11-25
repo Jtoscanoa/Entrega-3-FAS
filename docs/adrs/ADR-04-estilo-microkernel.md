@@ -24,6 +24,7 @@ Opción (b), con un solo cuanto. TurnOrchestratorComponent depende solo de `IEva
 - FF-01b (ArchUnit): núcleo `domain.rules.modelo` puro.
 - FF-08 (métricas de acoplamiento).
 - FF-13 (`ExtensibilidadVarianteTest` y `git diff` en los pull requests con etiqueta "variante").
+- Enmienda (24-nov-2026, bitácora E3-2 y E3-17): FF-01c filtra por el dueño del método con `DescribedPredicate.and(targetOwner(...), target(...))` e incluye `Agrupacion` entre los dueños vigilados; la regla misma se prueba en `FF01cReglaTest`.
 
 ## Notas
 

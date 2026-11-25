@@ -12,7 +12,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-java@v4
         with: { distribution: temurin, java-version: "21", cache: maven }
-      # mvn verify ejecuta: ArchUnit FF-01..FF-08b, JUnit FF-11/12/15/16/17/18 (Testcontainers),
+      # mvn verify ejecuta: ArchUnit FF-01..FF-08b, JUnit FF-11/12/13/16/17/18 (Testcontainers),
       # PMD FF-09 (CC <= 10) y JaCoCo FF-10 (ramas >= 95 % en domain.rules)
       - run: mvn -B verify
       - name: git diff de variantes (FF-13)
@@ -81,5 +81,12 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: grafana/setup-k6-action@v1
-      - run: k6 run tests/fitness/k6/latencia.js     # FF-14 (p95 < 300 ms, 50 salas) y FF-15 (reconexion <= 5 s)
-        env: { STAGING_URL: "${{ secrets.STAGING_URL }}", STAGING_TOKEN: "${{ secrets.STAGING_TOKEN }}" }
+      # STAGING_URL es la URL base HTTP(S) del servidor (p. ej. https://staging.example); los tokens los crea el script
+      - run: k6 run tests/fitness/k6/latencia.js     # FF-14: 50 salas x 4 jugadores, p(95) < 300 ms
+        env: { BASE_URL: "${{ secrets.STAGING_URL }}", SALIDA: resumen-latencia.json }
+      - run: k6 run tests/fitness/k6/reconexion.js   # FF-15: corte de 30 s y VistaPartida en <= 5 s
+        if: always()
+        env: { BASE_URL: "${{ secrets.STAGING_URL }}", SALIDA: resumen-reconexion.json }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: { name: fitness-k6, path: "resumen-*.json" }

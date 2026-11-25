@@ -9,10 +9,13 @@ import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.sli
 
 import co.edu.unal.apuntado.domain.gameplay.auditoria.OrdenMazo;
 import co.edu.unal.apuntado.domain.rules.ReglaJuego;
+import co.edu.unal.apuntado.domain.rules.modelo.Agrupacion;
 import co.edu.unal.apuntado.domain.rules.modelo.Carta;
 import co.edu.unal.apuntado.domain.rules.modelo.Combinacion;
+import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.Dependency;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaMethodCall;
 import com.tngtech.archunit.core.domain.properties.HasName;
 import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
@@ -45,20 +48,30 @@ class ReglasArquitecturaTest {
             .should().dependOnClassesThat().resideInAnyPackage("..domain.rules.evaluacion..",
                     "..domain.gameplay..", "..infrastructure..", "org.springframework..");
 
-    @ArchTest // FF-01c: el orquestador es mediador estricto: no calcula sobre cartas ni combinaciones
+    /**
+     * Llamada a un metodo de {@code duenos} cuyo nombre cumple {@code nombres}. Se usa el {@code and} estatico con
+     * los dos predicados (bitacora E3-2): escrito como {@code targetOwner(...).and(target(...))}, javac lo resolvia al
+     * metodo estatico invocado sobre una instancia y descartaba el filtro de owner.
+     */
+    static DescribedPredicate<JavaMethodCall> llamadaA(DescribedPredicate<? super JavaClass> duenos, String nombres) {
+        return DescribedPredicate.<JavaMethodCall>and(targetOwner(duenos),
+                target(HasName.Predicates.nameMatching(nombres)));
+    }
+
+    @ArchTest // FF-01c: el orquestador es mediador estricto: no calcula sobre cartas, combinaciones ni agrupaciones
     static final ArchRule ff01c_orquestador_sin_calculo_de_cartas = noClasses()
             .that().haveSimpleName(ORQUESTADOR)
-            .should().callMethodWhere(
-                    targetOwner(assignableTo(Carta.class).or(assignableTo(Combinacion.class)))
-                            .and(target(HasName.Predicates.nameMatching("puntos|valor|rango|pinta|compareTo|sumar.*|calcular.*"))))
+            .should().callMethodWhere(llamadaA(assignableTo(Carta.class).or(assignableTo(Combinacion.class))
+                            .or(assignableTo(Agrupacion.class)),
+                    "puntos|valor|rango|pinta|compareTo|sumar.*|calcular.*"))
             .because("la evaluacion corresponde a IEvaluadorMano y la puntuacion a ILiquidacion");
 
     @ArchTest // FF-01c (2): ni algoritmos de evaluacion ni aritmetica de agregacion
     static final ArchRule ff01c_orquestador_sin_algoritmos = noClasses()
             .that().haveSimpleName(ORQUESTADOR)
             .should().dependOnClassesThat().resideInAnyPackage("..domain.rules.evaluacion..")
-            .orShould().callMethodWhere(targetOwner(assignableTo(Math.class).or(assignableTo(Integer.class)))
-                    .and(target(HasName.Predicates.nameMatching("sum|max|min|abs"))));
+            .orShould().callMethodWhere(llamadaA(assignableTo(Math.class).or(assignableTo(Integer.class)),
+                    "sum|max|min|abs"));
 
     @ArchTest // FF-02: sin ciclos entre dominios
     static final ArchRule prueba3_ff02a_sin_ciclos_entre_dominios = slices()

@@ -36,7 +36,7 @@ en ghcr.io y la despliega en AWS EC2 por SSH (secretos `EC2_HOST` y `EC2_SSH_KEY
 
 | FF | Qué protege | Dónde |
 |---|---|---|
-| FF-01, 01b, 01c | Reglas aisladas; núcleo `modelo` puro; orquestador sin cálculo | `ReglasArquitecturaTest` |
+| FF-01, 01b, 01c | Reglas aisladas; núcleo `modelo` puro; orquestador sin cálculo sobre `Carta`, `Combinacion` ni `Agrupacion` | `ReglasArquitecturaTest`; la propia FF-01c se prueba en `FF01cReglaTest` |
 | FF-02 | Sin ciclos | `ReglasArquitecturaTest` |
 | FF-03 | Variantes independientes entre sí | `ReglasArquitecturaTest` |
 | FF-05 | Solo mazo y auditoría conocen el orden del mazo | `ReglasArquitecturaTest` |
@@ -45,10 +45,16 @@ en ghcr.io y la despliega en AWS EC2 por SSH (secretos `EC2_HOST` y `EC2_SSH_KEY
 | FF-09 | CC ≤ 10 por método | PMD `config/pmd/complejidad.xml` |
 | FF-10 | Cobertura de ramas ≥ 95 % en `domain.rules` | JaCoCo |
 | FF-11 | Reparto verificable (1.000 mazos) | `MazoYAuditoriaTest` |
+| FF-12 | Configuración sin redespliegue: umbral 150 y comodines elegidos en la sala, mismas clases | `ConfiguracionSinRedespliegueTest` |
+| FF-13 | Una variante nueva entra por `ServiceLoader` sin tocar nada fuera de `domain.rules` | `ExtensibilidadVarianteTest` y `git diff` en los PR con etiqueta `variante` |
 | FF-16 | Fallo en la liquidación → 0 filas (PostgreSQL real) | `LiquidacionTransaccionalIT`, `FalloTransaccionalTest` |
 | FF-17 | Doble cierre y temporizador obsoleto | `ConcurrenciaCierreTest`, `TurnosTest` |
 | FF-18 | CONNECT sin token, vencido o con firma ajena rechazado | `AutenticacionStompTest`, `TokenInvitadoTest` |
-| FF-14, FF-15 | Latencia p95 < 300 ms y reconexión ≤ 5 s | k6 `tests/fitness/k6/` (job nocturno) |
+| FF-14 | Latencia del comando al evento p(95) < 300 ms con 50 salas de 4 jugadores | k6 `tests/fitness/k6/latencia.js` (job nocturno) |
+| FF-15 | Reconexión tras un corte de 30 s: `VistaPartida` en ≤ 5 s | k6 `tests/fitness/k6/reconexion.js` (job nocturno) |
+| FF-19 | La presentación de la SPA no importa `src/api.ts` | dependency-cruiser (`npm run fitness`) |
+
+Cómo correr FF-14 y FF-15 (también en Windows y contra producción): [`tests/fitness/k6/README.md`](tests/fitness/k6/README.md).
 
 ## Despliegue en AWS
 
