@@ -616,7 +616,7 @@
 
 /* E3-18f: barra de proyeccion "si cierran ahora" bajo la mano, con el avance RF16 */
 .a-barra-proyeccion { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin: 2px auto 6px; text-align: center; width: 100%; }
-.a-proyeccion { position: relative; overflow: hidden; margin: 0; flex: 1 1 260px; max-width: 520px; padding: 6px 12px; border-radius: 999px;
+.a-proyeccion { position: relative; overflow: hidden; margin: 0; flex: 0 0 auto; width: min(100%, 520px); box-sizing: border-box; padding: 6px 12px; border-radius: 999px;
   border: 1px solid var(--a-borde); background: rgba(255, 255, 255, .05); font-size: 13.5px; font-variant-numeric: tabular-nums; }
 .a-proyeccion-llenado { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(201, 164, 92, .18), rgba(201, 164, 92, .42)); }
 .a-proyeccion-texto { position: relative; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
