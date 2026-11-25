@@ -1,0 +1,61 @@
+@startuml F02_secuencia_cierre
+title Figura 2. Secuencia del cierre y la liquidación de una ronda
+skinparam defaultFontName Arial
+skinparam shadowing false
+autonumber
+actor "Jugador\n(SPA)" as J
+participant "SessionGateway\nComponent" as G
+participant "TurnOrchestrator\nComponent\n(GameOrchestrator)" as T
+participant "HandEvaluator\nComponent\n(IEvaluadorMano)" as H
+participant "ReglaJuego\n(plug-in de la\nmodalidad)" as R
+participant "RoundScoring\nComponent\n(ScoringService)" as S
+participant "DealAudit\nComponent" as A
+participant "MatchState\nRepository" as M
+database "PostgreSQL\n(RDS)" as DB
+participant "PublicadorEventos\nStomp" as P
+
+J -> G : SEND /app/partidas/{id}/cerrar\n{carta, numeroTurno}
+G -> T : cerrar(partidaId, sub, carta, numeroTurno)
+activate T
+note right of T : ReentrantLock por partida (ADR-06);\nvalidarTurno: turno, fase y numeroTurno (FF-17)
+T -> H : validarCierre(manoSinDescarte, cfg)
+H -> R : evaluarCierre(mano, cfg)\n(RegistroReglas → plug-in por modalidad)
+R --> H : ResultadoValidacion
+H --> T : ResultadoValidacion
+alt cierre inválido
+  T -> P : publicar(CierreRechazado(motivo))
+  P --> J : /user/queue/partida (RF16)
+else cierre válido
+  loop por cada perdedor activo
+    T -> H : cartasSueltas(mano, cfg)
+    H --> T : Agrupacion (mínimo puntaje, programación dinámica)
+  end
+  T -> S : liquidar(SolicitudLiquidacion)
+  alt Clásica 4-3-3 (máximo de rondas = 1)
+    S --> T : ResultadoLiquidacion\n(ganador = quien cierra, fin = MAXIMO_RONDAS)
+  else Apuntado a 101
+    S -> S : puntos: cerrador = residuo (< 5),\nperdedores = cartas sueltas; acumular
+    S -> S : superanUmbral(marcador, 101)\ny determinarFin
+    S --> T : ResultadoLiquidacion\n(eliminados ≥ 101, fin si queda un activo)
+  end
+  T -> A : revelar(claveMazo)
+  A --> T : RevelacionReparto (orden + sal, RF18)
+  T -> M : guardarLiquidacion(instantánea)
+  activate M
+  M -> DB : BEGIN
+  M -> DB : UPDATE ronda SET estado='LIQUIDADA'\nWHERE id=? AND estado='EN_CURSO'
+  DB --> M : 1 fila (si 0: LiquidacionDuplicadaException)
+  M -> DB : INSERT manos, cartas, jugadas, puntajes
+  M -> DB : COMMIT
+  deactivate M
+  note right of M : una sola transacción (E5, FF-16)
+  T -> P : publicar(RondaLiquidada) — después del commit
+  P --> J : /topic/partidas/{id}
+  alt partida finalizada
+    T -> P : publicar(PartidaFinalizada(ganador, motivo))
+  else continúa (solo Apuntado)
+    T -> T : abrirSiguienteRonda()
+  end
+end
+deactivate T
+@enduml

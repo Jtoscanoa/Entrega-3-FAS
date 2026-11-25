@@ -1,0 +1,117 @@
+@startuml F03_clases
+title Figura 3. Clases de implementación del motor de reglas y su orquestación
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam classAttributeIconSize 0
+hide empty members
+
+package "domain.gameplay" {
+  interface ITurno {
+    +iniciarPartida(codigoSala: String, cfg: ConfiguracionReglas, jugadores: List<Participante>): long
+    +robar(partidaId: long, jugadorId: String, delDescarte: boolean, numeroTurno: int): void
+    +descartar(partidaId: long, jugadorId: String, codigoCarta: String, numeroTurno: int): void
+    +cerrar(partidaId: long, jugadorId: String, codigoCarta: String, numeroTurno: int): ResultadoValidacion
+    +vencerTurno(partidaId: long, numeroTurno: int): void
+    +vistaDe(partidaId: long, jugadorId: String): VistaPartida
+    +marcarConexion(partidaId: long, jugadorId: String, conectado: boolean): void
+  }
+  class TurnOrchestratorComponent <<mediador>> {
+    -partidas: Map<Long, PartidaEnMemoria>
+    -conCandado(partidaId: long, accion: Function): T
+    -validarTurno(p, jugadorId, numeroTurno, esperada: Fase): void
+    -liquidarCierre(p, cerrador, descarte, resto, cierre): void
+  }
+}
+
+package "domain.rules" {
+  interface IEvaluadorMano {
+    +validarCierre(mano: List<Carta>, cfg: ConfiguracionReglas): ResultadoValidacion
+    +cartasSueltas(mano: List<Carta>, cfg: ConfiguracionReglas): Agrupacion
+  }
+  interface ILiquidacion {
+    +liquidar(solicitud: SolicitudLiquidacion): ResultadoLiquidacion
+  }
+  interface IConfiguracion {
+    +predeterminada(modalidad: String): ConfiguracionReglas
+    +validarMesa(cfg: ConfiguracionReglas, jugadores: int): void
+  }
+  interface ReglaJuego <<contrato del microkernel>> {
+    +modalidad(): String
+    +evaluarCierre(mano: List<Carta>, cfg: ConfiguracionReglas): ResultadoValidacion
+    +cartasSueltas(mano: List<Carta>, cfg: ConfiguracionReglas): Agrupacion
+  }
+  class RegistroReglas <<registro>> {
+    +RegistroReglas()
+    +RegistroReglas(origen: Iterable<ReglaJuego>)
+    +obtener(modalidad: String): Optional<ReglaJuego>
+    +modalidades(): Set<String>
+  }
+  note bottom of RegistroReglas : ServiceLoader.load(ReglaJuego.class)\nMETA-INF/services
+  class HandEvaluatorComponent
+  class RoundScoringComponent {
+    -puntosDeRonda(s): Map<String,Integer>
+    -superanUmbral(marcador, umbral: int): Set<String>
+    -determinarFin(s, marcador, ...): Optional<MotivoFin>
+  }
+  class GameConfigurationComponent
+}
+
+package "domain.rules.evaluacion" <<plug-ins>> {
+  class ReglaApuntado101 {
+    +modalidad(): String
+    +evaluarCierre(mano, cfg): ResultadoValidacion
+    +cartasSueltas(mano, cfg): Agrupacion
+    -aplicarResiduo(residuo: int, cfg): ResultadoValidacion
+  }
+  class ReglaClasicaCuartaTerna {
+    +modalidad(): String
+    +evaluarCierre(mano, cfg): ResultadoValidacion
+    +cartasSueltas(mano, cfg): Agrupacion
+  }
+  class BuscadorCombinaciones <<máscaras de bits>> {
+    +BuscadorCombinaciones(mano: List<Carta>, comodines: boolean)
+    +particionExacta(tamanos: int...): Optional<List<Combinacion>>
+    +particionLibre(): Optional<List<Combinacion>>
+    +mejorParticionConSobrantes(ternas: int): Optional<ParticionConSobrantes>
+    -enumerar(comodines: boolean, grupos): void
+    -explorar(resto: int, ternasQuedan: int, ...): void
+  }
+  class ValidadorCombinacion <<utilidad>> {
+    +{static} clasificar(cartas: List<Carta>, comodines: boolean): Optional<TipoCombinacion>
+    -{static} esGrupo(naturales): boolean
+    -{static} esEscalera(naturales, tamano: int): boolean
+  }
+  class TablaPuntos <<utilidad>> {
+    +{static} puntos(carta: Carta): int
+  }
+}
+
+package "domain.rules.modelo" <<núcleo, solo java.*>> {
+  class Carta <<record>>
+  class Combinacion <<record>>
+  class Agrupacion <<record>>
+  class ConfiguracionReglas <<record>>
+  class ResultadoValidacion <<record>>
+  class SolicitudLiquidacion <<record>>
+  class ResultadoLiquidacion <<record>>
+}
+
+ITurno <|.. TurnOrchestratorComponent
+IEvaluadorMano <|.. HandEvaluatorComponent
+ILiquidacion <|.. RoundScoringComponent
+IConfiguracion <|.. GameConfigurationComponent
+ReglaJuego <|.. ReglaApuntado101
+ReglaJuego <|.. ReglaClasicaCuartaTerna
+TurnOrchestratorComponent --> IEvaluadorMano
+TurnOrchestratorComponent --> ILiquidacion
+HandEvaluatorComponent --> RegistroReglas
+RegistroReglas o--> "1..*" ReglaJuego
+ReglaApuntado101 ..> BuscadorCombinaciones
+ReglaClasicaCuartaTerna ..> BuscadorCombinaciones
+BuscadorCombinaciones ..> ValidadorCombinacion
+BuscadorCombinaciones ..> TablaPuntos
+ReglaJuego ..> Agrupacion
+ReglaJuego ..> ResultadoValidacion
+RoundScoringComponent ..> SolicitudLiquidacion
+RoundScoringComponent ..> ResultadoLiquidacion
+@enduml
