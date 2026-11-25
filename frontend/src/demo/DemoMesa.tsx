@@ -129,6 +129,7 @@ export default function DemoMesa({ version }: { version: Version }) {
         {boton('Turno rival', () => sim.turnoRival(0))}
         {boton('Rechazo', () => sim.rechazar())}
         {boton('Mano cerrable', () => sim.manoCerrable())}
+        {boton('Chat de Beto', () => sim.emitir('Chat', { jugadorId: 'demo-beto', texto: '¿Quién va ganando?', hora: new Date().toISOString() }))}
         {boton('Liquidar', () => sim.liquidar())}
         {boton('Fin', () => sim.terminar())}
         {boton('Cortar red 3 s', () => { sim.h?.alDesconectar(); setTimeout(() => sim.h?.alConectar(), 3000); })}

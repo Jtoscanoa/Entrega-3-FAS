@@ -15,12 +15,16 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
   const grupos = useMemo(() => gruposEnOrden(e.orden, avance?.grupos ?? []), [e.orden, avance]);
   const puedeCerrar = debeDescartar && !!avance?.puedeCerrar;
   const sugerida = avance?.descarteSugerido ?? null;
+  const chat = useChatLigero(mesa);
 
   return (
     <main className="mesa">
       <header className="barra">
         <div><strong>{NOMBRE_MODALIDAD[e.modalidad] ?? 'Partida'}</strong> · Ronda {e.ronda} · Sala {mesa.codigo}</div>
         <div className={mesa.conectado ? 'estado ok' : 'estado caido'}>{mesa.conectado ? 'Conectado' : 'Reconectando…'}</div>
+        <button className="chat-boton" aria-expanded={chat.abierto} aria-controls="chat-mesa" onClick={chat.alternar}>
+          Chat{chat.sinLeer > 0 && <span className="insignia" aria-label={`${chat.sinLeer} sin leer`}>{chat.sinLeer}</span>}
+        </button>
         <button className="enlace" onClick={mesa.salir}>Salir</button>
       </header>
 
@@ -90,7 +94,7 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       <aside className="bitacora">
         <h2>Lo último</h2>
         <ul>{bitacora.map((t, i) => <li key={i}>{t}</li>)}</ul>
-        <ChatLigero mesa={mesa} />
+        <ChatLigero mesa={mesa} estado={chat} />
         {historial.length > 0 && (
           <>
             <h2>Historial de rondas</h2>
@@ -165,18 +169,40 @@ function Carta({ codigo, seleccionada, nueva, grupo = -1, onClick, onDragStart, 
   );
 }
 
+interface EstadoChat { abierto: boolean; sinLeer: number; alternar: () => void; cerrar: () => void }
+
+/**
+ * Estado del chat ligero. En el telefono el chat es una hoja que se abre con el boton de la barra (con los mensajes
+ * sin leer de los demas); en escritorio va siempre a la vista en el lateral. Sin dependencias de la piel animada.
+ */
+function useChatLigero(mesa: VistaMesa): EstadoChat {
+  const [abierto, setAbierto] = useState(false);
+  const [leidoHasta, setLeidoHasta] = useState(0);
+  const ultimo = mesa.chat[mesa.chat.length - 1];
+  useEffect(() => { if (abierto && ultimo) setLeidoHasta(ultimo.id); }, [abierto, ultimo]);
+  const sinLeer = abierto ? 0 : mesa.chat.filter((m) => m.id > leidoHasta && m.jugadorId !== mesa.yo).length;
+  return { abierto, sinLeer, alternar: () => setAbierto((v) => !v), cerrar: () => setAbierto(false) };
+}
+
 /** Chat en vivo de la mesa, sin animaciones: lista con desplazamiento y un campo para escribir. */
-function ChatLigero({ mesa }: { mesa: VistaMesa }) {
+function ChatLigero({ mesa, estado }: { mesa: VistaMesa; estado: EstadoChat }) {
   const [texto, setTexto] = useState('');
   const lista = useRef<HTMLUListElement>(null);
-  useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }); }, [mesa.chat.length]);
+  useEffect(() => { lista.current?.scrollTo({ top: lista.current.scrollHeight }); }, [mesa.chat.length, estado.abierto]);
   const enviar = (ev: FormEvent) => { ev.preventDefault(); mesa.enviarChat(texto); setTexto(''); };
   return (
-    <section className="chat" aria-label="Chat de la mesa">
-      <h2>Chat</h2>
+    <section id="chat-mesa" className={estado.abierto ? 'chat abierto' : 'chat'} aria-label="Chat de la mesa">
+      <div className="chat-cabecera">
+        <h2>Chat</h2>
+        <button className="enlace chat-cerrar" onClick={estado.cerrar}>Cerrar</button>
+      </div>
       <ul ref={lista} className="chat-lista" aria-live="polite">
         {mesa.chat.length === 0 && <li className="tenue">Nadie ha escrito todavía.</li>}
-        {mesa.chat.map((m) => <li key={m.id}><b>{m.jugadorId === mesa.yo ? 'Tú' : mesa.nombre(m.jugadorId)}:</b> {m.texto}</li>)}
+        {mesa.chat.map((m) => (
+          <li key={m.id} className={m.jugadorId === mesa.yo ? 'mio' : ''}>
+            <b>{m.jugadorId === mesa.yo ? 'Tú' : mesa.nombre(m.jugadorId)}</b> {m.texto}
+          </li>
+        ))}
       </ul>
       <form className="fila" onSubmit={enviar}>
         <input aria-label="Mensaje para la mesa" placeholder="Escribe a la mesa" maxLength={LARGO_CHAT} value={texto}

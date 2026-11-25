@@ -83,11 +83,18 @@ button.cerrar.listo { background: var(--ok); border-color: #7fd6a4; box-shadow: 
 .bitacora { grid-area: bitacora; background: rgba(255,255,255,.08); border-radius: 16px; padding: 12px 16px; font-size: 14px; }
 .bitacora ul { padding-left: 18px; margin: 0; } .bitacora li { margin-bottom: 4px; }
 .bitacora table, table.liquidacion { width: 100%; border-collapse: collapse; font-size: 13px; }
+/* Chat de la mesa (piel ligera): en escritorio, dentro del lateral; en el telefono, hoja que abre el boton de la barra */
 .chat { margin-top: 14px; border-top: 1px solid rgba(255,255,255,.2); padding-top: 10px; }
-.chat-lista { list-style: none; padding: 0; margin: 0 0 8px; max-height: 220px; overflow-y: auto; overflow-wrap: anywhere; }
-.chat-lista li { margin-bottom: 4px; }
+.chat-cabecera { display: flex; justify-content: space-between; align-items: center; }
+.chat-cabecera h2 { margin: 0 0 8px; }
+.chat-cerrar, .chat-boton { display: none; }
+.bitacora .chat-lista, .chat-lista { list-style: none; padding: 0; margin: 0 0 8px; max-height: 220px; overflow-y: auto; overflow-wrap: anywhere; }
+.chat-lista li { margin-bottom: 6px; line-height: 1.35; }
+.chat-lista li b { display: block; font-size: 12px; color: var(--acento); }
+.chat-lista li.mio b { color: #9fdcb5; }
 .chat .fila { flex-wrap: nowrap; }
 .chat .fila input { flex: 1; width: auto; min-width: 0; }
+.insignia { display: inline-block; min-width: 18px; margin-left: 6px; padding: 1px 5px; border-radius: 9px; background: var(--rojo); color: #fff; font-size: 12px; font-weight: 700; text-align: center; }
 .bitacora th, .bitacora td { border-bottom: 1px solid rgba(255,255,255,.2); padding: 4px; text-align: center; }
 table.liquidacion th, table.liquidacion td { border-bottom: 1px solid var(--borde); padding: 6px; text-align: left; }
 tr.eliminado td { color: var(--rojo); }
@@ -100,6 +107,15 @@ tr.eliminado td { color: var(--rojo); }
 }
 @media (max-width: 860px) {
   .mesa { grid-template-columns: 1fr; grid-template-areas: "barra" "marcador" "centro" "aviso" "mano" "bitacora"; }
+  .barra { flex-wrap: wrap; }
+  .chat-boton { display: inline-flex; align-items: center; padding: 6px 12px; background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
+  .chat { display: none; }
+  .chat.abierto { display: flex; flex-direction: column; position: fixed; left: 8px; right: 8px; bottom: calc(60px + env(safe-area-inset-bottom)); z-index: 20;
+    max-height: min(70vh, 460px); margin: 0; padding: 10px 12px 12px; border: 1px solid rgba(255,255,255,.25); border-radius: 14px;
+    background: #0b2f23; color: #fff; box-shadow: 0 -8px 30px rgba(0,0,0,.45); }
+  .chat.abierto .chat-cerrar { display: inline; color: #fff; }
+  .chat.abierto .chat-lista { flex: 1; max-height: none; min-height: 90px; }
+  .chat .fila input { font-size: 16px; }
   .carta { width: 50px; height: 74px; }
   .carta .indice { width: 15px; } .carta .indice b { font-size: 15px; } .carta .indice span { font-size: 12px; }
   .carta .recuadro { left: 19px; right: 4px; top: 7px; bottom: 7px; font-size: 20px; }
