@@ -11,7 +11,7 @@ import { PielMesa } from '../presentacion/Pieles';
 const YO = 'demo-ana';
 const RIVALES = ['demo-beto', 'demo-caro', 'demo-dani'];
 const NOMBRES: Record<string, string> = { [YO]: 'Ana Toro', 'demo-beto': 'Beto', 'demo-caro': 'Carolina', 'demo-dani': 'Dani Ruiz' };
-const AVATARES: Record<string, AvatarId> = { [YO]: 'tia', 'demo-beto': 'taxista', 'demo-caro': 'abuela', 'demo-dani': 'galan' };
+const AVATARES: Record<string, AvatarId> = { [YO]: 'hincha', 'demo-beto': 'perro', 'demo-caro': 'panadero', 'demo-dani': 'metro' };
 const VALORES = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
 const PINTAS = ['C', 'D', 'T', 'P'];
 

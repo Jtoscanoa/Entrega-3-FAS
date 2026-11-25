@@ -92,10 +92,6 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
             <small>{e.robarDelDescarte ? 'Robar del pozo' : 'Pozo'}</small>
           </button>
         </div>
-        {e.huella && (
-          <p className="huella" title={e.huella}>Huella del reparto: <code>{huellaCorta(e.huella)}</code>
-            <span className="tenue"> · se comprueba al liquidar</span></p>
-        )}
         <div className={miTurno ? 'instruccion mia' : 'instruccion'}>
           {mesa.instruccion}{miTurno && segundos !== null && <span className="reloj"> {segundos} s</span>}
         </div>
@@ -161,6 +157,13 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
             </table>
             <p className="tenue pequeno">Puntos de la ronda y, entre paréntesis, el total. ✓ = cerró.</p>
           </>
+        )}
+        {e.huella && (
+          <details className="huella">
+            <summary>Verificación del reparto (SHA-256)</summary>
+            <p title={e.huella}>Huella de la ronda {e.ronda}: <code>{huellaCorta(e.huella)}</code>
+              <span className="tenue"> · se comprueba al liquidar</span></p>
+          </details>
         )}
       </aside>
 

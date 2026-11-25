@@ -57,6 +57,8 @@ export interface EstadoMesa {
   turnoDesde: number | null;
   /** Jugadores sin ninguna sesion abierta segun la presencia del servidor (RF17, ADR-08b). */
   ausentes: string[];
+  /** Segundos por turno de la mesa (VistaPartida): base del reloj cuando la recarga no vio el TurnoAsignado. */
+  segundosPorTurno: number;
   /** Huella SHA-256 del reparto de la ronda en curso, anunciada al iniciarla (RF18, ADR-03). */
   huella: string | null;
   /** Avance de la mano propia segun el servidor; null si aun no llega (RF16). */

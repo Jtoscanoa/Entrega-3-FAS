@@ -2,7 +2,11 @@
 import { useEffect, useRef } from 'react';
 import type { EventoMesa } from './estado/tipos';
 
-export type SonidoMesa = 'robar' | 'descartar' | 'rechazo' | 'turno' | 'reaccion' | 'liquidacion';
+export type SonidoMesa = 'robar' | 'descartar' | 'rechazo' | 'turno' | 'reaccion' | 'liquidacion'
+  | 'seleccionar' | 'repartir' | 'tema';
+
+/** Los efectos de interaccion suenan mas bajo que los de la partida. */
+const VOLUMEN: Partial<Record<SonidoMesa, number>> = { seleccionar: 0.38, tema: 0.45 };
 
 const cache = new Map<SonidoMesa, HTMLAudioElement>();
 
@@ -11,14 +15,19 @@ export function reproducirSonido(nombre: SonidoMesa, silenciado: boolean): void 
   let audio = cache.get(nombre);
   if (!audio) {
     audio = new Audio(`/sonidos/${nombre}.wav`);
-    audio.volume = 0.55;
+    audio.volume = VOLUMEN[nombre] ?? 0.55;
     cache.set(nombre, audio);
   }
-  audio.currentTime = 0;
-  void audio.play().catch(() => { /* el navegador exige interaccion previa antes del primer audio */ });
+  // Si el mismo efecto aun suena (pulsaciones seguidas), se reproduce una copia: el anterior no se corta.
+  const sonando = !audio.paused && !audio.ended;
+  const instancia = sonando ? (audio.cloneNode(true) as HTMLAudioElement) : audio;
+  instancia.volume = audio.volume;
+  instancia.currentTime = 0;
+  void instancia.play().catch(() => { /* el navegador exige interaccion previa antes del primer audio */ });
 }
 
 const SONIDO_EVENTO: Partial<Record<EventoMesa['tipo'], SonidoMesa>> = {
+  reparto: 'repartir',
   robo: 'robar',
   descarte: 'descartar',
   rechazo: 'rechazo',

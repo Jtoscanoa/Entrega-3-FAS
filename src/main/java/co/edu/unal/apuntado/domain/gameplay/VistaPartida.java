@@ -1,6 +1,7 @@
 package co.edu.unal.apuntado.domain.gameplay;
 
 import co.edu.unal.apuntado.domain.rules.modelo.EvaluacionMano;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
@@ -16,5 +17,5 @@ public record VistaPartida(long partidaId, int numeroRonda, List<String> mano, S
                            boolean finalizada, String fase, String modalidad, int umbral,
                            boolean robarDelDescarte, List<String> eliminados,
                            List<String> conectados, EvaluacionMano evaluacion,
-                           List<RondaHistorial> historial) {
+                           List<RondaHistorial> historial, Instant venceEn, int segundosPorTurno) {
 }

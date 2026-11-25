@@ -172,8 +172,14 @@ public final class TurnOrchestratorComponent implements ITurno {
     }
 
     private void descartarPorDefectoEn(PartidaEnMemoria p, String jugadorId) {
-        Carta porDefecto = p.ultimaRobada != null ? p.ultimaRobada : ultimaDeLaMano(p.asientoEnTurno());
-        aplicarDescarte(p, jugadorId, quitarDeLaMano(p, porDefecto));
+        aplicarDescarte(p, jugadorId, quitarDeLaMano(p, cartaPorDefecto(p, p.asientoEnTurno())));
+    }
+
+    private static Carta cartaPorDefecto(PartidaEnMemoria p, Asiento enTurno) {
+        if (p.ultimaRobada != null && enTurno.mano.contains(p.ultimaRobada)) {
+            return p.ultimaRobada;
+        }
+        return ultimaDeLaMano(enTurno);
     }
 
     @Override
@@ -239,7 +245,7 @@ public final class TurnOrchestratorComponent implements ITurno {
                     p.numeroTurno, p.huella, p.estado.finalizada(), p.estado.nombre(), p.cfg.modalidad(),
                     p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados, p.conectados(),
                     liquidacion.proyectar(evaluador.evaluarMano(a.mano, p.cfg), a.marcador, p.cfg),
-                    List.copyOf(p.historial));
+                    List.copyOf(p.historial), p.venceEn, p.cfg.segundosPorTurno());
         });
     }
 
@@ -397,6 +403,7 @@ public final class TurnOrchestratorComponent implements ITurno {
     private void repartirYAnunciar(PartidaEnMemoria p, List<Asiento> orden) {
         List<List<Carta>> manos = mazo.repartir(p.claveMazo, orden.size());
         p.jugadas.clear();
+        p.ultimaRobada = null;
         p.asientos.forEach(a -> a.mano.clear());
         for (int i = 0; i < orden.size(); i++) {
             orden.get(i).mano.addAll(manos.get(i));
@@ -456,6 +463,8 @@ public final class TurnOrchestratorComponent implements ITurno {
                 a.activo = !liq.eliminados().contains(a.id());
             }
         });
+        p.ultimaRobada = null;
+        p.venceEn = null;
         p.estado = EstadoTurno.ENTRE_RONDAS;
     }
 
@@ -463,6 +472,7 @@ public final class TurnOrchestratorComponent implements ITurno {
         mazo.liberar(p.claveMazo);
         if (liq.finPartida()) {
             p.estado = EstadoTurno.FINALIZADA;
+            p.venceEn = null;
             eventos.publicar(new EventoDominio.PartidaFinalizada(p.id, liq.ganador().orElseThrow(),
                     liq.motivoFin().orElseThrow().name()));
             return;

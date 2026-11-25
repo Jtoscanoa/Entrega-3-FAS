@@ -48,15 +48,29 @@ export function conectarMesa(token: string, partidaId: number, h: ManejadoresMes
     reconnectDelay: 2000,
   });
   const json = (f: IMessage) => JSON.parse(f.body);
+  let recibos = 0;
   cliente.onConnect = () => {
+    // La vista llega por /user/queue/partida: se pide un RECEIPT de esa suscripcion y solo entonces se avisa la
+    // conexion (que dispara "reanudar"). Si el broker no confirma, un respaldo de 250 ms avisa igual, una sola vez.
+    let avisado = false;
+    const notificarConectado = () => {
+      if (avisado) return;
+      avisado = true;
+      h.alConectar();
+    };
+    const idRecibo = `vista-${partidaId}-${++recibos}`;
+    cliente.watchForReceipt(idRecibo, notificarConectado);
     cliente.subscribe(`/topic/partidas/${partidaId}`, (f) => h.alMensaje(json(f)));
-    cliente.subscribe('/user/queue/partida', (f) => h.alMensaje(json(f)));
     cliente.subscribe('/user/queue/errores', (f) => h.alError(json(f).motivo));
-    h.alConectar();
+    cliente.subscribe('/user/queue/partida', (f) => h.alMensaje(json(f)), { receipt: idRecibo });
+    setTimeout(notificarConectado, 250);
   };
   cliente.onWebSocketClose = () => h.alDesconectar();
   cliente.onStompError = () => h.alDesconectar();
   cliente.activate();
+  // Al recargar o cerrar la pestana se cierra la sesion STOMP de inmediato (la presencia no espera los latidos).
+  const alOcultarPagina = () => { void cliente.deactivate(); };
+  window.addEventListener('pagehide', alOcultarPagina);
   const enviar = (accion: string, cuerpo: unknown = {}) => {
     if (cliente.connected) cliente.publish({ destination: `/app/partidas/${partidaId}/${accion}`, body: JSON.stringify(cuerpo) });
   };
@@ -67,7 +81,10 @@ export function conectarMesa(token: string, partidaId: number, h: ManejadoresMes
     robar: (delDescarte: boolean, numeroTurno: number) => enviar('robar', { delDescarte, numeroTurno }),
     descartar: (carta: string, numeroTurno: number) => enviar('descartar', { carta, numeroTurno }),
     cerrar: (carta: string, numeroTurno: number) => enviar('cerrar', { carta, numeroTurno }),
-    cerrarConexion: () => { void cliente.deactivate(); },
+    cerrarConexion: () => {
+      window.removeEventListener('pagehide', alOcultarPagina);
+      void cliente.deactivate();
+    },
   };
 }
 

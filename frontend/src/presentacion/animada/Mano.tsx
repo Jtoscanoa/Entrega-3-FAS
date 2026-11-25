@@ -27,6 +27,8 @@ interface Props {
   alSeleccionar: (indice: number | null) => void;
   alReordenar: (items: ItemMano[]) => void;
   alChispearCarta?: (x: number, y: number) => void;
+  /** Al empezar a arrastrar una carta (efecto de sonido de la mesa). */
+  alArrastrar?: () => void;
 }
 
 const RESORTE_TILT = { stiffness: 340, damping: 26, mass: 0.5 } as const;
@@ -53,6 +55,7 @@ interface CartaManoProps {
   arrastrando: MutableRefObject<boolean>;
   alSeleccionar: () => void;
   alChispear?: (x: number, y: number) => void;
+  alArrastrar?: () => void;
 }
 
 function ContenidoCarta({
@@ -127,7 +130,7 @@ function ContenidoCarta({
 }
 
 function CartaMano(props: CartaManoProps) {
-  const { it, i, elegida, sepGrupo, dosFilas, reducido, rotate, y, oculta, arrastrando, alChispear } = props;
+  const { it, i, elegida, sepGrupo, dosFilas, reducido, rotate, y, oculta, arrastrando, alChispear, alArrastrar } = props;
   const rotX = useMotionValue(0);
   const rotY = useMotionValue(0);
   const lustreOpacidad = useMotionValue(0);
@@ -185,6 +188,7 @@ function CartaMano(props: CartaManoProps) {
       onDragStart={(ev) => {
         arrastrando.current = true;
         soltarTilt();
+        alArrastrar?.();
         const el = (ev.target as HTMLElement | null)?.closest('.a-mano-item');
         const r = el?.getBoundingClientRect();
         if (r) alChispear?.(r.left + r.width / 2, r.top + r.height * 0.28);
@@ -196,7 +200,7 @@ function CartaMano(props: CartaManoProps) {
 }
 
 export const Mano = forwardRef<HTMLUListElement, Props>(function Mano(
-  { items, seleccion, ocultas, nueva, enTurno = false, dosFilas = false, grupos, alSeleccionar, alReordenar, alChispearCarta }, ref) {
+  { items, seleccion, ocultas, nueva, enTurno = false, dosFilas = false, grupos, alSeleccionar, alReordenar, alChispearCarta, alArrastrar }, ref) {
   const reducido = !!useReducedMotion();
   const arrastrando = useRef(false);
   const n = items.length;
@@ -212,7 +216,7 @@ export const Mano = forwardRef<HTMLUListElement, Props>(function Mano(
         enTurno={enTurno} enGrupo={idG >= 0} sepGrupo={sepGrupo} dosFilas={dosFilas}
         reducido={reducido} rotate={rotate} y={y} oculta={ocultas.has(it.id)}
         arrastrando={arrastrando} alSeleccionar={() => alSeleccionar(elegida ? null : i)}
-        alChispear={alChispearCarta} />
+        alChispear={alChispearCarta} alArrastrar={alArrastrar} />
     );
   });
 

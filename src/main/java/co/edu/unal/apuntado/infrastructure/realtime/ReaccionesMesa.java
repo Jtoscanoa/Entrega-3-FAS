@@ -53,7 +53,7 @@ public class ReaccionesMesa {
     }
 
     @MessageMapping("/partidas/{id}/reaccion")
-    public void reaccionar(@DestinationVariable long id, Reaccion comando, Principal usuario) {
+    public void reaccionar(@DestinationVariable("id") long id, Reaccion comando, Principal usuario) {
         String tipo = validarTipo(comando == null ? null : comando.tipo());
         String para = validarDestino(comando == null ? null : comando.para());
         verificarAsientos(id, usuario.getName(), para);

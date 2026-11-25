@@ -46,7 +46,7 @@ export default function App() {
         ? <PantallaMesa key={lugar.partidaId} version={version} sesion={sesion} codigo={lugar.codigo}
             partidaId={lugar.partidaId} silenciado={silenciado} alternarSilencio={alternarSilencio}
             alSalir={(aviso) => nav.irA(null, aviso)} />
-        : <PantallasPrevias nav={nav} version={version} />}
+        : <PantallasPrevias nav={nav} version={version} silenciado={silenciado} alternarSilencio={alternarSilencio} />}
       <SelectorVersion version={version} alCambiar={cambiarVersion} />
     </>
   );
@@ -58,7 +58,8 @@ function PantallaMesa({ version, ...p }: ParametrosMesa & { version: Version }) 
   return <PielMesa version={version} mesa={mesa} />;
 }
 
-function PantallasPrevias({ nav, version }: { nav: Navegacion; version: Version }) {
+function PantallasPrevias({ nav, version, silenciado, alternarSilencio }:
+  { nav: Navegacion; version: Version; silenciado: boolean; alternarSilencio: () => void }) {
   const { sesion, lugar, aviso, irA, entrar, salir } = nav;
   const codigoSala = sesion && lugar && lugar.partidaId === null ? lugar.codigo : null;
   const inicio = useInicio(entrar);
@@ -69,5 +70,5 @@ function PantallasPrevias({ nav, version }: { nav: Navegacion; version: Version 
   let vista: VistaPrevia = { pantalla: 'inicio', inicio };
   if (sesion && !lugar) vista = { pantalla: 'vestibulo', vestibulo };
   else if (sesion && codigoSala) vista = { pantalla: 'sala', sala };
-  return <PielPrevias version={version} vista={vista} />;
+  return <PielPrevias version={version} vista={vista} silenciado={silenciado} alternarSilencio={alternarSilencio} />;
 }

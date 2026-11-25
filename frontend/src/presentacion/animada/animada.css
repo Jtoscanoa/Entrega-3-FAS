@@ -125,7 +125,7 @@
 /* Encabezado */
 .a-encabezado { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; padding: 10px 18px; border-bottom: 1px solid var(--a-borde); background: rgba(4, 8, 7, .6); }
 .a-marca { font-family: var(--a-serif); font-weight: 700; font-size: 20px; color: var(--a-laton); letter-spacing: .02em; }
-.a-info { flex: 1; color: var(--a-tenue); font-size: 14px; }
+.a-info { flex: 1; color: var(--a-tenue); font-size: 14px; text-align: center; }
 .a-info b { color: var(--a-tinta); letter-spacing: .08em; }
 .a-panos { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border-radius: 999px; border: 1px solid var(--a-borde); background: rgba(255, 255, 255, .03); }
 .a-pano-btn { width: 14px; height: 14px; padding: 0; border-radius: 50%; border: 1.5px solid rgba(255, 255, 255, .35); cursor: pointer; transition: transform .15s ease; }
@@ -187,7 +187,7 @@
 }
 
 /* Asientos */
-.a-rivales { position: relative; z-index: 1; display: flex; justify-content: center; flex-wrap: wrap; gap: clamp(8px, 4vw, 36px); }
+.a-rivales { position: relative; z-index: 6; display: flex; justify-content: center; flex-wrap: wrap; gap: clamp(8px, 4vw, 36px); }
 .a-asiento { position: relative; display: flex; align-items: center; gap: 10px; padding: 7px 12px 7px 7px; border-radius: 40px; background: rgba(4, 10, 8, .54); border: 1px solid var(--a-borde); }
 .a-asiento.en-turno { border-color: rgba(227, 192, 122, .62); box-shadow: inset 0 0 12px rgba(227, 192, 122, .12), 0 0 14px rgba(227, 192, 122, .14); }
 .a-asiento-avatar { position: relative; display: inline-flex; flex: none; }
@@ -196,7 +196,8 @@
   background: linear-gradient(90deg, rgba(208, 86, 78, .92), rgba(201, 164, 92, .85));
   transform-origin: 50% 50%; transform: rotate(-28deg); pointer-events: none;
 }
-.a-asiento-texto { display: flex; flex-direction: column; line-height: 1.15; }
+.a-asiento-texto { display: flex; flex-direction: column; align-items: center; text-align: center; line-height: 1.15; }
+.a-asiento.propio { padding-left: 10px; padding-right: 10px; }
 .a-asiento-nombre { font-weight: 600; font-size: 14px; }
 .a-asiento-puntos b { font-family: var(--a-serif); font-size: 18px; font-variant-numeric: lining-nums tabular-nums; color: var(--a-turno); display: inline-block; }
 .a-asiento-puntos small { color: var(--a-tenue); font-size: 12px; }
@@ -207,7 +208,7 @@
 .a-dorsos > span { position: absolute; left: 7px; top: 0; width: 20px; height: 28px; transform-origin: 50% 100%; }
 .a-dorsos .a-dorso { border-radius: 3px; box-shadow: inset 0 0 0 1px rgba(201, 164, 92, .45), 0 1px 3px rgba(0, 0, 0, .4); }
 .a-dorsos .a-dorso-filete, .a-dorsos .a-dorso-sello { display: none; }
-.a-yo { position: relative; z-index: 1; display: flex; justify-content: center; }
+.a-yo { position: relative; z-index: 6; display: flex; justify-content: center; }
 
 /* Avatar con anillo de turno */
 .a-avatar {
@@ -225,16 +226,18 @@
 .a-iniciales { position: relative; }
 
 /* Centro: mazo, reloj y pozo */
-.a-centro { position: relative; z-index: 1; flex: 1; display: flex; justify-content: center; align-items: center; gap: clamp(14px, 5vw, 46px); --cw: 74px; }
+.a-centro { position: relative; z-index: 2; flex: 1; display: flex; justify-content: center; align-items: center; gap: clamp(14px, 5vw, 46px); --cw: 74px; }
 .a-monton { display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 0; border: 0; background: none; cursor: pointer; }
 .a-monton:disabled { cursor: default; }
 .a-pila, .a-pila-pozo { position: relative; display: block; width: var(--cw); height: calc(var(--cw) * 1.42); }
 .a-pila > span { position: absolute; inset: 0; }
-.a-mazo .a-pila::after, .a-pozo .a-pila-pozo::after {
-  content: ""; position: absolute; inset: -3px; border-radius: 10px; opacity: 0; pointer-events: none;
-  border: 1px solid var(--a-turno); box-shadow: 0 0 18px rgba(227, 192, 122, .28);
+/* Contorno de mazo y pozo: va DENTRO de la carta superior (y de la cima del pozo), asi rota y se mueve con ella. */
+.a-halo-monton {
+  position: absolute; inset: -3px; border-radius: 9px; pointer-events: none; opacity: 0; transition: opacity .25s ease;
+  border: 1px solid rgba(242, 215, 148, .9); box-shadow: 0 0 0 2px rgba(15, 30, 24, .55), 0 0 0 3px rgba(227, 192, 122, .55), 0 0 18px rgba(227, 192, 122, .3);
 }
-.a-mazo.activo .a-pila::after, .a-pozo.activo .a-pila-pozo::after { animation: a-pulso 1.6s ease-in-out infinite; }
+.a-halo-monton .a-halo-anillo { border-radius: 9px; }
+.a-mazo.activo .a-halo-monton, .a-pozo.activo .a-halo-monton { opacity: 1; animation: a-pulso 1.6s ease-in-out infinite; }
 @keyframes a-pulso { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
 .a-borde-pozo { position: absolute; inset: 0; border-radius: 7px; background: #e6decb; box-shadow: 0 1px 4px rgba(0, 0, 0, .45); }
 .a-borde-pozo.b1 { transform: rotate(-8deg) translate(-3px, 2px); }
@@ -246,8 +249,8 @@
 .a-cima { position: absolute; inset: 0; display: block; transform: rotate(-2deg); }
 .a-cima .a-carta { width: 100%; height: 100%; }
 .a-onda-pozo { position: absolute; inset: -3px; border-radius: 9px; pointer-events: none; border: 1.5px solid var(--a-turno); }
-.a-vacio { position: absolute; inset: 0; display: grid; place-items: center; border: 1.5px dashed rgba(233, 228, 216, .28); border-radius: 7px; font-size: 12px; color: var(--a-tenue); }
-.a-rotulo { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--a-tenue); }
+.a-vacio { position: absolute; inset: 0; display: grid; place-items: center; border: 1.5px dashed rgba(233, 228, 216, .32); border-radius: 9px; font-size: 12px; letter-spacing: .08em; color: var(--a-tenue); background: rgba(0, 0, 0, .12); }
+.a-rotulo { font-size: 11.5px; letter-spacing: .12em; text-transform: uppercase; color: var(--a-tenue); text-align: center; padding-left: .12em; }
 .a-monton.activo .a-rotulo { color: var(--a-turno); }
 
 /* Reloj de turno */
@@ -259,12 +262,12 @@
   background: var(--a-laton); transform-origin: 50% 34px; transition: opacity .45s ease;
 }
 .a-reloj-anillo.urgente span { background: var(--a-urgente); box-shadow: 0 0 6px rgba(208, 86, 78, .6); }
-.a-reloj-num { position: relative; font-family: var(--a-serif); font-size: 22px; font-variant-numeric: lining-nums tabular-nums; }
+.a-reloj-num { position: relative; font-family: var(--a-serif); font-size: 22px; font-variant-numeric: lining-nums tabular-nums; line-height: 1; text-align: center; }
 .a-reloj.mio .a-reloj-num { color: var(--a-turno); }
 
 .a-pasos-turno {
   position: relative; z-index: 1; display: flex; justify-content: center; align-items: center; gap: 8px; flex-wrap: wrap;
-  font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--a-tenue);
+  font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--a-tenue); text-align: center;
 }
 .a-pasos-turno span { padding: 2px 8px; border-radius: 999px; border: 1px solid transparent; opacity: .55; }
 .a-pasos-turno span.listo { opacity: .8; color: #9fd8b4; }
@@ -287,7 +290,7 @@
 }
 
 /* Avisos (rechazos) */
-.a-aviso { position: fixed; z-index: 42; left: 0; right: 0; bottom: 72px; width: min(540px, calc(100% - 24px)); margin: 0 auto; padding: 12px 16px; border-radius: 14px; display: flex; flex-direction: column; gap: 4px; background: rgba(34, 12, 10, .96); border: 1px solid rgba(208, 86, 78, .6); box-shadow: 0 18px 40px rgba(0, 0, 0, .55); }
+.a-aviso { position: fixed; z-index: 42; left: 0; right: 0; bottom: 72px; width: min(540px, calc(100% - 24px)); margin: 0 auto; padding: 12px 16px; border-radius: 14px; display: flex; flex-direction: column; gap: 4px; background: rgba(34, 12, 10, .96); border: 1px solid rgba(208, 86, 78, .6); box-shadow: 0 18px 40px rgba(0, 0, 0, .55); text-align: center; align-items: center; }
 .a-aviso span { color: #e2c4bf; font-size: 13px; }
 .a-aviso.info { background: rgba(12, 20, 17, .9); border-color: var(--a-borde); }
 
@@ -463,7 +466,8 @@
 @media (max-width: 560px) {
   .a-raiz { --cw: 48px; font-size: 14px; }
   .a-encabezado { padding: 8px 12px; gap: 8px; }
-  .a-info { order: 3; flex-basis: 100%; font-size: 12.5px; }
+  .a-info { order: 3; flex-basis: 100%; font-size: 12.5px; text-align: center; }
+  .a-mano-cabecera { justify-content: center; text-align: center; }
   .a-fieltro { min-height: 330px; padding: 12px 10px; border-radius: 22px; gap: 10px; }
   .a-centro { --cw: 56px; gap: 14px; }
   .a-reloj-hueco { width: 64px; height: 64px; }
@@ -496,7 +500,7 @@
   .a-brillo, .a-barrido-turno, .a-halo-giro { animation: none; }
   .a-barrido-turno, .a-boton:not(.fantasma)::before { display: none; }
   .a-boton:not(:disabled):active { transform: none; }
-  .a-mazo.activo .a-pila::after, .a-pozo.activo .a-pila-pozo::after { animation: none; opacity: 1; }
+  .a-mazo.activo .a-halo-monton, .a-pozo.activo .a-halo-monton { animation: none; opacity: 1; }
   .a-reloj-anillo span { transition-duration: .15s; }
 }
 
@@ -591,7 +595,9 @@
 }
 
 /* RF18: huella del reparto y verificacion en el navegador */
-.a-huella { margin: 14px 0 0; font-size: 12.5px; color: var(--a-tenue); overflow-wrap: anywhere; }
+.a-huella { margin: 14px 0 0; font-size: 12px; color: var(--a-tenue); overflow-wrap: anywhere; }
+.a-huella summary { cursor: pointer; opacity: .75; }
+.a-huella p { margin: 6px 0 0; }
 .a-huella code { color: var(--a-laton); }
 .a-huella small { display: block; margin-top: 2px; }
 .a-verificacion { margin: 4px 0 2px; padding: 8px 10px; border-radius: 10px; font-size: 13px; border: 1px solid var(--a-borde); display: flex; flex-direction: column; gap: 4px; }
@@ -609,7 +615,7 @@
 .a-avanzadas > p { margin: 4px 0 6px; }
 
 /* E3-18f: barra de proyeccion "si cierran ahora" bajo la mano, con el avance RF16 */
-.a-barra-proyeccion { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 6px; }
+.a-barra-proyeccion { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; margin: 2px auto 6px; text-align: center; width: 100%; }
 .a-proyeccion { position: relative; overflow: hidden; margin: 0; flex: 1 1 260px; max-width: 520px; padding: 6px 12px; border-radius: 999px;
   border: 1px solid var(--a-borde); background: rgba(255, 255, 255, .05); font-size: 13.5px; font-variant-numeric: tabular-nums; }
 .a-proyeccion-llenado { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(201, 164, 92, .18), rgba(201, 164, 92, .42)); }
@@ -617,14 +623,13 @@
 .a-proyeccion.peligro { border-color: rgba(208, 86, 78, .8); color: #ffd9d4; font-weight: 600; }
 .a-proyeccion.peligro .a-proyeccion-llenado { background: linear-gradient(90deg, rgba(208, 86, 78, .35), rgba(208, 86, 78, .7)); }
 @media (max-width: 560px) {
-  .a-avatares-vestibulo { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .a-asiento .a-avatar-svg { width: 100%; height: 100%; }
   .a-proyeccion { font-size: 12px; padding: 5px 9px; }
 }
 
 /* Bloque B (ADR-11): avatares en SVG, sonido silenciable y reacciones animadas */
 .a-avatar-svg { position: relative; display: block; border-radius: 50%; }
-.a-avatares-vestibulo { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.a-avatares-vestibulo { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; text-align: center; }
 .a-avatar-opcion {
   display: flex; flex-direction: column; align-items: center; gap: 5px; padding: 8px 4px;
   border-radius: 12px; border: 1px solid var(--a-borde); background: rgba(255, 255, 255, .03);
@@ -638,8 +643,9 @@
   background: rgba(255, 255, 255, .06); cursor: pointer; font-size: 14px; line-height: 1.3;
 }
 .a-reaccion-disparador.activo { border-color: var(--a-turno); background: rgba(201, 164, 92, .18); }
+/* Menu flotante fijo (fuera de .a-fieltro, que recorta): por encima de cartas y mano, debajo de paneles (45+). */
 .a-menu-reacciones {
-  position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); z-index: 25;
+  position: fixed; translate: -50% 0; z-index: 46;
   display: flex; gap: 4px; padding: 5px 7px; border-radius: 999px;
   background: rgba(8, 15, 12, .96); border: 1px solid rgba(227, 192, 122, .45);
   box-shadow: 0 12px 26px rgba(0, 0, 0, .55);
@@ -649,8 +655,9 @@
   font-size: 17px; line-height: 1.1; cursor: pointer;
 }
 .a-menu-reacciones button:hover { background: rgba(201, 164, 92, .24); }
+.a-capa-reacciones { position: fixed; inset: 0; z-index: 47; pointer-events: none; }
 .a-reaccion-impacto {
-  position: absolute; top: -8px; right: -8px; z-index: 3; width: 28px; height: 28px;
+  position: fixed; width: 28px; height: 28px;
   display: grid; place-items: center; border-radius: 50%; font-size: 17px;
   background: rgba(10, 18, 15, .92); border: 1.5px solid var(--a-turno);
   box-shadow: 0 4px 12px rgba(0, 0, 0, .45); pointer-events: none;

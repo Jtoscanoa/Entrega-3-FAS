@@ -57,7 +57,7 @@ export function guardarSilencio(silenciado: boolean): void {
   try { localStorage.setItem(CLAVE_SILENCIO, silenciado ? '1' : '0'); } catch { /* almacenamiento no disponible */ }
 }
 
-export const AVATAR_IDS = ['tendero', 'tia', 'taxista', 'abuela', 'galan'] as const;
+export const AVATAR_IDS = ['hincha', 'perro', 'mototaxi', 'panadero', 'metro', 'papa'] as const;
 export type AvatarId = typeof AVATAR_IDS[number];
 
 const CLAVE_AVATAR = 'mesa101.avatar';
@@ -69,9 +69,10 @@ export function esAvatarValido(v: unknown): v is AvatarId {
 export function avatarInicial(): AvatarId {
   try {
     const v = localStorage.getItem(CLAVE_AVATAR);
-    return esAvatarValido(v) ? v : 'tendero';
+    // Un id viejo guardado (p. ej. 'galan' o 'tendero') ya no es valido: se migra a 'hincha' sin AVATAR_INVALIDO.
+    return esAvatarValido(v) ? v : 'hincha';
   } catch {
-    return 'tendero';
+    return 'hincha';
   }
 }
 
