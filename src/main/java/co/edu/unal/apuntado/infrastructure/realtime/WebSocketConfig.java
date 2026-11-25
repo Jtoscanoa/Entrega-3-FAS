@@ -31,6 +31,8 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registro) {
         registro.addEndpoint("/ws").setAllowedOriginPatterns(origenes);
+        // Conserva por sesion el orden SUBSCRIBE -> SEND (p. ej. /user/queue/partida antes de reanudar, FF-15).
+        registro.setPreserveReceiveOrder(true);
     }
 
     @Override
