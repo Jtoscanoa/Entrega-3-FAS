@@ -9,7 +9,10 @@ import java.util.stream.*;
 
 /**
  * Mide sobre el codigo REAL: complejidad ciclomatica por metodo (McCabe: 1 + if/for/while/do/case/catch/?:/&&/||)
- * y acoplamiento por paquete (Ca, Ce, I, A, D) a partir de los imports. Uso: java herramientas/Metricas.java src/main/java
+ * y acoplamiento por paquete (Ca, Ce, I, A, D) a partir de los imports.
+ * Uso: java herramientas/Metricas.java src/main/java [salida.csv]
+ * Con salida.csv escribe Ca, Ce, I, A y D por paquete y por componente (dominio de ADR-01: los dos primeros segmentos
+ * del paquete, p. ej. domain.rules agrupa domain.rules, domain.rules.evaluacion y domain.rules.modelo).
  * Complementa (no reemplaza) a PMD, JaCoCo y ArchUnit del pipeline.
  */
 public class Metricas {
@@ -20,7 +23,7 @@ public class Metricas {
         List<Path> archivos;
         try (Stream<Path> s = Files.walk(src)) { archivos = s.filter(p -> p.toString().endsWith(".java")).sorted().toList(); }
         complejidad(archivos);
-        acoplamiento(archivos);
+        acoplamiento(archivos, args.length > 1 ? Path.of(args[1]) : null);
     }
 
     // ---------------------------------------------------------------- complejidad
@@ -32,12 +35,14 @@ public class Metricas {
         int[] totalMetodos = {0};
         for (CompilationUnitTree cu : task.parse()) {
             String archivo = Path.of(cu.getSourceFile().toUri()).getFileName().toString().replace(".java", "");
+            String nombrePaquete = cu.getPackageName() == null ? "" : cu.getPackageName().toString();
+            String paquete = nombrePaquete.startsWith(RAIZ) ? nombrePaquete.substring(RAIZ.length()) : "(raiz)";
             new TreeScanner<Void, String>() {
                 @Override public Void visitMethod(MethodTree m, String clase) {
                     if (m.getBody() != null) {
                         int cc = cc(m.getBody());
                         totalMetodos[0]++;
-                        filas.add(new String[]{archivo + "." + m.getName(), String.valueOf(cc)});
+                        filas.add(new String[]{archivo + "." + m.getName(), String.valueOf(cc), paquete});
                     }
                     return super.visitMethod(m, clase);
                 }
@@ -50,6 +55,12 @@ public class Metricas {
         System.out.println("## COMPLEJIDAD");
         System.out.printf(Locale.ROOT, "metodos=%d  CC_max=%d  CC_media=%.2f  metodos_con_CC>10=%d%n", totalMetodos[0], max, media, sobre);
         filas.stream().limit(10).forEach(f -> System.out.println("  " + f[1] + "  " + f[0]));
+        System.out.println("\n## COMPLEJIDAD POR PAQUETE");
+        System.out.println("paquete,metodos,CC_max,CC_media,metodo_max");
+        Map<String, List<String[]>> porPaquete = new TreeMap<>();
+        filas.forEach(f -> porPaquete.computeIfAbsent(f[2], k -> new ArrayList<>()).add(f));
+        porPaquete.forEach((paq, l) -> System.out.printf(Locale.ROOT, "%s,%d,%s,%.2f,%s%n", paq, l.size(), l.get(0)[1],
+                l.stream().mapToInt(f -> Integer.parseInt(f[1])).average().orElse(0), l.get(0)[0]));
     }
 
     static int cc(Tree cuerpo) {
@@ -74,7 +85,7 @@ public class Metricas {
     // ---------------------------------------------------------------- acoplamiento
     record Tipo(String paquete, String nombre, boolean abstracto) {}
 
-    static void acoplamiento(List<Path> archivos) throws Exception {
+    static void acoplamiento(List<Path> archivos, Path csv) throws Exception {
         Map<String, Tipo> tipos = new TreeMap<>();
         Map<String, Set<String>> imports = new HashMap<>();
         Pattern pkg = Pattern.compile("^package\\s+([\\w.]+);", Pattern.MULTILINE);
@@ -120,6 +131,9 @@ public class Metricas {
             double a = total == 0 ? 0 : (double) abs / total;
             System.out.printf(Locale.ROOT, "%s,%d,%d,%d,%.2f,%.2f,%.2f%n", p, total, ca, cef, i, a, Math.abs(a + i - 1));
         }
+        if (csv != null) {
+            escribirCsv(csv, ce, tipos);
+        }
         System.out.println("\n## DEPENDENCIAS ENTRE PAQUETES");
         ce.forEach((p, d) -> System.out.println(p + " -> " + d));
         // ciclos (DFS)
@@ -145,13 +159,49 @@ public class Metricas {
 
     interface Function<A, B> extends java.util.function.Function<A, B> {}
 
+    /** Componente = dominio de ADR-01: los dos primeros segmentos del paquete (config y (raiz) quedan solos). */
+    static String componente(String paquete) {
+        String[] partes = paquete.split("\\.");
+        return partes.length <= 2 ? paquete : partes[0] + "." + partes[1];
+    }
+
+    static String fila(String nivel, String nombre, long total, long abs, long ca, long ce) {
+        double i = ca + ce == 0 ? 0 : (double) ce / (ca + ce);
+        double a = total == 0 ? 0 : (double) abs / total;
+        return String.format(Locale.ROOT, "%s,%s,%d,%d,%d,%d,%.2f,%.2f,%.2f", nivel, nombre, total, abs, ca, ce, i, a,
+                Math.abs(a + i - 1));
+    }
+
+    static void escribirCsv(Path csv, Map<String, Set<String>> ce, Map<String, Tipo> tipos) throws IOException {
+        List<String> lineas = new ArrayList<>(List.of("nivel,nombre,tipos,abstractos,Ca,Ce,I,A,D"));
+        for (String p : ce.keySet()) {
+            long ca = ce.entrySet().stream().filter(e -> e.getValue().contains(p)).count();
+            long total = tipos.values().stream().filter(t -> t.paquete().equals(p)).count();
+            long abs = tipos.values().stream().filter(t -> t.paquete().equals(p) && t.abstracto()).count();
+            lineas.add(fila("paquete", p, total, abs, ca, ce.get(p).size()));
+        }
+        Map<String, Set<String>> ceComp = new TreeMap<>();
+        ce.forEach((p, ds) -> {
+            Set<String> d = ceComp.computeIfAbsent(componente(p), k -> new TreeSet<>());
+            ds.stream().map(Metricas::componente).filter(c -> !c.equals(componente(p))).forEach(d::add);
+        });
+        for (String c : ceComp.keySet()) {
+            long ca = ceComp.entrySet().stream().filter(e -> e.getValue().contains(c)).count();
+            long total = tipos.values().stream().filter(t -> componente(t.paquete()).equals(c)).count();
+            long abs = tipos.values().stream().filter(t -> componente(t.paquete()).equals(c) && t.abstracto()).count();
+            lineas.add(fila("componente", c, total, abs, ca, ceComp.get(c).size()));
+        }
+        Files.write(csv, lineas);
+        System.out.println("(CSV escrito en " + csv + ")");
+    }
+
     static void regla(String nombre, Map<String, Set<String>> imports, Map<String, Tipo> tipos, String origen,
                       List<String> prohibidos, List<String> externosProhibidos, List<Path> archivos) throws IOException {
         List<String> violaciones = new ArrayList<>();
         if (origen == null) { // FF-05
             for (Path p : archivos) {
                 String s = Files.readString(p);
-                String ruta = p.toString();
+                String ruta = p.toString().replace(File.separatorChar, '/');
                 if (s.contains("OrdenMazo") && !ruta.contains("gameplay/mazo") && !ruta.contains("gameplay/auditoria"))
                     violaciones.add(ruta);
             }
