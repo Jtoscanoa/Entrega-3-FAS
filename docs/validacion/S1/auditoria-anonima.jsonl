@@ -1,0 +1,353 @@
+{"tipo": "EVENTO", "hora": "2026-11-25T00:14:45.296972720Z", "evento": "RondaIniciada", "datos": {"partidaId": 6, "numeroRonda": 1, "huella": "3a17bfd54eac245e3e0712d557c6c72a4b5481a8ab07bffcf6b91b40c21ebff5", "cimaDescarte": "4D", "abridor": "U01"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:14:45.308951172Z", "evento": "ManoEntregada", "datos": {"partidaId": 6, "jugadorId": "U01", "cartas": ["6T", "6P", "3P", "10T", "9D", "4T", "5P", "QT", "JD", "KC", "AT"]}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:14:45.313599593Z", "evento": "ManoEntregada", "datos": {"partidaId": 6, "jugadorId": "U02", "cartas": ["10P", "JP", "3C", "QD", "6D", "2D", "8D", "7D", "9C", "6C"]}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:14:45.314384574Z", "evento": "ManoEntregada", "datos": {"partidaId": 6, "jugadorId": "U03", "cartas": ["KD", "8P", "9T", "9P", "AP", "5T", "7P", "4C", "JC", "AC"]}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:14:45.316050470Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 1, "venceEn": "2026-11-25T00:15:45.314846766Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:14:45.970956932Z", "partidaId": 6, "jugadorId": "U01", "conectado": true}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:14:46.245025586Z", "partidaId": 6, "jugadorId": "U02", "conectado": true}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:14:46.443021148Z", "partidaId": 6, "jugadorId": "U03", "conectado": true}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:15:30.265676729Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "5P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:15:30.267912692Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 2, "venceEn": "2026-11-25T00:16:30.267868473Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:15:30.270789925Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 1, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:15:40.766150179Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:15:40.773385510Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "5P"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:15:40.775494428Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_POZO", "numeroTurno": 2, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:15:55.864035987Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "3C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:15:55.864823355Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 3, "venceEn": "2026-11-25T00:16:55.864791474Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:15:55.868164789Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 2, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:16:05.736995161Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:16:05.740080247Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "7T"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:16:05.741893069Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 3, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:16:28.009870201Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "4C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:16:28.011603112Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 4, "venceEn": "2026-11-25T00:17:28.011567762Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:16:28.012879350Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 3, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:16:52.670833118Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:16:52.672199254Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "3D"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:16:52.673636548Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_MAZO", "numeroTurno": 4, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:00.187791101Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "3D"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:00.189299265Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 5, "venceEn": "2026-11-25T00:18:00.189261266Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:17:00.191150924Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 4, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:21.143668702Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:21.144501379Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "10D"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:17:21.144996112Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 5, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:29.491523791Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "5P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:29.493077029Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 6, "venceEn": "2026-11-25T00:18:29.493038822Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:17:29.493773843Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 5, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:38.703531059Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U03", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:38.704217834Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "5P"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:17:38.704991854Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_POZO", "numeroTurno": 6, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:43.215820302Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "AP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:43.217665857Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 7, "venceEn": "2026-11-25T00:18:43.217631744Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:17:43.218905261Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 6, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:56.513888127Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:56.514639118Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "3T"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:17:56.516509864Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_MAZO", "numeroTurno": 7, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:58.370250120Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "AT"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:17:58.371682110Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 8, "venceEn": "2026-11-25T00:18:58.371645690Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:17:58.372876453Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 7, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:04.283202314Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:04.283788741Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "KT"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:18:04.285834634Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 8, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:08.302305219Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "KT"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:08.302978873Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 9, "venceEn": "2026-11-25T00:19:08.302944419Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:18:08.305746810Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 8, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "CHAT", "hora": "2026-11-25T00:18:16.829518661Z", "partidaId": 6, "jugador": "U01", "largo": 3}
+{"tipo": "CHAT", "hora": "2026-11-25T00:18:21.190450917Z", "partidaId": 6, "jugador": "U02", "largo": 2}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:27.001484710Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U03", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:27.002045575Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "KT"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:18:27.004289898Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_POZO", "numeroTurno": 9, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "CHAT", "hora": "2026-11-25T00:18:28.549814801Z", "partidaId": 6, "jugador": "U01", "largo": 2}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:38.920446775Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "JC"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:38.922186841Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 10, "venceEn": "2026-11-25T00:19:38.922021585Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:18:38.922898656Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 9, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:52.650788486Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U01", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:52.651473507Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "JC"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:18:52.652592381Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_POZO", "numeroTurno": 10, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:55.300050536Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "4T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:18:55.300726781Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 11, "venceEn": "2026-11-25T00:19:55.300692844Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:18:55.302927868Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 10, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:19:31.118663830Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:19:31.119335308Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "2T"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:19:31.120907570Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 11, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:19:42.015588274Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "8D"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:19:42.016261180Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 12, "venceEn": "2026-11-25T00:20:42.016223752Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:19:42.016884332Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 11, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:19:49.522430281Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:19:49.523340457Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "2C"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:19:49.523994573Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 12, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:13.237685828Z", "evento": "CierreRechazado", "datos": {"partidaId": 6, "jugadorId": "U03", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:20:13.239741343Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "CERRAR", "numeroTurno": 12, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:21.792409809Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "5P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:21.792997251Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 13, "venceEn": "2026-11-25T00:21:21.792963669Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:20:21.804744924Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 12, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:25.764983791Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:25.765644948Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "4P"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:20:25.766044717Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_MAZO", "numeroTurno": 13, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:43.773490452Z", "evento": "CierreRechazado", "datos": {"partidaId": 6, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:20:43.774514838Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 13, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:52.005428770Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "3T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:20:52.006252647Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 14, "venceEn": "2026-11-25T00:21:52.006193053Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:20:52.008489911Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 13, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:01.912823011Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:01.913576542Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "QP"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:01.920016323Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 14, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:05.674832835Z", "evento": "CierreRechazado", "datos": {"partidaId": 6, "jugadorId": "U02", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:05.675638688Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "CERRAR", "numeroTurno": 14, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:15.826700119Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "7D"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:15.827510827Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 15, "venceEn": "2026-11-25T00:22:15.827454114Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:15.828024401Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 14, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:20.274802321Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:20.276140723Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "QC"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:20.276685721Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 15, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:26.151688587Z", "evento": "CierreRechazado", "datos": {"partidaId": 6, "jugadorId": "U03", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:26.152478694Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "CERRAR", "numeroTurno": 15, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "CHAT", "hora": "2026-11-25T00:21:33.645977741Z", "partidaId": 6, "jugador": "U03", "largo": 18}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:42.743703177Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "QC"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:42.744364394Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 16, "venceEn": "2026-11-25T00:22:42.744328965Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:42.744875317Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 15, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:50.314040168Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U01", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:50.315665375Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "QC"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:50.316424088Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_POZO", "numeroTurno": 16, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:54.574012361Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "3P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:21:54.574732167Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 17, "venceEn": "2026-11-25T00:22:54.574687849Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:21:54.575376445Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 16, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "CHAT", "hora": "2026-11-25T00:22:06.904558603Z", "partidaId": 6, "jugador": "U01", "largo": 4}
+{"tipo": "CHAT", "hora": "2026-11-25T00:22:11.067356778Z", "partidaId": 6, "jugador": "U02", "largo": 3}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:22.691858292Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:22.692523112Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "AD"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:22:22.692895579Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 17, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:24.785918351Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "9C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:24.786992018Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 18, "venceEn": "2026-11-25T00:23:24.786574758Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:22:24.788385316Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 17, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "CHAT", "hora": "2026-11-25T00:22:31.074334275Z", "partidaId": 6, "jugador": "U01", "largo": 5}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:35.802402405Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:35.803145581Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "5C"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:22:35.804862039Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 18, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:42.502898426Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "5C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:42.503574021Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 19, "venceEn": "2026-11-25T00:23:42.503537152Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:22:42.503950904Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 18, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:49.167110329Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:49.167816710Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "8C"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:22:49.168613294Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_MAZO", "numeroTurno": 19, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:51.834749630Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "4P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:22:51.835286862Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 20, "venceEn": "2026-11-25T00:23:51.835251914Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:22:51.835700127Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 19, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:02.437466839Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:02.438283769Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "KP"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:23:02.439738142Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 20, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:14.456428889Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "AD"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:14.456922520Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 21, "venceEn": "2026-11-25T00:24:14.456890414Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:23:14.457357269Z", "partidaId": 6, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 20, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:17.543765308Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:17.544368865Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "8T"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:23:17.544771923Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 21, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:33.037755527Z", "evento": "CierreRechazado", "datos": {"partidaId": 6, "jugadorId": "U03", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:23:33.041147047Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "CERRAR", "numeroTurno": 21, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:36.484146649Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U03", "carta": "8T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:36.484765039Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U01", "numeroTurno": 22, "venceEn": "2026-11-25T00:24:36.484731648Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:23:36.485562329Z", "partidaId": 6, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 21, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:23:37.724184900Z", "partidaId": 6, "jugadorId": "U02", "conectado": false}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:23:38.415076880Z", "partidaId": 6, "jugadorId": "U02", "conectado": true}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:23:42.230580586Z", "partidaId": 6, "jugadorId": "U02", "conectado": false}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:23:42.880192385Z", "partidaId": 6, "jugadorId": "U02", "conectado": true}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:50.212768902Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U01", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:23:50.213335382Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "8T"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:23:50.213724462Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_POZO", "numeroTurno": 22, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:23:55.075728269Z", "partidaId": 6, "jugadorId": "U02", "conectado": false}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:24:00.507143544Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U01", "carta": "9D"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:24:00.508818474Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U02", "numeroTurno": 23, "venceEn": "2026-11-25T00:24:10.508206550Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:24:00.510210228Z", "partidaId": 6, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 22, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:24:10.510417164Z", "evento": "CartaRobada", "datos": {"partidaId": 6, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:24:10.511074941Z", "evento": "CartaRecibida", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "7C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:24:10.511482738Z", "evento": "CartaDescartada", "datos": {"partidaId": 6, "jugadorId": "U02", "carta": "7C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:24:10.512153813Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 24, "venceEn": "2026-11-25T00:25:10.512120768Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:24:23.070984297Z", "partidaId": 6, "jugadorId": "U01", "conectado": false}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:24:23.592964541Z", "partidaId": 6, "jugadorId": "U03", "conectado": false}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:24:23.593454577Z", "evento": "TurnoAsignado", "datos": {"partidaId": 6, "jugadorId": "U03", "numeroTurno": 24, "venceEn": null}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:02.858339247Z", "evento": "RondaIniciada", "datos": {"partidaId": 7, "numeroRonda": 1, "huella": "572b0e43a480e8f39080da0479a8f6a34b53408398204eb4e60b48bc87451e01", "cimaDescarte": "AP", "abridor": "U01"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:02.858886863Z", "evento": "ManoEntregada", "datos": {"partidaId": 7, "jugadorId": "U01", "cartas": ["5D", "JT", "9C", "JC", "9P", "5C", "2P", "5P", "AC", "6P", "8T"]}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:02.859335991Z", "evento": "ManoEntregada", "datos": {"partidaId": 7, "jugadorId": "U03", "cartas": ["JD", "10C", "2T", "10P", "8C", "7D", "4C", "5T", "8P", "KD"]}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:02.859563717Z", "evento": "ManoEntregada", "datos": {"partidaId": 7, "jugadorId": "U02", "cartas": ["2D", "KC", "6D", "2C", "7T", "JP", "KT", "3T", "QT", "9D"]}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:02.859761202Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 1, "venceEn": "2026-11-25T00:25:37.859730082Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:25:03.283629057Z", "partidaId": 7, "jugadorId": "U01", "conectado": true}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:25:04.508382593Z", "partidaId": 7, "jugadorId": "U03", "conectado": true}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:25:04.555796289Z", "partidaId": 7, "jugadorId": "U02", "conectado": true}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:27.383213652Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "2P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:27.383751540Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 2, "venceEn": "2026-11-25T00:26:02.383717864Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:25:27.384090728Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 1, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:47.713511677Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:47.714024439Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "3P"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:25:47.714441004Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 2, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:54.408830142Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "3P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:25:54.409312295Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 3, "venceEn": "2026-11-25T00:26:29.409278797Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:25:54.409761590Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 2, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:01.704630293Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:01.705154807Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "3D"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:01.705528620Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 3, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:09.427221297Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "7T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:09.427719709Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 4, "venceEn": "2026-11-25T00:26:44.427686242Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:09.429935894Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 3, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:16.810241189Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:16.810801327Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "4P"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:16.811210172Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_MAZO", "numeroTurno": 4, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:21.345219971Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "4P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:21.345781960Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 5, "venceEn": "2026-11-25T00:26:56.345748893Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:21.347331510Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 4, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:24.275311279Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:24.275777880Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "7P"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:24.276081528Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 5, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:36.588775267Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "2T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:36.589321223Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 6, "venceEn": "2026-11-25T00:27:11.589286745Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:36.589688565Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 5, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:42.467702316Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:42.468249124Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "2T"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:42.468551332Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_POZO", "numeroTurno": 6, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:53.393547489Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "9D"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:53.394036531Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 7, "venceEn": "2026-11-25T00:27:28.393996364Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:53.394564719Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 6, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:56.459856514Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:26:56.460437685Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "9D"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:26:56.460761921Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_POZO", "numeroTurno": 7, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:00.719528791Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "5C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:00.720000283Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 8, "venceEn": "2026-11-25T00:27:35.719965260Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:27:00.720451653Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 7, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:07.596225809Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:07.597012223Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "10D"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:27:07.597466551Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 8, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:20.777395734Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "4C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:20.777995744Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 9, "venceEn": "2026-11-25T00:27:55.777956707Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:27:20.779619801Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 8, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:29.944859175Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:29.945458666Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "AT"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:27:29.945783396Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_MAZO", "numeroTurno": 9, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:52.332916128Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "JP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:52.333411034Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 10, "venceEn": "2026-11-25T00:28:27.333377596Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:27:52.333835532Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 9, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:56.599334986Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:56.599802818Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "JP"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:27:56.600613288Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_POZO", "numeroTurno": 10, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:27:59.497320858Z", "evento": "CierreRechazado", "datos": {"partidaId": 7, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:27:59.498734343Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 10, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:04.735945693Z", "evento": "CierreRechazado", "datos": {"partidaId": 7, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:28:04.737610960Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 10, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:10.761770669Z", "evento": "CierreRechazado", "datos": {"partidaId": 7, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:28:10.762436169Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 10, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:13.279608530Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "9C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:13.280149553Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 11, "venceEn": "2026-11-25T00:28:48.280118575Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:28:13.280499313Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "DESCARTAR", "numeroTurno": 10, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:16.765911228Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:16.766486041Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "3C"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:28:16.766787986Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 11, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:22.437246324Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "3C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:22.437672493Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 12, "venceEn": "2026-11-25T00:28:57.437640644Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:28:22.438000810Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 11, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:43.114649136Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "DESCARTE"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:43.115075891Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "3C"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:28:43.115460370Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "ROBAR_POZO", "numeroTurno": 12, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:49.818429078Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "6D"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:28:49.819469240Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 13, "venceEn": "2026-11-25T00:29:24.819432343Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:28:49.820271573Z", "partidaId": 7, "jugador": "U02", "apodo": "U02", "accion": "DESCARTAR", "numeroTurno": 12, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:24.820490586Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:24.821247663Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "QP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:24.821724218Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "QP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:24.822730972Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 14, "venceEn": "2026-11-25T00:29:59.822700848Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:29.235857298Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:29.236401491Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "8D"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:29:29.238682742Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 14, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:38.691709689Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "5T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:29:38.692428061Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 15, "venceEn": "2026-11-25T00:30:13.692392471Z"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:29:38.692951651Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "DESCARTAR", "numeroTurno": 14, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:13.693163032Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:13.693657380Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "AD"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:13.693956753Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "AD"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:13.694299843Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 16, "venceEn": "2026-11-25T00:30:48.694270378Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:30:46.536379679Z", "partidaId": 7, "jugadorId": "U01", "conectado": false}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:30:46.536627722Z", "partidaId": 7, "jugadorId": "U02", "conectado": false}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:46.536835143Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 16, "venceEn": "2026-11-25T00:30:48.694270378Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:48.695314697Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:48.695796666Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "10T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:48.696069307Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "10T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:48.696335549Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 17, "venceEn": "2026-11-25T00:31:23.696303218Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:30:49.151290621Z", "partidaId": 7, "jugadorId": "U01", "conectado": true}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:30:49.866953591Z", "partidaId": 7, "jugadorId": "U02", "conectado": true}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:50.955649194Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:30:50.956130841Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "4D"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:30:50.956456126Z", "partidaId": 7, "jugador": "U03", "apodo": "U03", "accion": "ROBAR_MAZO", "numeroTurno": 17, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:31:23.696766692Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "4D"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:31:23.697976112Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 18, "venceEn": "2026-11-25T00:31:58.697884447Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:31:58.700633663Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:31:58.701214284Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "6T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:31:58.701579766Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "6T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:31:58.701803984Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 19, "venceEn": "2026-11-25T00:32:33.701773614Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:32:11.836362891Z", "partidaId": 7, "jugadorId": "U02", "conectado": false}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:23.751436637Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:23.751878900Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "QC"}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:32:23.752335415Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "ROBAR_MAZO", "numeroTurno": 19, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:26.847564179Z", "evento": "CierreRechazado", "datos": {"partidaId": 7, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:32:26.848322769Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 19, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:29.702230112Z", "evento": "CierreRechazado", "datos": {"partidaId": 7, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:32:29.703026860Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 19, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:31.829308054Z", "evento": "CierreRechazado", "datos": {"partidaId": 7, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:32:31.830786051Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 19, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:33.390735782Z", "evento": "CierreRechazado", "datos": {"partidaId": 7, "jugadorId": "U01", "motivo": "Las cartas no forman la estructura que exige la modalidad."}}
+{"tipo": "COMANDO", "hora": "2026-11-25T00:32:33.393264660Z", "partidaId": 7, "jugador": "U01", "apodo": "U01", "accion": "CERRAR", "numeroTurno": 19, "resultado": "PROCESADO", "motivo": null}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:33.703786344Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "QC"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:32:33.704300766Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 20, "venceEn": "2026-11-25T00:33:08.704264365Z"}}
+{"tipo": "CHAT", "hora": "2026-11-25T00:32:37.281248490Z", "partidaId": 7, "jugador": "U03", "largo": 10}
+{"tipo": "CHAT", "hora": "2026-11-25T00:32:45.403539422Z", "partidaId": 7, "jugador": "U03", "largo": 15}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:08.704816812Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:08.705344034Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "6C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:08.705754671Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "6C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:08.705976061Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 21, "venceEn": "2026-11-25T00:33:18.705941663Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:33:13.791247386Z", "partidaId": 7, "jugadorId": "U01", "conectado": false}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:18.706822432Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:18.707303368Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "9T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:18.707574560Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "9T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:18.707794038Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 22, "venceEn": "2026-11-25T00:33:28.707747513Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:28.708219545Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:28.708712712Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "KP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:28.708983759Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "KP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:33:28.709283150Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 23, "venceEn": "2026-11-25T00:34:03.709215397Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:03.709702995Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:03.710434523Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "4T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:03.710887546Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "4T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:03.711494041Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 24, "venceEn": "2026-11-25T00:34:13.711430856Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:13.711932095Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:13.712463093Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "7C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:13.712745396Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "7C"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:13.712953306Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 25, "venceEn": "2026-11-25T00:34:23.712922877Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:23.713592226Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:23.714032526Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "QD"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:23.714459647Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "QD"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:23.714660730Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 26, "venceEn": "2026-11-25T00:34:58.714633548Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:58.716150407Z", "evento": "MazoRepuesto", "datos": {"partidaId": 7, "huella": "d642346b430031a310e5f37597adf37d8b449fa67a02b42e7eac0c0b0c734f1b"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:58.717790886Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:58.718235374Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "QP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:58.718571026Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "QP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:34:58.718767016Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 27, "venceEn": "2026-11-25T00:35:08.718738839Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:08.719187350Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:08.719650662Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "3P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:08.719886405Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "3P"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:08.720367975Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 28, "venceEn": "2026-11-25T00:35:18.720333173Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:18.720902026Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:18.721398469Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "7T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:18.721651960Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "7T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:18.721849558Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 29, "venceEn": "2026-11-25T00:35:53.721819599Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:53.722351890Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:53.722823152Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "AD"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:53.723138879Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "AD"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:35:53.723370272Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 30, "venceEn": "2026-11-25T00:36:03.723341221Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:03.723775395Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U02", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:03.724581827Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "5T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:03.724941102Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U02", "carta": "5T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:03.725239429Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U01", "numeroTurno": 31, "venceEn": "2026-11-25T00:36:13.725207661Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:13.726259079Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U01", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:13.726850420Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "AP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:13.727129610Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U01", "carta": "AP"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:13.727404402Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U03", "numeroTurno": 32, "venceEn": "2026-11-25T00:36:48.727374270Z"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:48.727824937Z", "evento": "CartaRobada", "datos": {"partidaId": 7, "jugadorId": "U03", "origen": "MAZO"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:48.728366675Z", "evento": "CartaRecibida", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "4T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:48.728734968Z", "evento": "CartaDescartada", "datos": {"partidaId": 7, "jugadorId": "U03", "carta": "4T"}}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:48.728944875Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 33, "venceEn": "2026-11-25T00:36:58.728915079Z"}}
+{"tipo": "PRESENCIA", "hora": "2026-11-25T00:36:52.601386154Z", "partidaId": 7, "jugadorId": "U03", "conectado": false}
+{"tipo": "EVENTO", "hora": "2026-11-25T00:36:52.601762569Z", "evento": "TurnoAsignado", "datos": {"partidaId": 7, "jugadorId": "U02", "numeroTurno": 33, "venceEn": null}}
