@@ -1,12 +1,20 @@
 // Tipos compartidos entre el estado (src/estado) y las dos pieles (src/presentacion).
 // Las pieles importan tipos desde aqui y nunca desde api.ts (FF-19).
+import type { AvatarId } from '../preferencias';
 import type { VerificacionReparto } from './verificarReparto';
 
+export type { AvatarId } from '../preferencias';
 export type { EstadoVerificacion, VerificacionReparto } from './verificarReparto';
+
+export type TipoReaccion = 'tomate' | 'burro' | 'aplauso' | 'risa';
+export interface ReaccionActiva { id: number; de: string; para: string; tipo: TipoReaccion; hora: string }
 
 export interface Sesion { token: string; sub: string; apodo: string; venceEn: string }
 export interface Participante { sub: string; alias: string }
-export interface EstadoSala { codigo: string; anfitrion: string; jugadores: Participante[]; partidaId: number | null }
+export interface EstadoSala {
+  codigo: string; anfitrion: string; jugadores: Participante[]; partidaId: number | null;
+  avatares?: Record<string, AvatarId>;
+}
 export interface OpcionesPartida {
   modalidad: 'APUNTADO_101' | 'CLASICA_433';
   robarDelDescarte: boolean;
@@ -76,6 +84,7 @@ export type EventoMesa =
   | { id: number; tipo: 'recibida'; carta: string; origen: OrigenRobo | null }
   | { id: number; tipo: 'descarte'; jugadorId: string; carta: string }
   | { id: number; tipo: 'rechazo'; motivo: string }
+  | { id: number; tipo: 'reaccion'; de: string; para: string; reaccion: TipoReaccion }
   | { id: number; tipo: 'liquidacion'; ronda: number }
   | { id: number; tipo: 'fin' };
 
@@ -88,6 +97,8 @@ export interface VistaMesa {
   nombre: (sub: string | null) => string;
   /** Apodo tal cual (tambien el propio), para avatares e iniciales. */
   alias: (sub: string) => string;
+  /** Avatar elegido en el vestibulo (null si el jugador entro sin elegir o aun no carga). */
+  avatar: (sub: string) => AvatarId | null;
   jugadores: string[];
   seleccion: number | null;
   cartaSel: string | null;
@@ -107,6 +118,11 @@ export interface VistaMesa {
   /** Chat en vivo de la mesa, del mas viejo al mas nuevo. */
   chat: MensajeChat[];
   enviarChat: (texto: string) => void;
+  /** Reacciones sociales recientes visibles temporalmente en la mesa. */
+  reacciones: ReaccionActiva[];
+  reaccionar: (para: string, tipo: TipoReaccion) => void;
+  silenciado: boolean;
+  alternarSilencio: () => void;
   seleccionar: (indice: number | null) => void;
   robar: (delDescarte: boolean) => void;
   descartar: () => void;
@@ -127,6 +143,7 @@ export interface VistaInicio {
 /** Vestibulo: crear una sala o unirse con un codigo. */
 export interface VistaVestibulo {
   apodo: string; codigo: string; setCodigo: (v: string) => void; puedeUnirse: boolean;
+  avatar: AvatarId; setAvatar: (a: AvatarId) => void;
   crear: () => void; unirse: () => void; cambiarApodo: () => void; error: string;
   /** Aviso informativo al llegar (p. ej. la partida se interrumpio por un reinicio); '' si no hay. */
   aviso: string;

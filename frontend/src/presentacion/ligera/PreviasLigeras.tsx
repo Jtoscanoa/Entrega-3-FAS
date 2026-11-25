@@ -1,6 +1,7 @@
 // Version ligera de las pantallas previas: inicio, vestibulo y sala de espera, tal como eran.
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
 import { AVISO_SEGUNDO_MAZO, AYUDA_AVANZADAS, RESIDUOS, SEGUNDOS_POR_TURNO, textoResiduo } from '../../mensajes';
+import { CATALOGO_AVATARES, RetratoAvatar } from '../AvataresSvg';
 
 export default function PreviasLigeras({ vista }: { vista: VistaPrevia }) {
   if (vista.pantalla === 'inicio') return <Inicio v={vista.inicio} />;
@@ -31,6 +32,17 @@ function Vestibulo({ v }: { v: VistaVestibulo }) {
       <div className="panel">
         <h1>Hola, {v.apodo}</h1>
         {v.aviso && <p className="aviso info" role="status">{v.aviso}</p>}
+        <p className="tenue pequeno">Elige tu avatar</p>
+        <div className="avatares-selector" role="radiogroup" aria-label="Elige tu avatar">
+          {CATALOGO_AVATARES.map((a) => (
+            <button key={a.id} type="button" role="radio" aria-checked={v.avatar === a.id}
+              className={v.avatar === a.id ? 'avatar-opcion activo' : 'avatar-opcion'}
+              title={a.detalle} onClick={() => v.setAvatar(a.id)}>
+              <RetratoAvatar id={a.id} tam={38} />
+              <span>{a.nombre}</span>
+            </button>
+          ))}
+        </div>
         <button className="principal" onClick={v.crear}>Crear una sala</button>
         <div className="separador">o únete con un código</div>
         <div className="fila">
@@ -56,10 +68,17 @@ function Sala({ v }: { v: VistaSala }) {
         <div className="codigo">{v.codigo}</div>
         <h2>Jugadores ({estado?.jugadores.length ?? 0}/6)</h2>
         <ul className="lista-jugadores">
-          {estado?.jugadores.map((j) => (
-            <li key={j.sub}>{j.alias}{j.sub === estado.anfitrion && <span className="etiqueta">anfitrión</span>}
-              {j.sub === v.yo && <span className="etiqueta">tú</span>}</li>
-          ))}
+          {estado?.jugadores.map((j) => {
+            const av = estado.avatares?.[j.sub];
+            return (
+              <li key={j.sub}>
+                {av && <RetratoAvatar id={av} tam={26} className="avatar-ligero" />}
+                <span>{j.alias}</span>
+                {j.sub === estado.anfitrion && <span className="etiqueta">anfitrión</span>}
+                {j.sub === v.yo && <span className="etiqueta">tú</span>}
+              </li>
+            );
+          })}
         </ul>
         {v.soyAnfitrion ? (
           <section className="opciones">

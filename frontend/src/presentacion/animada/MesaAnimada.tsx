@@ -4,9 +4,10 @@ import { AnimatePresence, motion, MotionConfig, useAnimate, useReducedMotion } f
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
 import {
-  ayudaCierre, CIERRE_CORTO, llenadoProyeccion, NOMBRE_MODALIDAD, pistaCierre, textoAvance, textoProyeccion,
+  ayudaCierre, CIERRE_CORTO, emojiReaccion, llenadoProyeccion, NOMBRE_MODALIDAD, pistaCierre, REACCIONES, textoAvance,
+  textoProyeccion,
 } from '../../mensajes';
-import type { EventoMesa, VistaMesa } from '../../estado/tipos';
+import type { EventoMesa, TipoReaccion, VistaMesa } from '../../estado/tipos';
 import { huellaCorta } from '../../estado/verificarReparto';
 import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, PanoMesa, useAnclas, usePanoMesa } from './comun';
 import { ItemMano, itemsDe, Mano } from './Mano';
@@ -44,6 +45,24 @@ type Anclar = (nombre: string) => (el: HTMLElement | null) => void;
 
 interface PosturaCarta { rot: number; dx: number; dy: number }
 interface CartaPozo extends PosturaCarta { id: string; codigo: string }
+interface VueloReaccion {
+  id: number; para: string; tipo: TipoReaccion;
+  desde: { x: number; y: number }; hasta: { x: number; y: number };
+}
+
+function IconoSonido({ silenciado }: { silenciado: boolean }) {
+  return (
+    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true">
+      <path d="M2.5 6.2H5l3.5-3v9.6L5 9.8H2.5z" fill="currentColor" />
+      {silenciado ? (
+        <path d="M10.5 5.5l3.5 5M14 5.5l-3.5 5" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" />
+      ) : (
+        <path d="M10.5 5.4a3.6 3.6 0 0 1 0 5.2M12.4 3.6a6 6 0 0 1 0 8.8" fill="none" stroke="currentColor"
+          strokeWidth="1.5" strokeLinecap="round" />
+      )}
+    </svg>
+  );
+}
 
 function posturaPozo(codigo: string, paso: number): PosturaCarta {
   let h = paso * 37 + 11;
@@ -55,27 +74,46 @@ function posturaPozo(codigo: string, paso: number): PosturaCarta {
   return { rot, dx, dy };
 }
 
-function Asiento({ mesa, sub, k, total, anclar, propio = false, reducido = false }:
-  { mesa: VistaMesa; sub: string; k: number; total: number; anclar: Anclar; propio?: boolean; reducido?: boolean }) {
+function Asiento({
+  mesa, sub, k, total, anclar, propio = false, reducido = false, esTutorial = false,
+  reaccionImpacto = null, menuAbierto = false, alAlternarMenu, alReaccionar,
+}: {
+  mesa: VistaMesa; sub: string; k: number; total: number; anclar: Anclar; propio?: boolean; reducido?: boolean;
+  esTutorial?: boolean; reaccionImpacto?: TipoReaccion | null; menuAbierto?: boolean;
+  alAlternarMenu?: () => void; alReaccionar?: (tipo: TipoReaccion) => void;
+}) {
   const { e } = mesa;
   const enTurno = e.turnoDe === sub && !e.finalizada;
   const eliminado = e.eliminados.includes(sub);
   const ausente = e.ausentes.includes(sub);
   const d = total > 1 ? (k - (total - 1) / 2) / ((total - 1) / 2) : 0;
   const puntos = e.marcador[sub] ?? 0;
+  const puedeReaccionar = !propio && !esTutorial && !e.finalizada;
   return (
     <motion.div ref={anclar(`asiento:${sub}`)} role="group" aria-label={`${mesa.nombre(sub)}, ${puntos} puntos${enTurno ? ', en turno' : ''}${ausente ? ', sin conexión' : ''}`}
       className={['a-asiento', propio ? 'propio' : '', enTurno ? 'en-turno' : '', eliminado ? 'eliminado' : '', ausente ? 'ausente' : ''].join(' ')}
       initial={{ opacity: 0, y: -10 }} animate={{ opacity: eliminado ? 0.42 : ausente ? 0.55 : 1, y: propio ? 0 : d * d * 16 }}
       transition={{ duration: 0.4 }}>
       <span className="a-asiento-avatar">
-        <Avatar sub={sub} nombre={mesa.alias(sub)} enTurno={enTurno} tam={propio ? 44 : 48} />
+        <Avatar sub={sub} nombre={mesa.alias(sub)} avatar={mesa.avatar(sub)} enTurno={enTurno} tam={propio ? 44 : 48} />
         {eliminado && (
           <motion.span className="a-marca-eliminado" aria-hidden="true"
             initial={reducido ? { opacity: 1 } : { opacity: 0, scaleX: 0 }}
             animate={{ opacity: 1, scaleX: 1 }}
             transition={{ duration: 0.35 }} />
         )}
+        <AnimatePresence>
+          {reaccionImpacto && (
+            <motion.span key={reaccionImpacto} className="a-reaccion-impacto" role="status"
+              aria-label={`Reacción para ${mesa.nombre(sub)}: ${reaccionImpacto}`}
+              initial={reducido ? { opacity: 1 } : { opacity: 0, scale: 0.4, y: 6 }}
+              animate={reducido ? { opacity: 1 } : { opacity: 1, scale: [1.35, 1], y: -2 }}
+              exit={{ opacity: 0, scale: 0.7, y: -8 }}
+              transition={{ duration: 0.28 }}>
+              {emojiReaccion(reaccionImpacto)}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </span>
       <span className="a-asiento-texto">
         <span className="a-asiento-nombre">{mesa.nombre(sub)}</span>
@@ -102,6 +140,27 @@ function Asiento({ mesa, sub, k, total, anclar, propio = false, reducido = false
           {[0, 1, 2].map((i) => <span key={i} style={{ transform: `rotate(${(i - 1) * 13}deg)` }}><DorsoCarta /></span>)}
         </span>
       )}
+      {puedeReaccionar && (
+        <button type="button" className={['a-reaccion-disparador', menuAbierto ? 'activo' : ''].join(' ')}
+          aria-expanded={menuAbierto} aria-label={`Enviar reacción a ${mesa.nombre(sub)}`}
+          title={`Reaccionar a ${mesa.nombre(sub)}`} onClick={alAlternarMenu}>
+          😊
+        </button>
+      )}
+      <AnimatePresence>
+        {puedeReaccionar && menuAbierto && (
+          <motion.div className="a-menu-reacciones" role="group" aria-label={`Reacciones para ${mesa.nombre(sub)}`}
+            initial={{ opacity: 0, scale: 0.9, y: -4 }} animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: -4 }} transition={{ duration: 0.16 }}>
+            {REACCIONES.map((r) => (
+              <button key={r.tipo} type="button" title={r.etiqueta} aria-label={`${r.etiqueta} para ${mesa.nombre(sub)}`}
+                onClick={() => alReaccionar?.(r.tipo)}>
+                {r.emoji}
+              </button>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
@@ -126,6 +185,9 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
   const [dosFilas, setDosFilas] = useState(() => typeof window !== 'undefined' && window.innerWidth <= 560);
   const [pano, setPano] = usePanoMesa();
   const [tutorialAbierto, setTutorialAbierto] = useState(false);
+  const [menuReaccion, setMenuReaccion] = useState<string | null>(null);
+  const [vuelosReaccion, setVuelosReaccion] = useState<VueloReaccion[]>([]);
+  const [impactosReaccion, setImpactosReaccion] = useState<Record<string, TipoReaccion>>({});
   const siguienteVuelo = useRef(1);
   const visto = useRef(mesa.eventos.length ? mesa.eventos[mesa.eventos.length - 1].id : 0);
   const cimaAnterior = useRef(e.cima);
@@ -135,6 +197,7 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
   const eliminadosPrevios = useRef<string[]>(e.eliminados);
   const barajadoTimer = useRef<number | null>(null);
   const rondaTimer = useRef<number | null>(null);
+  const impactoTimers = useRef<Map<string, number>>(new Map());
 
   const red = useEstadoRed(mesa.conectado);
   const items = useMemo(() => itemsDe(e.orden), [e.orden]);
@@ -152,17 +215,47 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
 
   const centro = (r: DOMRect) => ({ x: r.left + r.width / 2, y: r.top + r.height / 2 });
 
+  const mostrarImpacto = (para: string, tipo: TipoReaccion, ms: number) => {
+    const previo = impactoTimers.current.get(para);
+    if (previo) window.clearTimeout(previo);
+    setImpactosReaccion((m) => ({ ...m, [para]: tipo }));
+    const tid = window.setTimeout(() => {
+      impactoTimers.current.delete(para);
+      setImpactosReaccion((m) => {
+        if (m[para] !== tipo) return m;
+        const copia = { ...m };
+        delete copia[para];
+        return copia;
+      });
+    }, ms);
+    impactoTimers.current.set(para, tid);
+  };
+
   // Los eventos nuevos se animan antes de pintar (useLayoutEffect): asi la carta que llega no parpadea en la mano.
   useLayoutEffect(() => {
     const nuevos = mesa.eventos.filter((ev) => ev.id > visto.current);
     if (!nuevos.length) return;
     visto.current = nuevos[nuevos.length - 1].id;
     const lanzados: Vuelo[] = [];
+    const reaccionesNuevas: VueloReaccion[] = [];
     const aOcultar = new Set<string>();
     const lanzar = (v: Omit<Vuelo, 'id'>) => lanzados.push({ ...v, id: siguienteVuelo.current++ });
     const mostrar = (id: string) => setOcultas((s) => { const n = new Set(s); n.delete(id); return n; });
 
     const procesar = (ev: EventoMesa) => {
+      if (ev.tipo === 'reaccion') {
+        const desde = !reducido ? rect(`asiento:${ev.de}`) : null;
+        const hasta = !reducido ? rect(`asiento:${ev.para}`) : null;
+        if (desde && hasta) {
+          reaccionesNuevas.push({
+            id: siguienteVuelo.current++, para: ev.para, tipo: ev.reaccion,
+            desde: centro(desde), hasta: centro(hasta),
+          });
+        } else {
+          mostrarImpacto(ev.para, ev.reaccion, reducido ? 1600 : 1400);
+        }
+        return;
+      }
       if (ev.tipo === 'rechazo') {
         if (!reducido && marcoMano.current) {
           void animarMano(marcoMano.current, { x: [0, -12, 12, -9, 9, -5, 5, 0] }, { duration: 0.5 });
@@ -308,6 +401,7 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
     nuevos.forEach(procesar);
     if (aOcultar.size) setOcultas((s) => new Set([...s, ...aOcultar]));
     if (lanzados.length) setVuelos((v) => [...v, ...lanzados]);
+    if (reaccionesNuevas.length) setVuelosReaccion((v) => [...v, ...reaccionesNuevas]);
   });
 
   useLayoutEffect(() => { cimaAnterior.current = e.cima; }, [e.cima]);
@@ -315,6 +409,8 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
   useEffect(() => () => {
     if (barajadoTimer.current) window.clearTimeout(barajadoTimer.current);
     if (rondaTimer.current) window.clearTimeout(rondaTimer.current);
+    impactoTimers.current.forEach((tid) => window.clearTimeout(tid));
+    impactoTimers.current.clear();
   }, []);
 
   useEffect(() => {
@@ -398,6 +494,16 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
               onClick={() => setPano(p.id)} />
           ))}
         </div>
+        {!esTutorial && (
+          <button type="button" className={['a-boton suave a-sonido-btn', mesa.silenciado ? 'silencio' : ''].join(' ')}
+            aria-pressed={!mesa.silenciado}
+            aria-label={mesa.silenciado ? 'Activar efectos de sonido' : 'Silenciar efectos de sonido'}
+            title={mesa.silenciado ? 'Sonido silenciado (clic para activar)' : 'Sonido activado (clic para silenciar)'}
+            onClick={mesa.alternarSilencio}>
+            <IconoSonido silenciado={mesa.silenciado} />
+            <span>{mesa.silenciado ? 'Silencio' : 'Sonido'}</span>
+          </button>
+        )}
         {!esTutorial && <ChatAnimado mesa={mesa} />}
         {!esTutorial && <button type="button" className="a-boton suave" onClick={() => setTutorialAbierto(true)}>Tutorial</button>}
         <span className={['a-conexion', mesa.conectado ? 'ok' : 'caida'].join(' ')} role="status">
@@ -437,7 +543,13 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
                 transition={{ duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }} />
             )}
             <div className="a-rivales" ref={anclar('rivales')}>
-              {rivales.map((s, k) => <Asiento key={s} mesa={mesa} sub={s} k={k} total={rivales.length} anclar={anclar} reducido={reducido} />)}
+              {rivales.map((s, k) => (
+                <Asiento key={s} mesa={mesa} sub={s} k={k} total={rivales.length} anclar={anclar} reducido={reducido}
+                  esTutorial={esTutorial} reaccionImpacto={impactosReaccion[s] ?? null}
+                  menuAbierto={menuReaccion === s}
+                  alAlternarMenu={() => setMenuReaccion((m) => (m === s ? null : s))}
+                  alReaccionar={(tipo) => { mesa.reaccionar(s, tipo); setMenuReaccion(null); }} />
+              ))}
             </div>
 
             <div className="a-centro" ref={anclar('centro')}>
@@ -521,7 +633,8 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
               initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }}>{mesa.instruccion}</motion.p>
 
             <div className="a-yo">
-              <Asiento mesa={mesa} sub={mesa.yo} k={0} total={1} anclar={anclar} propio reducido={reducido} />
+              <Asiento mesa={mesa} sub={mesa.yo} k={0} total={1} anclar={anclar} propio reducido={reducido}
+                esTutorial={esTutorial} reaccionImpacto={impactosReaccion[mesa.yo] ?? null} />
             </div>
 
             <AnimatePresence>
@@ -669,6 +782,11 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
       </motion.div>
 
       <CapaVuelos vuelos={vuelos} alTerminar={(id) => setVuelos((v) => v.filter((x) => x.id !== id))} />
+      <CapaReacciones vuelos={vuelosReaccion} alAterrizar={(v) => {
+        setVuelosReaccion((l) => l.filter((x) => x.id !== v.id));
+        motor.emitir(v.hasta.x, v.hasta.y, 'seleccion');
+        mostrarImpacto(v.para, v.tipo, 1100);
+      }} />
       {lienzo}
       <AnimatePresence>
         {mesa.liquidacion && !mesa.fin && <PanelLiquidacion key={`liq-${mesa.liquidacion.ronda}`} mesa={mesa} l={mesa.liquidacion} />}
@@ -676,6 +794,30 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
       <AnimatePresence>{mesa.fin && <PanelFin key="fin" mesa={mesa} fin={mesa.fin} />}</AnimatePresence>
       {!esTutorial && tutorialAbierto && <PartidaTutorial alCerrar={() => setTutorialAbierto(false)} />}
       <div className="a-sr" aria-live="polite">{mesa.miTurno ? `Es tu turno. ${mesa.instruccion}` : ''}</div>
+    </div>
+  );
+}
+
+function CapaReacciones({ vuelos, alAterrizar }: { vuelos: VueloReaccion[]; alAterrizar: (v: VueloReaccion) => void }) {
+  if (!vuelos.length) return null;
+  return (
+    <div className="a-vuelos" aria-hidden="true">
+      {vuelos.map((v) => {
+        const dx0 = v.desde.x - 20;
+        const dy0 = v.desde.y - 20;
+        const dx1 = v.hasta.x - 20;
+        const dy1 = v.hasta.y - 20;
+        const dyPico = Math.min(dy0, dy1) - 54;
+        return (
+          <motion.span key={v.id} className="a-reaccion-voladora"
+            initial={{ x: dx0, y: dy0, scale: 0.65, rotate: -18, opacity: 0 }}
+            animate={{ x: dx1, y: [dy0, dyPico, dy1], scale: [0.7, 1.4, 1.05], rotate: [-18, 14, 0], opacity: [0, 1, 1] }}
+            transition={{ duration: 0.62, ease: [0.22, 1, 0.36, 1] }}
+            onAnimationComplete={() => alAterrizar(v)}>
+            {emojiReaccion(v.tipo)}
+          </motion.span>
+        );
+      })}
     </div>
   );
 }

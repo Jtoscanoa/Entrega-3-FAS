@@ -2,7 +2,9 @@ import { lazy, Suspense, useState } from 'react';
 import { useMesa, ParametrosMesa } from './estado/useMesa';
 import { useInicio, useNavegacion, useSala, useVestibulo } from './estado/usePrevias';
 import type { VistaPrevia } from './estado/tipos';
-import { guardarVersion, Version, versionInicial } from './preferencias';
+import {
+  guardarSilencio, guardarVersion, silencioGuardado, silencioInicial, Version, versionInicial,
+} from './preferencias';
 import { PielMesa, PielPrevias } from './presentacion/Pieles';
 import SelectorVersion from './presentacion/SelectorVersion';
 
@@ -15,13 +17,25 @@ const enDemo = DemoMesa !== null && new URLSearchParams(location.search).has('de
 export default function App() {
   const nav = useNavegacion();
   const [version, setVersion] = useState<Version>(versionInicial);
-  const cambiarVersion = (v: Version) => { guardarVersion(v); setVersion(v); };
+  const [silenciado, setSilenciado] = useState<boolean>(() => silencioInicial(version));
+  const cambiarVersion = (v: Version) => {
+    guardarVersion(v);
+    setVersion(v);
+    if (silencioGuardado() === null) setSilenciado(v === 'ligera');
+  };
+  const alternarSilencio = () => setSilenciado((s) => {
+    const nuevo = !s;
+    guardarSilencio(nuevo);
+    return nuevo;
+  });
   const { sesion, lugar } = nav;
 
   if (DemoMesa && enDemo) {
     return (
       <>
-        <Suspense fallback={null}><DemoMesa version={version} /></Suspense>
+        <Suspense fallback={null}>
+          <DemoMesa version={version} silenciado={silenciado} alternarSilencio={alternarSilencio} />
+        </Suspense>
         <SelectorVersion version={version} alCambiar={cambiarVersion} />
       </>
     );
@@ -30,7 +44,8 @@ export default function App() {
     <>
       {sesion && lugar && lugar.partidaId !== null
         ? <PantallaMesa key={lugar.partidaId} version={version} sesion={sesion} codigo={lugar.codigo}
-            partidaId={lugar.partidaId} alSalir={(aviso) => nav.irA(null, aviso)} />
+            partidaId={lugar.partidaId} silenciado={silenciado} alternarSilencio={alternarSilencio}
+            alSalir={(aviso) => nav.irA(null, aviso)} />
         : <PantallasPrevias nav={nav} version={version} />}
       <SelectorVersion version={version} alCambiar={cambiarVersion} />
     </>

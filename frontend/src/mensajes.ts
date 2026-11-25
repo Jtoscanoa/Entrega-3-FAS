@@ -1,5 +1,5 @@
 // Traduccion de motivos del servidor a mensajes claros (RF16).
-import type { AvanceMano } from './estado/tipos';
+import type { AvanceMano, TipoReaccion } from './estado/tipos';
 
 const MOTIVOS: Record<string, string> = {
   PARTIDA_INEXISTENTE: 'La partida ya no existe en el servidor (puede haberse reiniciado).',
@@ -22,7 +22,23 @@ const MOTIVOS: Record<string, string> = {
   CHAT_LARGO: 'El mensaje es muy largo (máximo 200 caracteres).',
   CHAT_MUY_RAPIDO: 'Vas muy rápido: espera unos segundos para volver a escribir.',
   CHAT_SIN_ASIENTO: 'Solo los jugadores de la mesa pueden escribir en el chat.',
+  REACCION_MUY_RAPIDA: 'Espera 3 segundos antes de lanzar otra reacción.',
+  REACCION_INVALIDA: 'Esa reacción no existe.',
+  REACCION_SIN_ASIENTO: 'Solo los jugadores de la mesa pueden enviar reacciones.',
+  REACCION_DESTINO_INVALIDO: 'Elige a un jugador de la mesa.',
+  AVATAR_INVALIDO: 'Elige uno de los avatares disponibles.',
 };
+
+/** Catalogo de reacciones sociales rapidas de la mesa (ADR-11). */
+export const REACCIONES: ReadonlyArray<{ tipo: TipoReaccion; emoji: string; etiqueta: string }> = [
+  { tipo: 'tomate', emoji: '🍅', etiqueta: 'Tomate' },
+  { tipo: 'burro', emoji: '🐴', etiqueta: 'Burro' },
+  { tipo: 'aplauso', emoji: '👏', etiqueta: 'Aplauso' },
+  { tipo: 'risa', emoji: '😂', etiqueta: 'Risa' },
+];
+export function emojiReaccion(tipo: TipoReaccion): string {
+  return REACCIONES.find((r) => r.tipo === tipo)?.emoji ?? '🍅';
+}
 
 /**
  * Opciones del tiempo de turno en la sala: 60 s por defecto y 45 s como minimo. En la sesion S1 la mediana de un turno

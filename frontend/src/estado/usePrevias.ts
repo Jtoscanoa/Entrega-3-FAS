@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, ErrorApi, guardado } from '../api';
 import { mensajeDe } from '../mensajes';
-import type { EstadoSala, OpcionesPartida, Sesion, VistaInicio, VistaSala, VistaVestibulo } from './tipos';
+import { avatarInicial, guardarAvatar } from '../preferencias';
+import type { AvatarId, EstadoSala, OpcionesPartida, Sesion, VistaInicio, VistaSala, VistaVestibulo } from './tipos';
 
 const motivo = (e: unknown) => mensajeDe(e instanceof ErrorApi ? e.motivo : 'Sin conexión');
 
@@ -42,17 +43,19 @@ export function useVestibulo(sesion: Sesion | null, alEntrarSala: (codigo: strin
                              alCambiarApodo: () => void, aviso = ''): VistaVestibulo {
   const [codigo, setCodigo] = useState('');
   const [error, setError] = useState('');
+  const [avatar, cambiarAvatar] = useState<AvatarId>(avatarInicial);
+  const setAvatar = useCallback((a: AvatarId) => { guardarAvatar(a); cambiarAvatar(a); }, []);
   const intentar = async (accion: () => Promise<string>) => {
     try { alEntrarSala(await accion()); } catch (e) { setError(motivo(e)); }
   };
   const token = sesion?.token ?? '';
   return {
-    apodo: sesion?.apodo ?? '', codigo, setCodigo, error,
+    apodo: sesion?.apodo ?? '', codigo, setCodigo, error, avatar, setAvatar,
     puedeUnirse: codigo.trim().length === 6,
-    crear: () => void intentar(async () => (await api.crearSala(token)).codigo),
+    crear: () => void intentar(async () => (await api.crearSala(token, avatar)).codigo),
     unirse: () => void intentar(async () => {
       const c = codigo.trim().toUpperCase();
-      await api.unirse(token, c);
+      await api.unirse(token, c, avatar);
       return c;
     }),
     cambiarApodo: alCambiarApodo,

@@ -16,4 +16,7 @@ public final class Comandos {
 
     /** Mensaje de chat de la mesa: texto libre, sin reglas de juego. */
     public record Chat(String texto) { }
+
+    /** Reaccion social rapida hacia un jugador sentado en la mesa (ADR-11). */
+    public record Reaccion(String para, String tipo) { }
 }
