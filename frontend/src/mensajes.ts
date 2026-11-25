@@ -58,6 +58,11 @@ export const TIPO_CIERRE: Record<string, string> = {
   A_PINTAS: 'A pintas',
 };
 
+/** Nombre corto del tipo de cierre para la tabla del historial (RF13). */
+export const CIERRE_CORTO: Record<string, string> = {
+  CLASICO_433: 'Clásico', APUNTADO: 'Apuntado', COMPLETO: 'Completo', A_PINTAS: 'A pintas',
+};
+
 export const MOTIVO_FIN: Record<string, string> = {
   MAXIMO_RONDAS: 'se jugó la única ronda de la modalidad',
   TODOS_SUPERARON_UMBRAL: 'todos superaron el umbral; gana el menor marcador',

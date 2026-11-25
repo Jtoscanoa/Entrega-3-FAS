@@ -37,6 +37,8 @@ final class PartidaEnMemoria {
     final List<Asiento> asientos = new ArrayList<>();
     final ReentrantLock candado = new ReentrantLock();
     final List<JugadaRegistrada> jugadas = new ArrayList<>();
+    /** Rondas liquidadas en orden (RF13); se agrega despues del commit de cada liquidacion. */
+    final List<RondaHistorial> historial = new ArrayList<>();
     Fase fase = Fase.ENTRE_RONDAS;
     int indiceAbridor = -1;
     int indiceTurno;

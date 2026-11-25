@@ -34,6 +34,12 @@ const INICIAL: EstadoMesa = {
   ausentes: [], avance: null,
 };
 
+/** RF13: rondas ya liquidadas segun el servidor (VistaPartida.historial); asi sobreviven a una recarga. */
+function historialDe(h: any[]): Liquidacion[] {
+  return h.map((r) => ({ ronda: r.numeroRonda, cerrador: r.cerradorId, tipoCierre: r.tipoCierre,
+    puntosRonda: r.puntosRonda, marcador: r.marcador, eliminados: [] }));
+}
+
 /** La evaluacion del servidor trae indices de su mano; aqui se pasan a codigos de carta. */
 function avanceDe(ev: any, mano: string[]): AvanceMano | null {
   if (!ev) return null;
@@ -116,6 +122,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
             ? Object.keys(d.marcador).filter((sub) => !d.conectados.includes(sub)) : s.ausentes,
           avance: avanceDe(d.evaluacion, d.mano),
         }));
+        if (Array.isArray(d.historial)) setHistorial(historialDe(d.historial));
         break;
       case 'Presencia': {
         // Solo se anotan cambios reales: la primera llegada de un jugador no es un "volvió".
@@ -171,7 +178,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         const l: Liquidacion = { ronda: d.numeroRonda, cerrador: d.cerradorId, tipoCierre: d.tipoCierre,
           puntosRonda: d.puntosRonda, marcador: d.marcador, eliminados: d.eliminados ?? [] };
         setLiquidacion(l);
-        setHistorial((h) => [...h, l]);
+        setHistorial((h) => (h.some((x) => x.ronda === l.ronda) ? h : [...h, l]));
         setE((s) => ({ ...s, marcador: { ...s.marcador, ...d.marcador },
           eliminados: Array.from(new Set([...s.eliminados, ...(d.eliminados ?? [])])) }));
         anotar(`${quien(d.cerradorId, 'cerró', 'cerraste')} la ronda ${d.numeroRonda}.`);

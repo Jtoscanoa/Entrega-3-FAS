@@ -3,9 +3,9 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
 import {
-  ayudaCierre, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance, TIPO_CIERRE,
+  ayudaCierre, CIERRE_CORTO, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance, TIPO_CIERRE,
 } from '../../mensajes';
-import type { VistaMesa } from '../../estado/tipos';
+import type { Liquidacion, VistaMesa } from '../../estado/tipos';
 
 export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
   const { e, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar, segundos, aviso, fin,
@@ -99,11 +99,13 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
           <>
             <h2>Historial de rondas</h2>
             <table>
-              <thead><tr><th>Ronda</th>{jugadores.map((s) => <th key={s}>{nombre(s)}</th>)}</tr></thead>
+              <thead><tr><th>Ronda</th><th>Cierre</th>{jugadores.map((s) => <th key={s}>{nombre(s)}</th>)}</tr></thead>
               <tbody>{historial.map((h) => (
-                <tr key={h.ronda}><td>{h.ronda}</td>{jugadores.map((s) => <td key={s}>{s === h.cerrador ? `${h.puntosRonda[s] ?? 0} ✓` : h.puntosRonda[s] ?? '—'}</td>)}</tr>
+                <tr key={h.ronda}><td>{h.ronda}</td><td>{CIERRE_CORTO[h.tipoCierre] ?? h.tipoCierre}</td>
+                  {jugadores.map((s) => <td key={s}><CeldaRonda h={h} sub={s} /></td>)}</tr>
               ))}</tbody>
             </table>
+            <p className="tenue pequeno">Puntos de la ronda y, entre paréntesis, el total. ✓ = cerró.</p>
           </>
         )}
       </aside>
@@ -138,6 +140,12 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       )}
     </main>
   );
+}
+
+/** Puntos de la ronda y total acumulado del jugador (RF13). */
+function CeldaRonda({ h, sub }: { h: Liquidacion; sub: string }) {
+  if (h.puntosRonda[sub] === undefined) return <>—</>;
+  return <>{h.puntosRonda[sub]}{sub === h.cerrador && ' ✓'} <small className="tenue">({h.marcador[sub] ?? '—'})</small></>;
 }
 
 /** Senal tachada: el jugador no tiene ninguna sesion abierta (RF17). */

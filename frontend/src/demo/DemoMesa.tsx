@@ -35,6 +35,8 @@ class Simulador {
   betoAusente = false;
   /** Guion: avance que mandaria el servidor (RF16); null = sin dato. */
   evaluacion: unknown = null;
+  /** Rondas liquidadas como las manda el servidor en VistaPartida.historial (RF13). */
+  historial: unknown[] = [];
 
   emitir(tipo: string, datos: unknown) { this.h?.alMensaje({ tipo, datos } as Mensaje); }
   vista() {
@@ -42,6 +44,7 @@ class Simulador {
       numeroRonda: this.ronda, mano: this.mano, cimaDescarte: this.cima, marcador: this.marcador, turnoDe: this.turnoDe,
       numeroTurno: this.turno, fase: this.fase, modalidad: 'APUNTADO_101', umbral: 101, robarDelDescarte: true,
       eliminados: this.eliminados, finalizada: false, evaluacion: this.evaluacion,
+      historial: this.historial,
     });
   }
   asignar(jugador: string, fase: string) {
@@ -92,6 +95,8 @@ class Simulador {
     if (previo['demo-caro'] < 60) previo['demo-caro'] = 64;
     Object.keys(puntos).forEach((s) => { this.marcador[s] = (previo[s] ?? 0) + puntos[s]; });
     this.eliminados = Object.keys(this.marcador).filter((s) => this.marcador[s] >= 101);
+    this.historial = [...this.historial, { numeroRonda: this.ronda, cerradorId: YO, tipoCierre: 'COMPLETO',
+      puntosRonda: puntos, marcador: { ...this.marcador } }];
     this.emitir('RondaLiquidada', { numeroRonda: this.ronda, cerradorId: YO, tipoCierre: 'COMPLETO', puntosRonda: puntos,
       marcador: this.marcador, eliminados: this.eliminados });
   }

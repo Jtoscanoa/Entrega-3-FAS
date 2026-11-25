@@ -3,7 +3,7 @@
 import { AnimatePresence, motion, MotionConfig, useAnimate, useReducedMotion } from 'motion/react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
-import { ayudaCierre, NOMBRE_MODALIDAD, pistaCierre, textoAvance } from '../../mensajes';
+import { ayudaCierre, CIERRE_CORTO, NOMBRE_MODALIDAD, pistaCierre, textoAvance } from '../../mensajes';
 import type { EventoMesa, VistaMesa } from '../../estado/tipos';
 import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, PanoMesa, useAnclas, usePanoMesa } from './comun';
 import { ItemMano, itemsDe, Mano } from './Mano';
@@ -632,12 +632,16 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
             <details className="a-historial">
               <summary>Historial de rondas</summary>
               <table>
-                <thead><tr><th>Ronda</th>{mesa.jugadores.map((s) => <th key={s}>{mesa.nombre(s)}</th>)}</tr></thead>
+                <thead><tr><th>Ronda</th><th>Cierre</th>{mesa.jugadores.map((s) => <th key={s}>{mesa.nombre(s)}</th>)}</tr></thead>
                 <tbody>{mesa.historial.map((h, i) => (
-                  <tr key={`${h.ronda}-${i}`}><td>{h.ronda}</td>{mesa.jugadores.map((s) => (
-                    <td key={s}>{s === h.cerrador ? `${h.puntosRonda[s] ?? 0} ✓` : h.puntosRonda[s] ?? '—'}</td>))}</tr>
+                  <tr key={`${h.ronda}-${i}`}><td>{h.ronda}</td><td>{CIERRE_CORTO[h.tipoCierre] ?? h.tipoCierre}</td>
+                    {mesa.jugadores.map((s) => (
+                      <td key={s}>{h.puntosRonda[s] === undefined ? '—' : (
+                        <>{h.puntosRonda[s]}{s === h.cerrador && ' ✓'} <small className="a-tenue">({h.marcador[s] ?? '—'})</small></>
+                      )}</td>))}</tr>
                 ))}</tbody>
               </table>
+              <p className="a-tenue a-pequeno">Puntos de la ronda y, entre paréntesis, el total. ✓ = cerró.</p>
             </details>
           )}
         </aside>

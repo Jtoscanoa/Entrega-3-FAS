@@ -199,7 +199,7 @@ public final class TurnOrchestratorComponent implements ITurno {
                     p.marcadorDeTodos(), p.fase == Fase.FINALIZADA ? null : p.asientoEnTurno().id(),
                     p.numeroTurno, p.huella, p.fase == Fase.FINALIZADA, p.fase.name(), p.cfg.modalidad(),
                     p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados, p.conectados(),
-                    evaluador.evaluarMano(a.mano, p.cfg));
+                    evaluador.evaluarMano(a.mano, p.cfg), List.copyOf(p.historial));
         });
     }
 
@@ -392,6 +392,8 @@ public final class TurnOrchestratorComponent implements ITurno {
             return;
         }
         aplicarEnMemoria(p, descarte, liq);
+        p.historial.add(new RondaHistorial(p.numeroRonda, cerrador, cierre.tipo().name(), liq.puntosRonda(),
+                liq.marcador()));
         eventos.publicar(new EventoDominio.RondaLiquidada(p.id, p.numeroRonda, cerrador, cierre.tipo().name(),
                 liq.puntosRonda(), liq.marcador(), liq.eliminados(), revelacion));
         terminarRonda(p, liq);
