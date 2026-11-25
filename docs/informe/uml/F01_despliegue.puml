@@ -1,0 +1,50 @@
+@startuml F01_despliegue
+title Figura 1. Diagrama de despliegue de Mesa 101 (AWS us-east-1)
+skinparam defaultFontName Arial
+skinparam shadowing false
+skinparam nodesep 40
+skinparam ranksep 50
+
+node "Dispositivo del jugador\n(PC o celular)" as dev {
+  node "Navegador web" <<execution environment>> as nav {
+    artifact "SPA React + TypeScript\n(bundle JS: piel ligera +\nchunk diferido de la piel animada)" as spa
+  }
+}
+
+node "GitHub" as gh {
+  node "GitHub Actions" <<execution environment>> as gha {
+    artifact "Pipeline ci.yml\n(fitness functions FF-01..FF-19)" as pipe
+  }
+  database "ghcr.io" as ghcr {
+    artifact "Imagen Docker\napuntado-server:<sha>" as img
+  }
+}
+
+rectangle "AWS us-east-1 · VPC por defecto" as aws {
+  node "EC2 t3.small · Ubuntu 24.04\nsg mesa101-web (80, 443, 22)\nElastic IP 3.233.175.115" <<device>> as ec2 {
+    node "Docker Engine + Compose" <<execution environment>> as docker {
+      node "Contenedor caddy:2" <<container>> as caddy {
+        artifact "Caddyfile\n(HTTPS Let's Encrypt,\nproxy inverso)" as caddyfile
+      }
+      node "Contenedor app\n(eclipse-temurin:21-jre)" <<container>> as app {
+        artifact "apuntado-server.jar\n(Spring Boot 3.3 + SPA en static/)" as jar
+      }
+    }
+  }
+  node "Amazon RDS\ndb.t4g.micro · sin acceso público\nsg mesa101-db (5432 solo desde mesa101-web)" <<device>> as rds {
+    database "PostgreSQL 16\nBD apuntado (Flyway V1..V4)" as pg
+  }
+}
+
+node "DuckDNS" as dns {
+  artifact "mesa101.duckdns.org → 3.233.175.115" as reg
+}
+
+nav --> caddy : HTTPS / WSS (STOMP 1.2)\nTCP 443
+caddy --> app : HTTP / WebSocket\nTCP 8080 (red Docker)
+app --> pg : JDBC / TLS\nTCP 5432 (sslmode=require)
+nav ..> reg : DNS
+pipe --> ghcr : docker push\n(solo con FF en verde)
+pipe --> docker : SSH 22\ncompose up
+ghcr <.. ec2 : pull\nHTTPS 443
+@enduml
