@@ -1,6 +1,8 @@
 package co.edu.unal.apuntado.domain.rules;
 
 import co.edu.unal.apuntado.domain.rules.modelo.Agrupacion;
+import co.edu.unal.apuntado.domain.rules.modelo.ConfiguracionReglas;
+import co.edu.unal.apuntado.domain.rules.modelo.EvaluacionMano;
 import co.edu.unal.apuntado.domain.rules.modelo.MotivoFin;
 import co.edu.unal.apuntado.domain.rules.modelo.ResultadoLiquidacion;
 import co.edu.unal.apuntado.domain.rules.modelo.SolicitudLiquidacion;
@@ -27,6 +29,22 @@ public final class RoundScoringComponent implements ILiquidacion {
         return new ResultadoLiquidacion(ronda, marcador, eliminados, motivo.isPresent(), ganador, motivo);
     }
 
+    /** Sin umbral en una partida de una sola ronda (la Clasica): solo se informa el marcador proyectado. */
+    @Override
+    public EvaluacionMano proyectar(EvaluacionMano evaluacion, int marcadorActual, ConfiguracionReglas cfg) {
+        int proyectado = marcadorActual + evaluacion.penalizacionSiCierranAhora();
+        if (cfg.maximoRondas() == 1) {
+            return evaluacion.conProyeccion(proyectado, null, false);
+        }
+        int umbral = cfg.umbralEliminacion();
+        return evaluacion.conProyeccion(proyectado, umbral - proyectado, alcanzaUmbral(proyectado, umbral));
+    }
+
+    /** Regla unica de eliminacion: llegar al umbral elimina (101 con umbral 101; 100 no). */
+    private static boolean alcanzaUmbral(int total, int umbral) {
+        return total >= umbral;
+    }
+
     private static Map<String, Integer> puntosDeRonda(SolicitudLiquidacion s) {
         Map<String, Integer> ronda = new LinkedHashMap<>();
         s.marcadorPrevio().keySet().forEach(id -> ronda.put(id, puntosDe(s, id)));
@@ -46,7 +64,7 @@ public final class RoundScoringComponent implements ILiquidacion {
     private static Set<String> superanUmbral(Map<String, Integer> marcador, int umbral) {
         Set<String> r = new LinkedHashSet<>();
         marcador.forEach((id, total) -> {
-            if (total >= umbral) {
+            if (alcanzaUmbral(total, umbral)) {
                 r.add(id);
             }
         });

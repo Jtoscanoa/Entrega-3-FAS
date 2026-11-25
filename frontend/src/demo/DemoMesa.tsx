@@ -89,11 +89,22 @@ class Simulador {
     }, 2100);
   }
   rechazar() { this.emitir('CierreRechazado', { jugadorId: YO, motivo: 'Tienes 2 de 3 ternas.' }); }
+  /** Guion E3-18f: marcador 64 y 2 ternas con sobrante 37: si cierran ahora llegaria a 101 y quedaria eliminado. */
+  alBorde() {
+    this.mano = ['5C', '6C', '7C', '8D', '8T', '8P', 'KD', 'QT', 'JP', '7D'];
+    this.marcador = { ...this.marcador, [YO]: 64 };
+    this.evaluacion = { grupos: [[0, 1, 2], [3, 4, 5]], cuartasFormadas: 0, cuartasRequeridas: 0, ternasFormadas: 2,
+      ternasRequeridas: 3, puntosSobrantes: 37, puedeCerrar: false, descarteSugerido: null,
+      penalizacionSiCierranAhora: 37, marcadorProyectado: 101, faltaParaUmbral: 0, quedariaEliminado: true };
+    this.emitir('ManoEntregada', { jugadorId: YO, cartas: this.mano });
+    this.turnoRival(0);
+  }
   /** Mano de 11 cartas que el servidor declararia cerrable descartando el As (3 ternas + sobrante 4). */
   manoCerrable() {
     this.mano = ['5C', '6C', '7C', '8D', '8T', '8P', 'JC', 'QC', 'KC', '4T', 'AD'];
     this.evaluacion = { grupos: [[0, 1, 2], [3, 4, 5], [6, 7, 8]], cuartasFormadas: 0, cuartasRequeridas: 0,
-      ternasFormadas: 3, ternasRequeridas: 3, puntosSobrantes: 4, puedeCerrar: true, descarteSugerido: 10 };
+      ternasFormadas: 3, ternasRequeridas: 3, puntosSobrantes: 4, puedeCerrar: true, descarteSugerido: 10,
+      penalizacionSiCierranAhora: 4, marcadorProyectado: 4, faltaParaUmbral: 97, quedariaEliminado: false };
     this.emitir('ManoEntregada', { jugadorId: YO, cartas: this.mano });
     this.asignar(YO, 'ESPERANDO_DESCARTE');
   }
@@ -143,6 +154,7 @@ export default function DemoMesa({ version }: { version: Version }) {
         {boton('Turno rival', () => sim.turnoRival(0))}
         {boton('Rechazo', () => sim.rechazar())}
         {boton('Mano cerrable', () => sim.manoCerrable())}
+        {boton('Al borde', () => sim.alBorde())}
         {boton('Revelar mal', () => { sim.revelarMal = !sim.revelarMal; })}
         {boton('Chat de Beto', () => sim.emitir('Chat', { jugadorId: 'demo-beto', texto: '¿Quién va ganando?', hora: new Date().toISOString() }))}
         {boton('Liquidar', () => sim.liquidar())}

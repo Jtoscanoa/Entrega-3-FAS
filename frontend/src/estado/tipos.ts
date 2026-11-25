@@ -33,6 +33,11 @@ export interface AvanceMano {
   grupos: string[][]; cuartasFormadas: number; cuartasRequeridas: number; ternasFormadas: number;
   ternasRequeridas: number; puntosSobrantes: number; puedeCerrar: boolean; descarteSugerido: string | null;
   cartas: number;
+  /**
+   * Proyeccion "si cierran ahora" (sesion S1, E3-18f), tambien del servidor: puntos que sumaria, marcador resultante,
+   * cuanto faltaria para el umbral (null sin umbral, p. ej. Clasica) y si quedaria eliminado.
+   */
+  penalizacion: number; marcadorProyectado: number | null; faltaParaUmbral: number | null; quedariaEliminado: boolean;
 }
 
 /** Estado de la mesa tal como lo comunica el servidor (RD4: la SPA no decide nada sobre las reglas). */

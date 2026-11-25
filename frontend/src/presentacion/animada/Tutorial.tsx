@@ -23,6 +23,8 @@ const MANO_INICIAL = ['7C', '4D', '7P', 'KC', '5D', '2D', '7T', 'KD', '2C', '9T'
  */
 const TERNAS_GUION = [['7C', '7P', '7T'], ['KC', 'KD', 'KP'], ['4D', '5D', '6D']];
 const SOBRANTE_GUION: Record<number, number> = { 1: 42, 2: 13, 3: 2 };
+/** Proyeccion del guion con marcador 0 y umbral 101: [puntos si cierran ahora, falta para 101]. */
+const PROYECCION_GUION: Record<number, [number, number]> = { 1: [42, 59], 2: [13, 88], 3: [2, 99] };
 
 function avanceGuion(orden: string[]): AvanceMano {
   const grupos = TERNAS_GUION.filter((t) => t.every((c) => orden.includes(c)));
@@ -31,6 +33,8 @@ function avanceGuion(orden: string[]): AvanceMano {
     grupos, cuartasFormadas: 0, cuartasRequeridas: 0, ternasFormadas: grupos.length, ternasRequeridas: 3,
     puntosSobrantes: SOBRANTE_GUION[grupos.length] ?? 0, puedeCerrar: once && grupos.length === 3,
     descarteSugerido: once ? (grupos.length === 3 ? '2C' : '9T') : null, cartas: orden.length,
+    penalizacion: PROYECCION_GUION[grupos.length]?.[0] ?? 0, marcadorProyectado: PROYECCION_GUION[grupos.length]?.[0] ?? null,
+    faltaParaUmbral: PROYECCION_GUION[grupos.length]?.[1] ?? null, quedariaEliminado: false,
   };
 }
 

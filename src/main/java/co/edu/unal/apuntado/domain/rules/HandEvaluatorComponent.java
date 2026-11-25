@@ -37,24 +37,32 @@ public final class HandEvaluatorComponent implements IEvaluadorMano {
         return regla(cfg).cartasSueltas(mano, cfg);
     }
 
-    /** Con 11 cartas prueba cada descarte con la propia regla y se queda con el mejor (EvaluacionMano#mejorQue). */
+    /**
+     * Con 11 cartas prueba cada descarte con la propia regla y se queda con el mejor (EvaluacionMano#mejorQue). La
+     * penalizacion si otro cierra ya son las cartas sueltas (RF07) de la mano que quedaria: la evaluada o, con 11
+     * cartas, la que deja el descarte sugerido.
+     */
     @Override
     public EvaluacionMano evaluarMano(List<Carta> mano, ConfiguracionReglas cfg) {
         ReglaJuego regla = regla(cfg);
         if (mano.size() != CARTAS_AL_CERRAR + 1) {
-            return regla.evaluarAvance(mano, cfg);
+            return regla.evaluarAvance(mano, cfg).conPenalizacion(regla.cartasSueltas(mano, cfg).puntos());
         }
         EvaluacionMano mejor = null;
         for (int i = 0; i < mano.size(); i++) {
-            List<Carta> resto = new ArrayList<>(mano);
-            resto.remove(i);
-            EvaluacionMano opcion = regla.evaluarAvance(resto, cfg)
-                    .conDescarte(i, regla.evaluarCierre(resto, cfg).valido());
+            EvaluacionMano opcion = regla.evaluarAvance(sin(mano, i), cfg)
+                    .conDescarte(i, regla.evaluarCierre(sin(mano, i), cfg).valido());
             if (mejor == null || opcion.mejorQue(mejor)) {
                 mejor = opcion;
             }
         }
-        return mejor;
+        return mejor.conPenalizacion(regla.cartasSueltas(sin(mano, mejor.descarteSugerido()), cfg).puntos());
+    }
+
+    private static List<Carta> sin(List<Carta> mano, int indice) {
+        List<Carta> resto = new ArrayList<>(mano);
+        resto.remove(indice);
+        return resto;
     }
 
     private ReglaJuego regla(ConfiguracionReglas cfg) {

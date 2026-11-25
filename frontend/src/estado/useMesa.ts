@@ -50,6 +50,8 @@ function avanceDe(ev: any, mano: string[]): AvanceMano | null {
     cuartasRequeridas: ev.cuartasRequeridas, ternasFormadas: ev.ternasFormadas, ternasRequeridas: ev.ternasRequeridas,
     puntosSobrantes: ev.puntosSobrantes, puedeCerrar: ev.puedeCerrar,
     descarteSugerido: ev.descarteSugerido == null ? null : carta(ev.descarteSugerido), cartas: mano.length,
+    penalizacion: ev.penalizacionSiCierranAhora ?? 0, marcadorProyectado: ev.marcadorProyectado ?? null,
+    faltaParaUmbral: ev.faltaParaUmbral ?? null, quedariaEliminado: !!ev.quedariaEliminado,
   };
 }
 const MAX_EVENTOS = 40;

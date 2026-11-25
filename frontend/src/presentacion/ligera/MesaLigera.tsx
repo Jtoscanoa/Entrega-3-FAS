@@ -3,7 +3,8 @@
 import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
 import {
-  ayudaCierre, CIERRE_CORTO, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance, TIPO_CIERRE,
+  ayudaCierre, CIERRE_CORTO, LARGO_CHAT, llenadoProyeccion, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance,
+  textoProyeccion, TIPO_CIERRE,
   VERIFICACION_REPARTO,
 } from '../../mensajes';
 import { huellaCorta } from '../../estado/verificarReparto';
@@ -67,7 +68,6 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       <section className="mano">
         <div className="mano-cabecera">
           <h2>Tu mano ({e.orden.length})</h2>
-          {avance && textoAvance(avance) && <span className={puedeCerrar ? 'avance listo' : 'avance'}>{textoAvance(avance)}</span>}
           <div className="fila">
             <button onClick={() => mesa.reordenar(ordenarPorGrupos(e.orden, avance?.grupos ?? []))}
               disabled={!avance?.grupos.length}>Agrupar juegos</button>
@@ -83,6 +83,16 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
               onDrop={() => { if (arrastrada.current !== null && arrastrada.current !== i) mesa.mover(arrastrada.current, i); arrastrada.current = null; }} />
           ))}
         </div>
+        {avance && !e.eliminados.includes(mesa.yo) && (
+          <div className="barra-proyeccion" role="status">
+            {avance.marcadorProyectado !== null && (
+              <p className={avance.quedariaEliminado ? 'proyeccion peligro' : 'proyeccion'}
+                style={{ ['--lleno' as string]: llenadoProyeccion(avance, e.umbral) }}
+                title={textoProyeccion(avance, e.umbral)}>{textoProyeccion(avance, e.umbral)}</p>
+            )}
+            {textoAvance(avance) && <p className={puedeCerrar ? 'avance listo' : 'avance'}>{textoAvance(avance)}</p>}
+          </div>
+        )}
         <p className="tenue pequeno">Arrastra las cartas para agrupar tus ternas y cuartas. Toca una carta para seleccionarla.</p>
         {puedeCerrar && sugerida && (
           <p className="pista-cierre" role="status">
@@ -98,7 +108,7 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       </section>
 
       <aside className="bitacora">
-        <h2>Lo último</h2>
+        <h2>Registro</h2>
         <ul>{bitacora.map((t, i) => <li key={i}>{t}</li>)}</ul>
         <ChatLigero mesa={mesa} estado={chat} />
         {historial.length > 0 && (
