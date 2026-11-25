@@ -16,6 +16,8 @@ public record ConfiguracionReglas(
     public static final String APUNTADO_101 = "APUNTADO_101";
     public static final String CLASICA_433 = "CLASICA_433";
     public static final int RESIDUO_TOPE = 4;
+    /** Plazo por defecto: en la sesion S1 la mediana de un turno fue 22,6 s y el maximo 46,7 s (35 s no alcanzaba). */
+    public static final int SEGUNDOS_POR_TURNO = 60;
     public static final int JUGADORES_MINIMO = 2;
     public static final int JUGADORES_MAXIMO = 6;
     public static final int JUGADORES_CON_UN_MAZO = 4;
@@ -38,12 +40,14 @@ public record ConfiguracionReglas(
     }
 
     public static ConfiguracionReglas apuntado101() {
-        return new ConfiguracionReglas(APUNTADO_101, 101, RESIDUO_TOPE, false, false, false, false, 0, -51, 30);
+        return new ConfiguracionReglas(APUNTADO_101, 101, RESIDUO_TOPE, false, false, false, false, 0, -51,
+                SEGUNDOS_POR_TURNO);
     }
 
     /** La Clasica 4-3-3 es una partida atomica: maximo de rondas = 1. */
     public static ConfiguracionReglas clasica() {
-        return new ConfiguracionReglas(CLASICA_433, 101, RESIDUO_TOPE, false, false, false, false, 1, -51, 30);
+        return new ConfiguracionReglas(CLASICA_433, 101, RESIDUO_TOPE, false, false, false, false, 1, -51,
+                SEGUNDOS_POR_TURNO);
     }
 
     public ConfiguracionReglas conComodines(boolean valor) {

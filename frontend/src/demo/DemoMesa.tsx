@@ -33,13 +33,15 @@ class Simulador {
   eliminados: string[] = [];
   segundos = 45;
   betoAusente = false;
+  /** Guion: avance que mandaria el servidor (RF16); null = sin dato. */
+  evaluacion: unknown = null;
 
   emitir(tipo: string, datos: unknown) { this.h?.alMensaje({ tipo, datos } as Mensaje); }
   vista() {
     this.emitir('VistaPartida', {
       numeroRonda: this.ronda, mano: this.mano, cimaDescarte: this.cima, marcador: this.marcador, turnoDe: this.turnoDe,
       numeroTurno: this.turno, fase: this.fase, modalidad: 'APUNTADO_101', umbral: 101, robarDelDescarte: true,
-      eliminados: this.eliminados, finalizada: false,
+      eliminados: this.eliminados, finalizada: false, evaluacion: this.evaluacion,
     });
   }
   asignar(jugador: string, fase: string) {
@@ -75,7 +77,15 @@ class Simulador {
       if (k + 1 < RIVALES.length) this.turnoRival(k + 1); else this.asignar(YO, 'ESPERANDO_ROBO');
     }, 2100);
   }
-  rechazar() { this.emitir('CierreRechazado', { jugadorId: YO, motivo: 'Las cartas no forman la estructura que exige la modalidad.' }); }
+  rechazar() { this.emitir('CierreRechazado', { jugadorId: YO, motivo: 'Tienes 2 de 3 ternas.' }); }
+  /** Mano de 11 cartas que el servidor declararia cerrable descartando el As (3 ternas + sobrante 4). */
+  manoCerrable() {
+    this.mano = ['5C', '6C', '7C', '8D', '8T', '8P', 'JC', 'QC', 'KC', '4T', 'AD'];
+    this.evaluacion = { grupos: [[0, 1, 2], [3, 4, 5], [6, 7, 8]], cuartasFormadas: 0, cuartasRequeridas: 0,
+      ternasFormadas: 3, ternasRequeridas: 3, puntosSobrantes: 4, puedeCerrar: true, descarteSugerido: 10 };
+    this.emitir('ManoEntregada', { jugadorId: YO, cartas: this.mano });
+    this.asignar(YO, 'ESPERANDO_DESCARTE');
+  }
   liquidar() {
     const puntos: Record<string, number> = { [YO]: -10, 'demo-beto': 23, 'demo-caro': 47, 'demo-dani': 8 };
     const previo = { ...this.marcador };
@@ -118,6 +128,7 @@ export default function DemoMesa({ version }: { version: Version }) {
         {boton('Repartir', () => sim.repartir())}
         {boton('Turno rival', () => sim.turnoRival(0))}
         {boton('Rechazo', () => sim.rechazar())}
+        {boton('Mano cerrable', () => sim.manoCerrable())}
         {boton('Liquidar', () => sim.liquidar())}
         {boton('Fin', () => sim.terminar())}
         {boton('Cortar red 3 s', () => { sim.h?.alDesconectar(); setTimeout(() => sim.h?.alConectar(), 3000); })}

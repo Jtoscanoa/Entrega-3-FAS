@@ -36,7 +36,7 @@ class CierresTest {
     void clasicaRechazaDosEscalerasDeCinco() {
         ResultadoValidacion r = evaluador.validarCierre(Manos.de("5P 6P 7P 8P 9P 2C 3C 4C 5C 6C"), clasica);
         assertFalse(r.valido());
-        assertEquals(MotivoRechazo.ESTRUCTURA_INVALIDA, r.motivo());
+        assertEquals(MotivoRechazo.FALTAN_TERNAS, r.motivo());
     }
 
     @Test
@@ -109,7 +109,7 @@ class CierresTest {
     @Test
     void apuntadoRechazaManoSinTresTernas() {
         ResultadoValidacion r = evaluador.validarCierre(Manos.de("AC 3D 5T 7P 9C JD KT 2P 4D 6T"), apuntado);
-        assertEquals(MotivoRechazo.ESTRUCTURA_INVALIDA, r.motivo());
+        assertEquals(MotivoRechazo.FALTAN_TERNAS, r.motivo());
     }
 
     @Test

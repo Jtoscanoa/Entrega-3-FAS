@@ -3,6 +3,7 @@ package co.edu.unal.apuntado.domain.rules;
 import co.edu.unal.apuntado.domain.rules.modelo.Agrupacion;
 import co.edu.unal.apuntado.domain.rules.modelo.Carta;
 import co.edu.unal.apuntado.domain.rules.modelo.ConfiguracionReglas;
+import co.edu.unal.apuntado.domain.rules.modelo.EvaluacionMano;
 import co.edu.unal.apuntado.domain.rules.modelo.ResultadoValidacion;
 import java.util.List;
 
@@ -17,4 +18,12 @@ public interface ReglaJuego {
 
     /** Agrupacion que minimiza los puntos sueltos de un perdedor (RF07). */
     Agrupacion cartasSueltas(List<Carta> mano, ConfiguracionReglas cfg);
+
+    /**
+     * Cuanto le falta a una mano de 10 cartas para cerrar (RF16): combinaciones, ternas y sobrante. Una variante que
+     * no lo implemente no muestra avance; nunca se usa para validar (eso es {@link #evaluarCierre}).
+     */
+    default EvaluacionMano evaluarAvance(List<Carta> mano, ConfiguracionReglas cfg) {
+        return EvaluacionMano.sinDetalle();
+    }
 }
