@@ -1,11 +1,11 @@
 // Unica fuente de estado de la mesa. Vive por encima de las dos pieles: cambiar de version no reconecta.
 // La SPA no valida reglas (RD4): solo refleja lo que el servidor comunica y le envia las intenciones del jugador.
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { api, conectarMesa, ConexionMesa, ManejadoresMesa } from '../api';
+import { api, conectarMesa, ConexionMesa, guardado, ManejadoresMesa } from '../api';
 import { infoCarta, ordenarPorPinta, ordenarPorValor, reconciliar } from '../cartas';
 import { mensajeDe, PARTIDA_INTERRUMPIDA, rondaPendiente } from '../mensajes';
 import { avatarInicial, esAvatarValido } from '../preferencias';
-import { useSonidosMesa } from '../sonidos';
+import { reproducirSonido, useSonidosMesa } from '../sonidos';
 import { verificarReparto } from './verificarReparto';
 import type {
   AvatarId, AvanceMano, Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo,
@@ -46,8 +46,15 @@ const REINTENTO_RONDA_MS = 3000;
 const INICIAL: EstadoMesa = {
   ronda: 0, orden: [], cima: null, marcador: {}, turnoDe: null, numeroTurno: 0, fase: '', modalidad: '',
   umbral: 101, robarDelDescarte: false, eliminados: [], finalizada: false, venceEn: null, nueva: null, turnoDesde: null,
-  ausentes: [], avance: null, huella: null,
+  ausentes: [], avance: null, huella: null, segundosPorTurno: 60,
 };
+/** El registro de la mesa sobrevive a una recarga (sessionStorage, por pestana). */
+const MAX_REGISTRO = 10;
+const claveRegistro = (partidaId: number) => `bitacora:${partidaId}`;
+/** Sin VistaPartida (recarga o reconexion) se vuelve a pedir "reanudar" cada tanto. */
+const REINTENTO_VISTA_MS = 1200;
+/** Rechazos que indican que la SPA quedo atrasada: se resincroniza con una vista nueva. */
+const MOTIVOS_RESINCRONIZAR = new Set(['TURNO_OBSOLETO', 'FASE_INCORRECTA', 'FUERA_DE_TURNO']);
 
 /** RF13: rondas ya liquidadas segun el servidor (VistaPartida.historial); asi sobreviven a una recarga. */
 function historialDe(h: any[]): Liquidacion[] {
@@ -99,7 +106,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false
   const [conectado, setConectado] = useState(false);
   const [seleccion, setSeleccion] = useState<number | null>(null);
   const [aviso, setAviso] = useState<Aviso | null>(null);
-  const [bitacora, setBitacora] = useState<string[]>([]);
+  const [bitacora, setBitacora] = useState<string[]>(() => guardado.leer<string[]>(claveRegistro(partidaId)) ?? []);
+  const vistaRecibida = useRef(false);
   const [liquidacion, setLiquidacion] = useState<Liquidacion | null>(null);
   const [historial, setHistorial] = useState<Liquidacion[]>([]);
   const [fin, setFin] = useState<FinPartida | null>(null);
@@ -130,7 +138,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false
 
   const nombre = useCallback((sub: string | null) =>
     !sub ? '—' : sub === sesion.sub ? 'Tú' : nombresRef.current[sub] ?? 'Jugador', [sesion.sub]);
-  const anotar = useCallback((t: string) => setBitacora((b) => [t, ...b].slice(0, 8)), []);
+  const anotar = useCallback((t: string) => setBitacora((b) => [t, ...b].slice(0, MAX_REGISTRO)), []);
   /** Conjuga en segunda persona cuando la accion es del propio jugador ("Tú descartaste" y no "Tú descartó"). */
   const quien = useCallback((sub: string, tercera: string, segunda: string) =>
     sub === sesion.sub ? `Tú ${segunda}` : `${nombre(sub)} ${tercera}`, [nombre, sesion.sub]);
@@ -150,7 +158,11 @@ export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false
           ausentes: Array.isArray(d.conectados)
             ? Object.keys(d.marcador).filter((sub) => !d.conectados.includes(sub)) : s.ausentes,
           avance: avanceDe(d.evaluacion, d.mano), huella: d.huella ?? s.huella,
+          venceEn: d.venceEn ?? null, segundosPorTurno: d.segundosPorTurno ?? s.segundosPorTurno,
+          turnoDesde: s.turnoDesde ?? (d.venceEn ? Date.now() : null),
         }));
+        vistaRecibida.current = true;
+        if (d.numeroRonda > 0) setBitacora((b) => (b.length ? b : [`Ronda ${d.numeroRonda} en curso.`]));
         if (d.huella) huellaRef.current = d.huella;
         if (Array.isArray(d.historial)) {
           setHistorial((previo) => historialDe(d.historial).map((r) => ({
@@ -274,14 +286,16 @@ export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false
       alError: (motivo) => {
         // Retro E2 2.3: tras un reinicio la partida ya no esta en memoria; se vuelve al vestibulo explicando que paso.
         if (motivo === 'PARTIDA_INEXISTENTE' && !finalizadaRef.current) {
+          guardado.borrar(claveRegistro(partidaId));
           c.cerrarConexion();
           alSalirRef.current(PARTIDA_INTERRUMPIDA);
           return;
         }
         setAviso({ texto: mensajeDe(motivo), tipo: 'error', cierre: false });
+        if (MOTIVOS_RESINCRONIZAR.has(motivo)) c.reanudar();
       },
       alConectar: () => { setConectado(true); c.reanudar(); },
-      alDesconectar: () => setConectado(false),
+      alDesconectar: () => { vistaRecibida.current = false; setConectado(false); },
     });
     conexion.current = c;
     return () => {
@@ -294,6 +308,15 @@ export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false
   }, [sesion.token, codigo, partidaId, alMensaje, conector]);
 
   useEffect(() => { const t = setInterval(() => setAhora(Date.now()), 500); return () => clearInterval(t); }, []);
+  useEffect(() => { guardado.escribir(claveRegistro(partidaId), bitacora); }, [bitacora, partidaId]);
+  // Tras recargar, la primera vista puede perderse: se insiste con "reanudar" hasta que llegue (idempotente).
+  useEffect(() => {
+    if (!conectado || e.finalizada || (e.ronda > 0 && vistaRecibida.current)) return undefined;
+    const t = setInterval(() => {
+      if (!vistaRecibida.current || e.ronda === 0) conexion.current?.reanudar();
+    }, REINTENTO_VISTA_MS);
+    return () => clearInterval(t);
+  }, [conectado, e.finalizada, e.ronda]);
   useEffect(() => { if (!aviso) return; const t = setTimeout(() => setAviso(null), 6000); return () => clearTimeout(t); }, [aviso]);
 
   const miTurno = e.turnoDe === sesion.sub && !e.finalizada;
@@ -327,7 +350,11 @@ export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false
     modoOrden.current = null;
     setE((s) => ({ ...s, orden }));
   }, []);
-  const salir = useCallback(() => { conexion.current?.cerrarConexion(); alSalir(); }, [alSalir]);
+  const salir = useCallback(() => {
+    guardado.borrar(claveRegistro(partidaId));
+    conexion.current?.cerrarConexion();
+    alSalir();
+  }, [alSalir, partidaId]);
 
   return {
     yo: sesion.sub, codigo, e, conectado, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar,
@@ -341,7 +368,10 @@ export function useMesa({ sesion, codigo, partidaId, alSalir, silenciado = false
       const a = avataresRef.current[sub];
       return esAvatarValido(a) ? a : sub === sesion.sub ? avatarInicial() : null;
     },
-    seleccionar: setSeleccion,
+    seleccionar: (indice) => {
+      if (indice !== null && indice !== seleccion) reproducirSonido('seleccionar', silenciado);
+      setSeleccion(indice);
+    },
     robar: (delDescarte) => conexion.current?.robar(delDescarte, e.numeroTurno),
     descartar: () => { if (cartaSel) conexion.current?.descartar(cartaSel, e.numeroTurno); },
     cerrar: () => { if (cartaSel) conexion.current?.cerrar(cartaSel, e.numeroTurno); },

@@ -108,7 +108,29 @@ class TurnosTest {
         assertEquals(10, v.mano().size());
         assertEquals("sub-a", v.turnoDe());
         assertEquals("4D", v.cimaDescarte());
+        assertEquals(Escenario.AHORA.plusSeconds(ConfiguracionReglas.SEGUNDOS_POR_TURNO), v.venceEn());
+        assertEquals(ConfiguracionReglas.SEGUNDOS_POR_TURNO, v.segundosPorTurno());
         assertEquals(MotivoComando.FUERA_DE_TURNO, motivo(() -> e.orquestador.vistaDe(id, "intruso")));
+    }
+
+    @Test
+    void cerrarTrasRobarLimpiaUltimaRobadaYElAusenteQueAbreLaSiguienteRondaNoSeBloquea() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101().conUmbral(200).conRobarDelDescarte(true), 2);
+        e.orquestador.descartar(id, "sub-a", "4T", 1);
+        e.orquestador.marcarConexion(id, "sub-b", false);
+        e.programador.ultimo().run();
+        // Turno 3: sub-a roba 3T del mazo (carta que no tendra sub-b en la ronda 2) y cierra con AD.
+        e.orquestador.robar(id, "sub-a", false, 3);
+        assertTrue(e.orquestador.cerrar(id, "sub-a", "AD", 3).valido());
+
+        // Ronda 2: abre sub-b (sin conexion); al vencer su plazo de 10 s debe descartar de su nueva mano y pasar el turno.
+        assertEquals("sub-b", ultimoTurno(e).jugadorId());
+        int turnoRonda2 = ultimoTurno(e).numeroTurno();
+        e.programador.ultimo().run();
+        assertEquals(turnoRonda2 + 1, ultimoTurno(e).numeroTurno());
+        assertEquals("sub-a", ultimoTurno(e).jugadorId());
+        assertEquals(10, e.orquestador.vistaDe(id, "sub-b").mano().size());
     }
 
     @Test

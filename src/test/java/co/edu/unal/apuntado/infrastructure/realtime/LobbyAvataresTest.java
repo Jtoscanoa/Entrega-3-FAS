@@ -45,11 +45,16 @@ class LobbyAvataresTest {
 
     @Test
     void exponeEnLaSalaLosAvataresElegidosAlCrearYUnirse() {
-        String codigo = controlador.crear(new SolicitudSala("Tendero"), jwt("sub-1", "Ana")).get("codigo");
-        controlador.unirse(codigo, new SolicitudSala("abuela"), jwt("sub-2", "Beto"));
+        String codigo = controlador.crear(new SolicitudSala("Hincha"), jwt("sub-1", "Ana")).get("codigo");
+        controlador.unirse(codigo, new SolicitudSala("metro"), jwt("sub-2", "Beto"));
 
         VistaSala vista = controlador.estado(codigo);
-        assertEquals(Map.of("sub-1", "tendero", "sub-2", "abuela"), vista.avatares());
+        assertEquals(Map.of("sub-1", "hincha", "sub-2", "metro"), vista.avatares());
+
+        for (String avatar : List.of("hincha", "perro", "mototaxi", "panadero", "metro", "papa")) {
+            String sala = controlador.crear(new SolicitudSala(avatar), jwt("sub-" + avatar, "Ana")).get("codigo");
+            assertEquals(avatar, controlador.estado(sala).avatares().get("sub-" + avatar));
+        }
     }
 
     @Test

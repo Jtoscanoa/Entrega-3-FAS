@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { infoCarta, ordenarPorGrupos } from '../../cartas';
 import type { AvanceMano, AvatarId, Aviso, EventoMesa, Liquidacion, VistaMesa } from '../../estado/tipos';
+import { reproducirSonido, useSonidosMesa } from '../../sonidos';
 import { nombreCarta } from './comun';
 
 const YO = 'tut-yo';
@@ -15,9 +16,9 @@ const NOMBRES: Record<string, string> = {
   'tut-caro': 'Carolina',
 };
 const AVATARES_TUT: Record<string, AvatarId> = {
-  [YO]: 'tendero',
-  'tut-beto': 'taxista',
-  'tut-caro': 'abuela',
+  [YO]: 'hincha',
+  'tut-beto': 'mototaxi',
+  'tut-caro': 'papa',
 };
 
 const MANO_INICIAL = ['7C', '4D', '7P', 'KC', '5D', '2D', '7T', 'KD', '2C', '9T'];
@@ -98,7 +99,8 @@ export interface ControlTutorial {
   salir: () => void;
 }
 
-export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
+export function usePartidaTutorial(alCerrar: () => void, silenciado = true,
+  alternarSilencio: () => void = () => undefined): ControlTutorial {
   const [st, setSt] = useState<EstadoTutorial>(() => crearEstadoInicial(1));
   const siguienteEvento = useRef(1);
   const timers = useRef<number[]>([]);
@@ -142,6 +144,7 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
   }, []);
 
   const seleccionar = useCallback((indice: number | null) => {
+    if (indice !== null && indice !== st.seleccion) reproducirSonido('seleccionar', silenciado);
     setSt((prev) => {
       const elegido = indice !== null ? prev.orden[indice] ?? null : null;
       let paso = prev.paso;
@@ -149,7 +152,7 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
       else if (prev.paso === 3 && elegido !== '9T') paso = 2;
       return { ...prev, seleccion: indice, paso, aviso: null };
     });
-  }, []);
+  }, [st.seleccion, silenciado]);
 
   const reordenar = useCallback((orden: string[]) => {
     setSt((prev) => ({ ...prev, orden }));
@@ -396,6 +399,8 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
 
   const cartaSel = st.seleccion !== null ? st.orden[st.seleccion] ?? null : null;
   const miTurno = st.turnoDe === YO && !st.esperandoRivales;
+  // El tutorial suena igual que una partida real (reparto, robos, descartes, tu turno), con el mismo interruptor.
+  useSonidosMesa(st.eventos, miTurno, st.numeroTurno, false, silenciado);
   const debeRobar = miTurno && st.fase === 'ESPERANDO_ROBO';
   const debeDescartar = miTurno && st.fase === 'ESPERANDO_DESCARTE';
 
@@ -431,11 +436,12 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
       ausentes: [],
       avance: null,
       huella: null,
+      segundosPorTurno: 60,
     },
     conectado: true,
     nombre: (sub) => (sub ? NOMBRES[sub] ?? sub : ''),
     alias: (sub) => NOMBRES[sub] ?? sub,
-    avatar: (sub) => AVATARES_TUT[sub] ?? 'tendero',
+    avatar: (sub) => AVATARES_TUT[sub] ?? 'hincha',
     jugadores: JUGADORES,
     seleccion: st.seleccion,
     cartaSel,
@@ -455,8 +461,8 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
     enviarChat: () => undefined,
     reacciones: [],
     reaccionar: () => undefined,
-    silenciado: true,
-    alternarSilencio: () => undefined,
+    silenciado,
+    alternarSilencio,
     seleccionar,
     robar,
     descartar,
@@ -468,7 +474,7 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
     cerrarLiquidacion,
     salir,
   }), [
-    st, cartaSel, miTurno, debeRobar, debeDescartar, instruccion,
+    st, cartaSel, miTurno, debeRobar, debeDescartar, instruccion, silenciado, alternarSilencio,
     seleccionar, robar, descartar, cerrar, mover, reordenar, ordenarPorPinta, ordenarPorValor, cerrarLiquidacion, salir,
   ]);
 

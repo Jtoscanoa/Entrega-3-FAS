@@ -30,7 +30,8 @@ function Interruptor({ activo, cambiar, children }: { activo: boolean; cambiar: 
   );
 }
 
-export default function PreviasAnimadas({ vista }: { vista: VistaPrevia }) {
+export default function PreviasAnimadas({ vista, silenciado = true, alternarSilencio = () => undefined }:
+  { vista: VistaPrevia; silenciado?: boolean; alternarSilencio?: () => void }) {
   const [pano] = usePanoMesa();
   const [tutorial, setTutorial] = useState(false);
   return (
@@ -41,7 +42,9 @@ export default function PreviasAnimadas({ vista }: { vista: VistaPrevia }) {
           {vista.pantalla === 'vestibulo' && <Vestibulo key="vestibulo" v={vista.vestibulo} abrirTutorial={() => setTutorial(true)} />}
           {vista.pantalla === 'sala' && <Sala key={`sala-${vista.sala.codigo}`} v={vista.sala} abrirTutorial={() => setTutorial(true)} />}
         </AnimatePresence>
-        {tutorial && <PartidaTutorial alCerrar={() => setTutorial(false)} />}
+        {tutorial && (
+          <PartidaTutorial alCerrar={() => setTutorial(false)} silenciado={silenciado} alternarSilencio={alternarSilencio} />
+        )}
       </div>
     </MotionConfig>
   );

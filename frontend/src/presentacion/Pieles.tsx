@@ -18,11 +18,13 @@ export function PielMesa({ version, mesa }: { version: Version; mesa: VistaMesa 
   );
 }
 
-export function PielPrevias({ version, vista }: { version: Version; vista: VistaPrevia }) {
+/** {@code silenciado} y {@code alternarSilencio} llegan al tutorial de la animada (la ligera no tiene tutorial). */
+export function PielPrevias({ version, vista, silenciado = true, alternarSilencio = () => undefined }:
+  { version: Version; vista: VistaPrevia; silenciado?: boolean; alternarSilencio?: () => void }) {
   if (version === 'ligera') return <PreviasLigeras vista={vista} />;
   return (
     <Suspense fallback={<PreviasLigeras vista={vista} />}>
-      <PreviasAnimadas vista={vista} />
+      <PreviasAnimadas vista={vista} silenciado={silenciado} alternarSilencio={alternarSilencio} />
     </Suspense>
   );
 }

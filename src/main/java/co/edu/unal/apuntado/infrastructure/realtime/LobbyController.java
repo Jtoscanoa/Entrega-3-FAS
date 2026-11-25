@@ -24,7 +24,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/api/salas")
 public class LobbyController {
 
-    static final Set<String> AVATARES = Set.of("tendero", "tia", "taxista", "abuela", "galan");
+    static final Set<String> AVATARES = Set.of("hincha", "perro", "mototaxi", "panadero", "metro", "papa");
 
     public record SolicitudSala(String avatar) { }
 
