@@ -6,7 +6,7 @@ Propuesto (25-nov-2026). Bitácora: E3-18.
 
 ## Contexto
 
-- El chat **no está en el E1 ni en el E2**: ningún requisito funcional ni escenario de calidad lo pide. Es una deriva del E3, pedida durante las pruebas con usuarios, y se registra aquí para que no quede como cambio implícito.
+- El chat **no está en el E1 ni en el E2**: ningún requisito funcional ni escenario de calidad lo pide. Es una deriva del E3: se agregó el 24-nov-2026 (fusionado a las 13:54), antes de la sesión S1 con usuarios (19:05), y se registra aquí para que no quede como cambio implícito. En S1 se usó 9 veces y los usuarios lo valoraron en un comentario verbal.
 - La mesa no tenía forma de conversar entre jugadores remotos.
 - Cualquier texto que el servidor reenvía es una superficie de abuso: mensajes en ráfaga, caracteres de control, textos muy largos, contenido que no debe quedar en los registros.
 - El dominio no debe aprender de chat: el orquestador es mediador estricto (FF-01c) y las reglas no conocen la red (FF-06). Tampoco hay persistencia para esto (FF-07).
@@ -21,7 +21,7 @@ Propuesto (25-nov-2026). Bitácora: E3-18.
 
 ### Alternativas descartadas
 
-- **No tener chat** (lo que dice el E2). Los usuarios lo pidieron para jugar a distancia.
+- **No tener chat** (lo que dice el E2). La mesa no tenía cómo conversar a distancia.
 - **Guardar los mensajes en la base.** Requiere tabla, retención y moderación; no lo pide ningún requisito.
 - **Auditar el contenido.** Mete datos personales en el log que se usa como evidencia del informe.
 - **Chat como parte del dominio de la partida.** Rompe FF-06 y FF-07 sin ganar nada: no afecta las reglas.
