@@ -120,7 +120,7 @@ public final class TurnOrchestratorComponent implements ITurno {
             List<Carta> resto = restoSinCarta(p.asientoEnTurno(), descarte);
             ResultadoValidacion cierre = evaluador.validarCierre(resto, p.cfg);
             if (!cierre.valido()) {
-                eventos.publicar(new EventoDominio.CierreRechazado(p.id, jugadorId, cierre.motivo().mensaje()));
+                eventos.publicar(new EventoDominio.CierreRechazado(p.id, jugadorId, cierre.mensaje()));
                 return cierre;
             }
             liquidarCierre(p, jugadorId, descarte, resto, cierre);
@@ -198,7 +198,8 @@ public final class TurnOrchestratorComponent implements ITurno {
             return new VistaPartida(p.id, p.numeroRonda, a.mano.stream().map(Carta::codigo).toList(), cima,
                     p.marcadorDeTodos(), p.fase == Fase.FINALIZADA ? null : p.asientoEnTurno().id(),
                     p.numeroTurno, p.huella, p.fase == Fase.FINALIZADA, p.fase.name(), p.cfg.modalidad(),
-                    p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados, p.conectados());
+                    p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados, p.conectados(),
+                    evaluador.evaluarMano(a.mano, p.cfg));
         });
     }
 

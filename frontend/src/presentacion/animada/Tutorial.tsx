@@ -2,9 +2,8 @@
 // agrupando juegos, descartando, viendo turnos rivales y cerrando una ronda. Solo presentacion (RD4).
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react';
 import { RefObject, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { infoCarta } from '../../cartas';
-import type { Aviso, EventoMesa, Liquidacion, VistaMesa } from '../../estado/tipos';
-import { agruparManoVisual } from './agrupacionVisual';
+import { infoCarta, ordenarPorGrupos } from '../../cartas';
+import type { AvanceMano, Aviso, EventoMesa, Liquidacion, VistaMesa } from '../../estado/tipos';
 import { nombreCarta } from './comun';
 
 const YO = 'tut-yo';
@@ -17,6 +16,23 @@ const NOMBRES: Record<string, string> = {
 };
 
 const MANO_INICIAL = ['7C', '4D', '7P', 'KC', '5D', '2D', '7T', 'KD', '2C', '9T'];
+
+/**
+ * En la partida real el avance lo calcula el servidor (RF16, RD4). La practica no tiene servidor, asi que usa un
+ * guion fijo para su mano conocida: las ternas que se pueden armar y el sobrante de cada paso.
+ */
+const TERNAS_GUION = [['7C', '7P', '7T'], ['KC', 'KD', 'KP'], ['4D', '5D', '6D']];
+const SOBRANTE_GUION: Record<number, number> = { 1: 42, 2: 13, 3: 2 };
+
+function avanceGuion(orden: string[]): AvanceMano {
+  const grupos = TERNAS_GUION.filter((t) => t.every((c) => orden.includes(c)));
+  const once = orden.length === 11;
+  return {
+    grupos, cuartasFormadas: 0, cuartasRequeridas: 0, ternasFormadas: grupos.length, ternasRequeridas: 3,
+    puntosSobrantes: SOBRANTE_GUION[grupos.length] ?? 0, puedeCerrar: once && grupos.length === 3,
+    descarteSugerido: once ? (grupos.length === 3 ? '2C' : '9T') : null, cartas: orden.length,
+  };
+}
 
 interface EstadoTutorial {
   revision: number;
@@ -170,7 +186,8 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
             aviso: { tipo: 'info', cierre: false, texto: 'Para esta jugada te conviene el Rey de picas: toca «Robar del pozo».' },
           };
         }
-        const { orden } = agruparManoVisual([...prev.orden, 'KP']);
+        const conKP = [...prev.orden, 'KP'];
+        const orden = ordenarPorGrupos(conKP, avanceGuion(conKP).grupos);
         const evRobo: EventoMesa = { id: siguienteEvento.current++, tipo: 'robo', jugadorId: YO, origen: 'DESCARTE' };
         const evRecibida: EventoMesa = { id: siguienteEvento.current++, tipo: 'recibida', carta: 'KP', origen: 'DESCARTE' };
         return {
@@ -193,7 +210,8 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
             aviso: { tipo: 'info', cierre: false, texto: 'El 8♠ del pozo no te sirve; toca «Robar del mazo».' },
           };
         }
-        const { orden } = agruparManoVisual([...prev.orden, '6D']);
+        const con6D = [...prev.orden, '6D'];
+        const orden = ordenarPorGrupos(con6D, avanceGuion(con6D).grupos);
         const evRobo: EventoMesa = { id: siguienteEvento.current++, tipo: 'robo', jugadorId: YO, origen: 'MAZO' };
         const evRecibida: EventoMesa = { id: siguienteEvento.current++, tipo: 'recibida', carta: '6D', origen: 'MAZO' };
         return {
@@ -402,6 +420,7 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
       nueva: st.nueva,
       turnoDesde: null,
       ausentes: [],
+      avance: null,
     },
     conectado: true,
     nombre: (sub) => (sub ? NOMBRES[sub] ?? sub : ''),
@@ -414,6 +433,7 @@ export function usePartidaTutorial(alCerrar: () => void): ControlTutorial {
     debeDescartar,
     segundos: null,
     instruccion,
+    avance: st.paso < 6 ? avanceGuion(st.orden) : null,
     aviso: st.aviso,
     bitacora: st.bitacora,
     liquidacion: st.liquidacion,

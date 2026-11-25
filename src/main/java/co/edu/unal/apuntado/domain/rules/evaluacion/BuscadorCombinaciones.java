@@ -22,12 +22,23 @@ public final class BuscadorCombinaciones {
 
     public static final int MAX_CARTAS = 11;
     private static final int TERNA = 3;
+    private static final int CUARTA = 4;
 
     /** Ternas elegidas mas las cartas que sobran y sus puntos. */
     public record ParticionConSobrantes(List<Combinacion> ternas, List<Carta> sobrantes, int puntos) {
         public ParticionConSobrantes {
             ternas = List.copyOf(ternas);
             sobrantes = List.copyOf(sobrantes);
+        }
+    }
+
+    /**
+     * Avance hacia un cierre: {@code ternas} ternas disjuntas (junto a la cuarta, si se pidio) y los puntos de las
+     * cartas que quedan fuera; {@code grupos} son los indices de cada combinacion contada (la cuarta va primero).
+     */
+    public record Avance(int ternas, int sobrante, List<List<Integer>> grupos) {
+        public Avance {
+            grupos = List.copyOf(grupos);
         }
     }
 
@@ -98,6 +109,16 @@ public final class BuscadorCombinaciones {
         return new Combinacion(tipos.get(mascara), cartasDe(mascara));
     }
 
+    private List<Integer> indicesDe(int mascara) {
+        List<Integer> r = new ArrayList<>();
+        for (int i = 0; i < n; i++) {
+            if ((mascara & (1 << i)) != 0) {
+                r.add(i);
+            }
+        }
+        return r;
+    }
+
     private List<Combinacion> combinacionesDe(Iterable<Integer> mascaras) {
         List<Combinacion> r = new ArrayList<>();
         mascaras.forEach(m -> r.add(combinacionDe(m)));
@@ -121,21 +142,26 @@ public final class BuscadorCombinaciones {
         if (Arrays.stream(tamanos).sum() != n) {
             return Optional.empty();
         }
-        return particionar(completa, cupos, new ArrayDeque<>());
+        return particionar(completa, cupos, new ArrayDeque<>()).map(this::combinacionesDe);
     }
 
     /** Particion de toda la mano en combinaciones de 3 a 5 cartas (cierre completo). */
     public Optional<List<Combinacion>> particionLibre() {
-        return particionar(completa, null, new ArrayDeque<>());
+        return particionar(completa, null, new ArrayDeque<>()).map(this::combinacionesDe);
     }
 
-    private Optional<List<Combinacion>> particionar(int resto, int[] cupos, Deque<Integer> elegidas) {
+    /** La misma particion libre, como indices de la mano por combinacion. */
+    public Optional<List<List<Integer>>> gruposDeParticionLibre() {
+        return particionar(completa, null, new ArrayDeque<>()).map(l -> l.stream().map(this::indicesDe).toList());
+    }
+
+    private Optional<List<Integer>> particionar(int resto, int[] cupos, Deque<Integer> elegidas) {
         if (resto == 0) {
-            return Optional.of(combinacionesDe(elegidas));
+            return Optional.of(new ArrayList<>(elegidas));
         }
         for (int m : porMenor[Integer.numberOfTrailingZeros(resto)]) {
             if (cabe(m, resto, cupos)) {
-                Optional<List<Combinacion>> r = probar(m, resto, cupos, elegidas);
+                Optional<List<Integer>> r = probar(m, resto, cupos, elegidas);
                 if (r.isPresent()) {
                     return r;
                 }
@@ -148,13 +174,13 @@ public final class BuscadorCombinaciones {
         return (m & resto) == m && (cupos == null || cupos[Integer.bitCount(m)] > 0);
     }
 
-    private Optional<List<Combinacion>> probar(int m, int resto, int[] cupos, Deque<Integer> elegidas) {
+    private Optional<List<Integer>> probar(int m, int resto, int[] cupos, Deque<Integer> elegidas) {
         int k = Integer.bitCount(m);
         if (cupos != null) {
             cupos[k]--;
         }
         elegidas.push(m);
-        Optional<List<Combinacion>> r = particionar(resto ^ m, cupos, elegidas);
+        Optional<List<Integer>> r = particionar(resto ^ m, cupos, elegidas);
         elegidas.pop();
         if (cupos != null) {
             cupos[k]++;
@@ -207,6 +233,77 @@ public final class BuscadorCombinaciones {
                 ternas.pop();
             }
         }
+    }
+
+    /**
+     * Mayor numero de ternas disjuntas y, entre empates, el menor sobrante (RF16). Con {@code conCuarta}, ademas
+     * reserva una cuarta (cualquier combinacion valida de 4 cartas) y vacio si la mano no tiene ninguna. Programacion
+     * dinamica sobre subconjuntos: t(S) y p(S) con la carta de menor indice de S suelta o dentro de una terna.
+     */
+    public Optional<Avance> avance(boolean conCuarta) {
+        int[] ternas = new int[completa + 1];
+        int[] sobrante = new int[completa + 1];
+        int[] decision = new int[completa + 1];
+        for (int s = 1; s <= completa; s++) {
+            resolverTernas(s, ternas, sobrante, decision);
+        }
+        if (!conCuarta) {
+            return Optional.of(avanceDesde(completa, 0, ternas, sobrante, decision));
+        }
+        int cuarta = mejorCuarta(ternas, sobrante);
+        return cuarta == 0 ? Optional.empty()
+                : Optional.of(avanceDesde(completa ^ cuarta, cuarta, ternas, sobrante, decision));
+    }
+
+    private void resolverTernas(int s, int[] ternas, int[] sobrante, int[] decision) {
+        int c = Integer.numberOfTrailingZeros(s);
+        int sinC = s & (s - 1);
+        ternas[s] = ternas[sinC];
+        sobrante[s] = sobrante[sinC] + puntos[c];
+        decision[s] = 0;
+        for (int m : porMenor[c]) {
+            if (Integer.bitCount(m) == TERNA && (m & s) == m
+                    && supera(ternas[s ^ m] + 1, sobrante[s ^ m], ternas[s], sobrante[s])) {
+                ternas[s] = ternas[s ^ m] + 1;
+                sobrante[s] = sobrante[s ^ m];
+                decision[s] = m;
+            }
+        }
+    }
+
+    private static boolean supera(int ternas, int sobrante, int ternasRival, int sobranteRival) {
+        return ternas > ternasRival || ternas == ternasRival && sobrante < sobranteRival;
+    }
+
+    private int mejorCuarta(int[] ternas, int[] sobrante) {
+        int mejor = 0;
+        for (int m : tipos.keySet()) {
+            int resto = completa ^ m;
+            if (Integer.bitCount(m) == CUARTA
+                    && (mejor == 0 || supera(ternas[resto], sobrante[resto], ternas[completa ^ mejor],
+                    sobrante[completa ^ mejor]))) {
+                mejor = m;
+            }
+        }
+        return mejor;
+    }
+
+    private Avance avanceDesde(int conjunto, int cuarta, int[] ternas, int[] sobrante, int[] decision) {
+        List<List<Integer>> grupos = new ArrayList<>();
+        if (cuarta != 0) {
+            grupos.add(indicesDe(cuarta));
+        }
+        int s = conjunto;
+        while (s != 0) {
+            int m = decision[s];
+            if (m == 0) {
+                s &= s - 1;
+            } else {
+                grupos.add(indicesDe(m));
+                s ^= m;
+            }
+        }
+        return new Avance(ternas[conjunto], sobrante[conjunto], grupos);
     }
 
     /**

@@ -28,6 +28,26 @@ export function ordenarPorValor(cartas: string[]): string[] {
   });
 }
 
+/**
+ * Id de grupo (del servidor) para cada carta del orden local, o -1 si va suelta. Solo ubica las cartas que el
+ * servidor ya agrupo; no decide nada sobre las reglas (RD4).
+ */
+export function gruposEnOrden(orden: string[], grupos: string[][]): number[] {
+  const ids = orden.map(() => -1);
+  grupos.forEach((g, id) => g.forEach((c) => {
+    const i = orden.findIndex((x, k) => x === c && ids[k] === -1);
+    if (i >= 0) ids[i] = id;
+  }));
+  return ids;
+}
+
+/** Junta las combinaciones que informa el servidor y deja las sueltas al final, por número. */
+export function ordenarPorGrupos(orden: string[], grupos: string[][]): string[] {
+  const ids = gruposEnOrden(orden, grupos);
+  const juntas = grupos.flatMap((_, id) => ordenarPorValor(orden.filter((_, i) => ids[i] === id)));
+  return [...juntas, ...ordenarPorValor(orden.filter((_, i) => ids[i] === -1))];
+}
+
 /** Mantiene el orden que el jugador eligio: conserva las cartas que siguen en la mano y agrega las nuevas al final. */
 export function reconciliar(ordenActual: string[], mano: string[]): string[] {
   const pendientes = [...mano];

@@ -5,7 +5,7 @@ import { api, conectarMesa, ConexionMesa, ManejadoresMesa } from '../api';
 import { infoCarta, ordenarPorPinta, ordenarPorValor, reconciliar } from '../cartas';
 import { mensajeDe, PARTIDA_INTERRUMPIDA, rondaPendiente } from '../mensajes';
 import type {
-  Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo, Sesion, VistaMesa,
+  AvanceMano, Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo, Sesion, VistaMesa,
 } from './tipos';
 
 /** Puertos hacia el servidor. Se inyectan para poder ejercitar el hook sin red (modo demostracion). */
@@ -31,8 +31,20 @@ const REINTENTO_RONDA_MS = 3000;
 const INICIAL: EstadoMesa = {
   ronda: 0, orden: [], cima: null, marcador: {}, turnoDe: null, numeroTurno: 0, fase: '', modalidad: '',
   umbral: 101, robarDelDescarte: false, eliminados: [], finalizada: false, venceEn: null, nueva: null, turnoDesde: null,
-  ausentes: [],
+  ausentes: [], avance: null,
 };
+
+/** La evaluacion del servidor trae indices de su mano; aqui se pasan a codigos de carta. */
+function avanceDe(ev: any, mano: string[]): AvanceMano | null {
+  if (!ev) return null;
+  const carta = (i: number) => mano[i];
+  return {
+    grupos: (ev.grupos as number[][]).map((g) => g.map(carta)), cuartasFormadas: ev.cuartasFormadas,
+    cuartasRequeridas: ev.cuartasRequeridas, ternasFormadas: ev.ternasFormadas, ternasRequeridas: ev.ternasRequeridas,
+    puntosSobrantes: ev.puntosSobrantes, puedeCerrar: ev.puedeCerrar,
+    descarteSugerido: ev.descarteSugerido == null ? null : carta(ev.descarteSugerido), cartas: mano.length,
+  };
+}
 const MAX_EVENTOS = 40;
 const MAX_CHAT = 60;
 
@@ -90,6 +102,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
           robarDelDescarte: d.robarDelDescarte, eliminados: d.eliminados, finalizada: d.finalizada,
           ausentes: Array.isArray(d.conectados)
             ? Object.keys(d.marcador).filter((sub) => !d.conectados.includes(sub)) : s.ausentes,
+          avance: avanceDe(d.evaluacion, d.mano),
         }));
         break;
       case 'Presencia': {
@@ -219,6 +232,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   else if (debeRobar) instruccion = e.robarDelDescarte ? 'Tu turno: roba una carta del mazo o del pozo.' : 'Tu turno: roba una carta del mazo.';
   else if (debeDescartar) instruccion = 'Elige una carta y descártala, o úsala como descarte para cerrar la ronda.';
 
+  const avance = e.avance && e.avance.cartas === e.orden.length && !e.finalizada ? e.avance : null;
+
   const mover = useCallback((desde: number, hasta: number) => {
     setE((s) => { const o = [...s.orden]; const [c] = o.splice(desde, 1); o.splice(hasta, 0, c); return { ...s, orden: o }; });
     setSeleccion(null);
@@ -228,7 +243,7 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
 
   return {
     yo: sesion.sub, codigo, e, conectado, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar,
-    segundos, instruccion, aviso, bitacora, liquidacion, historial, fin, eventos, chat,
+    segundos, instruccion, avance, aviso, bitacora, liquidacion, historial, fin, eventos, chat,
     enviarChat: (texto) => { if (texto.trim()) conexion.current?.chatear(texto); },
     alias: (sub) => nombresRef.current[sub] ?? (sub === sesion.sub ? 'Tú' : 'Jugador'),
     seleccionar: setSeleccion,

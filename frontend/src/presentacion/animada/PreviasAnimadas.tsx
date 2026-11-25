@@ -3,6 +3,7 @@
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react';
 import { useState } from 'react';
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
+import { SEGUNDOS_POR_TURNO } from '../../mensajes';
 import { Avatar, Carta, ContadorVivo, usePanoMesa } from './comun';
 import { PartidaTutorial } from './MesaAnimada';
 import './tema';
@@ -174,9 +175,10 @@ function Sala({ v, abrirTutorial }: { v: VistaSala; abrirTutorial: () => void })
               Permitir robar del pozo
             </label>
             <div className="a-numeros">
-              <label className="a-campo">Segundos por turno
-                <input type="number" min={15} max={300} value={opciones.segundosPorTurno}
-                  onChange={(e) => cambiar({ segundosPorTurno: Number(e.target.value) })} />
+              <label className="a-campo">Tiempo por turno
+                <select value={opciones.segundosPorTurno} onChange={(e) => cambiar({ segundosPorTurno: Number(e.target.value) })}>
+                  {SEGUNDOS_POR_TURNO.map((s) => <option key={s} value={s}>{s} s</option>)}
+                </select>
               </label>
               <AnimatePresence initial={false}>
                 {opciones.modalidad === 'APUNTADO_101' && (

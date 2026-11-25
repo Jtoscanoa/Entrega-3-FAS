@@ -19,6 +19,17 @@ export interface Mensaje { tipo: string; datos: any }
 /** Mensaje del chat de la mesa tal como lo difunde el servidor (ya limpio y acotado). */
 export interface MensajeChat { id: number; jugadorId: string; texto: string; hora: string }
 
+/**
+ * Avance de la mano propia hacia el cierre (RF16), calculado por el servidor con el evaluador de reglas: la SPA solo
+ * lo muestra (RD4). Las cartas van por codigo; {@code cartas} es el tamano de la mano evaluada, para no mostrar un
+ * avance viejo mientras llega la vista nueva.
+ */
+export interface AvanceMano {
+  grupos: string[][]; cuartasFormadas: number; cuartasRequeridas: number; ternasFormadas: number;
+  ternasRequeridas: number; puntosSobrantes: number; puedeCerrar: boolean; descarteSugerido: string | null;
+  cartas: number;
+}
+
 /** Estado de la mesa tal como lo comunica el servidor (RD4: la SPA no decide nada sobre las reglas). */
 export interface EstadoMesa {
   ronda: number; orden: string[]; cima: string | null; marcador: Record<string, number>;
@@ -28,6 +39,8 @@ export interface EstadoMesa {
   turnoDesde: number | null;
   /** Jugadores sin ninguna sesion abierta segun la presencia del servidor (RF17, ADR-08b). */
   ausentes: string[];
+  /** Avance de la mano propia segun el servidor; null si aun no llega (RF16). */
+  avance: AvanceMano | null;
 }
 
 export interface Liquidacion {
@@ -69,6 +82,8 @@ export interface VistaMesa {
   debeDescartar: boolean;
   segundos: number | null;
   instruccion: string;
+  /** Avance vigente de la mano propia (el del servidor, si corresponde a la mano que se ve); null si no hay. */
+  avance: AvanceMano | null;
   aviso: Aviso | null;
   bitacora: string[];
   liquidacion: Liquidacion | null;

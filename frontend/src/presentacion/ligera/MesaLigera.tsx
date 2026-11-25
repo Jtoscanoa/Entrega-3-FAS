@@ -1,14 +1,20 @@
 // Version ligera de la mesa: la interfaz original, sin animaciones, pensada para telefonos de bajos recursos.
 // Solo recibe lo que entrega useMesa(); no conoce la conexion ni las reglas (RD4, FF-19).
-import { FormEvent, useEffect, useRef, useState } from 'react';
-import { infoCarta } from '../../cartas';
-import { ayudaCierre, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, TIPO_CIERRE } from '../../mensajes';
+import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
+import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
+import {
+  ayudaCierre, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance, TIPO_CIERRE,
+} from '../../mensajes';
 import type { VistaMesa } from '../../estado/tipos';
 
 export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
   const { e, nombre, jugadores, seleccion, cartaSel, miTurno, debeRobar, debeDescartar, segundos, aviso, fin,
-    liquidacion, historial, bitacora } = mesa;
+    liquidacion, historial, bitacora, avance } = mesa;
   const arrastrada = useRef<number | null>(null);
+  // Grupos y avance calculados por el servidor (RF16, RD4): aqui solo se muestran.
+  const grupos = useMemo(() => gruposEnOrden(e.orden, avance?.grupos ?? []), [e.orden, avance]);
+  const puedeCerrar = debeDescartar && !!avance?.puedeCerrar;
+  const sugerida = avance?.descarteSugerido ?? null;
 
   return (
     <main className="mesa">
@@ -51,23 +57,32 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
       <section className="mano">
         <div className="mano-cabecera">
           <h2>Tu mano ({e.orden.length})</h2>
+          {avance && textoAvance(avance) && <span className={puedeCerrar ? 'avance listo' : 'avance'}>{textoAvance(avance)}</span>}
           <div className="fila">
+            <button onClick={() => mesa.reordenar(ordenarPorGrupos(e.orden, avance?.grupos ?? []))}
+              disabled={!avance?.grupos.length}>Agrupar juegos</button>
             <button onClick={mesa.ordenarPorPinta}>Ordenar por pinta</button>
             <button onClick={mesa.ordenarPorValor}>Ordenar por número</button>
           </div>
         </div>
         <div className="cartas">
           {e.orden.map((c, i) => (
-            <Carta key={`${c}-${i}`} codigo={c} seleccionada={seleccion === i} nueva={c === e.nueva}
+            <Carta key={`${c}-${i}`} codigo={c} seleccionada={seleccion === i} nueva={c === e.nueva} grupo={grupos[i]}
               onClick={() => mesa.seleccionar(seleccion === i ? null : i)}
               onDragStart={() => { arrastrada.current = i; }}
               onDrop={() => { if (arrastrada.current !== null && arrastrada.current !== i) mesa.mover(arrastrada.current, i); arrastrada.current = null; }} />
           ))}
         </div>
         <p className="tenue pequeno">Arrastra las cartas para agrupar tus ternas y cuartas. Toca una carta para seleccionarla.</p>
+        {puedeCerrar && sugerida && (
+          <p className="pista-cierre" role="status">
+            {pistaCierre(`${infoCarta(sugerida).valor}${infoCarta(sugerida).simbolo}`)}
+            {cartaSel !== sugerida && <button onClick={() => mesa.seleccionar(e.orden.indexOf(sugerida))}>Elegirla</button>}
+          </p>
+        )}
         <div className="acciones">
           <button className="principal" disabled={!debeDescartar || !cartaSel} onClick={mesa.descartar}>Descartar carta</button>
-          <button className="cerrar" disabled={!debeDescartar || !cartaSel} onClick={mesa.cerrar}>Cerrar ronda descartando esta carta</button>
+          <button className={puedeCerrar ? 'cerrar listo' : 'cerrar'} disabled={!debeDescartar || !cartaSel} onClick={mesa.cerrar}>Cerrar ronda descartando esta carta</button>
         </div>
         {e.modalidad && <p className="tenue pequeno">{ayudaCierre(e.modalidad)}</p>}
       </section>
@@ -132,14 +147,15 @@ function IconoSinConexion() {
 }
 
 interface PropsCarta {
-  codigo: string; seleccionada?: boolean; nueva?: boolean; onClick?: () => void;
+  codigo: string; seleccionada?: boolean; nueva?: boolean; grupo?: number; onClick?: () => void;
   onDragStart?: () => void; onDrop?: () => void;
 }
 
-function Carta({ codigo, seleccionada, nueva, onClick, onDragStart, onDrop }: PropsCarta) {
+function Carta({ codigo, seleccionada, nueva, grupo = -1, onClick, onDragStart, onDrop }: PropsCarta) {
   const c = infoCarta(codigo);
   return (
-    <div className={['carta', c.roja ? 'roja' : '', seleccionada ? 'sel' : '', nueva ? 'nueva' : ''].join(' ')}
+    <div className={['carta', c.roja ? 'roja' : '', seleccionada ? 'sel' : '', nueva ? 'nueva' : '',
+      grupo >= 0 ? `en-grupo g${grupo % 4}` : ''].join(' ')}
       onClick={onClick} draggable={!!onDragStart} onDragStart={onDragStart}
       onDragOver={(ev) => ev.preventDefault()} onDrop={onDrop} title={`${c.puntos} puntos`}>
       <span className="valor">{c.valor}</span><span className="pinta">{c.simbolo}</span>

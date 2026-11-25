@@ -2,7 +2,8 @@
 // habilita botones segun el turno y la fase que comunica el servidor, igual que la ligera.
 import { AnimatePresence, motion, MotionConfig, useAnimate, useReducedMotion } from 'motion/react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ayudaCierre, NOMBRE_MODALIDAD } from '../../mensajes';
+import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
+import { ayudaCierre, NOMBRE_MODALIDAD, pistaCierre, textoAvance } from '../../mensajes';
 import type { EventoMesa, VistaMesa } from '../../estado/tipos';
 import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, PanoMesa, useAnclas, usePanoMesa } from './comun';
 import { ItemMano, itemsDe, Mano } from './Mano';
@@ -11,7 +12,6 @@ import { RelojTurno } from './RelojTurno';
 import { CapaVuelos, Vuelo } from './Vuelos';
 import { FranjaRed, useEstadoRed } from './EstadoRed';
 import { useMotorParticulas } from './Particulas';
-import { agruparManoVisual, detectarGruposContiguos } from './agrupacionVisual';
 import { GuiaTutorial, usePartidaTutorial } from './Tutorial';
 import { ChatAnimado } from './ChatAnimado';
 import './tema';
@@ -135,7 +135,10 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
 
   const red = useEstadoRed(mesa.conectado);
   const items = useMemo(() => itemsDe(e.orden), [e.orden]);
-  const gruposMano = useMemo(() => detectarGruposContiguos(e.orden), [e.orden]);
+  // Grupos que calculo el servidor (RF16, RD4): la SPA solo los ubica en el orden local.
+  const gruposMano = useMemo(() => gruposEnOrden(e.orden, mesa.avance?.grupos ?? []), [e.orden, mesa.avance]);
+  const avance = mesa.avance;
+  const puedeCerrar = mesa.debeDescartar && !!avance?.puedeCerrar;
   const rivales = mesa.jugadores.filter((s) => s !== mesa.yo);
   const total = e.venceEn && e.turnoDesde ? Math.max(1, Math.round((new Date(e.venceEn).getTime() - e.turnoDesde) / 1000)) : 0;
   const cimaMostrada = cimaRetenida !== undefined ? cimaRetenida : e.cima;
@@ -346,7 +349,7 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
   };
   const agruparJuegos = () => {
     const elegida = seleccion !== null ? items[seleccion]?.id : null;
-    const { orden } = agruparManoVisual(e.orden);
+    const orden = ordenarPorGrupos(e.orden, avance?.grupos ?? []);
     mesa.reordenar(orden);
     if (elegida) {
       const nuevosItems = itemsDe(orden);
@@ -355,6 +358,10 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
     const r = manoRef.current?.getBoundingClientRect();
     if (r) motor.emitir(r.left + r.width / 2, r.top + r.height / 2, 'seleccion');
     alAgrupar?.();
+  };
+  const elegirSugerida = () => {
+    const i = avance?.descarteSugerido ? e.orden.indexOf(avance.descarteSugerido) : -1;
+    if (i >= 0) mesa.seleccionar(i);
   };
   const moverElegida = (delta: number) => {
     if (seleccion === null) return;
@@ -556,6 +563,9 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
             </AnimatePresence>
             <div className="a-mano-cabecera">
               <h2>Tu mano <ContadorVivo valor={e.orden.length} /></h2>
+              {avance && textoAvance(avance) && (
+                <span className={['a-avance', puedeCerrar ? 'listo' : ''].join(' ')} data-tut="avance">{textoAvance(avance)}</span>
+              )}
               <div className="a-fila">
                 <button type="button" data-tut="agrupar" className="a-boton suave" onClick={agruparJuegos}>Agrupar juegos</button>
                 <button type="button" className="a-boton suave" onClick={mesa.ordenarPorPinta}>Por pinta</button>
@@ -587,10 +597,18 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
                 </span>
               )}
             </div>
+            {puedeCerrar && avance?.descarteSugerido && (
+              <p className="a-pista-cierre" role="status">
+                {pistaCierre(`${infoCarta(avance.descarteSugerido).valor}${infoCarta(avance.descarteSugerido).simbolo}`)}
+                {cartaSel !== avance.descarteSugerido && (
+                  <button type="button" className="a-boton suave" onClick={elegirSugerida}>Elegirla</button>
+                )}
+              </p>
+            )}
             <div className="a-acciones" ref={anclar('acciones')}>
               <motion.button type="button" data-tut="descartar" className="a-boton principal" disabled={!mesa.debeDescartar || !cartaSel}
                 onClick={descartar} whileTap={{ scale: 0.97 }}>Descartar carta</motion.button>
-              <motion.button type="button" data-tut="cerrar" className="a-boton cerrar" disabled={!mesa.debeDescartar || !cartaSel}
+              <motion.button type="button" data-tut="cerrar" className={['a-boton cerrar', puedeCerrar ? 'listo' : ''].join(' ')} disabled={!mesa.debeDescartar || !cartaSel}
                 onClick={mesa.cerrar} whileTap={{ scale: 0.97 }}>Cerrar ronda con esta carta</motion.button>
             </div>
             {e.modalidad && <p className="a-tenue a-pequeno">{ayudaCierre(e.modalidad)}</p>}
