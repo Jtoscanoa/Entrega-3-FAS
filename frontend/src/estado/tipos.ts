@@ -15,6 +15,8 @@ export interface OpcionesPartida {
   comodines: boolean;
   cierreAPintas: boolean;
   segundoMazo: boolean;
+  /** Apuntado: el sobrante debe ser menor o igual a este valor (0 a 4; 4 = "menor a 5"). */
+  residuoMaximo: number | null;
 }
 /** Sobre de los mensajes STOMP salientes del servidor: {tipo, datos}. */
 export interface Mensaje { tipo: string; datos: any }

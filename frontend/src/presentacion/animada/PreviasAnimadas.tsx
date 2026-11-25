@@ -1,9 +1,11 @@
 // Version animada de las pantallas previas: inicio, vestibulo y sala de espera con eleccion de modalidad.
 // Las transiciones entre pantallas van con AnimatePresence; solo transform y opacity.
 import { AnimatePresence, motion, MotionConfig, useReducedMotion } from 'motion/react';
-import { useState } from 'react';
+import { ReactNode, useState } from 'react';
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
-import { SEGUNDOS_POR_TURNO } from '../../mensajes';
+import {
+  AVISO_SEGUNDO_MAZO, AYUDA_AVANZADAS, RESIDUOS, SEGUNDOS_POR_TURNO, textoResiduo,
+} from '../../mensajes';
 import { Avatar, Carta, ContadorVivo, usePanoMesa } from './comun';
 import { PartidaTutorial } from './MesaAnimada';
 import './tema';
@@ -13,6 +15,19 @@ const PANTALLA = {
   animate: { opacity: 1, y: 0, transition: { duration: 0.45, ease: [0.2, 0.8, 0.2, 1] } },
   exit: { opacity: 0, y: -12, transition: { duration: 0.25 } },
 } as const;
+
+/** Interruptor de la sala (mismo aspecto que el de robar del pozo). */
+function Interruptor({ activo, cambiar, children }: { activo: boolean; cambiar: (v: boolean) => void; children: ReactNode }) {
+  return (
+    <label className="a-interruptor">
+      <input type="checkbox" checked={activo} onChange={(e) => cambiar(e.target.checked)} />
+      <span className="a-pista" aria-hidden="true">
+        <motion.span className="a-perilla" animate={{ x: activo ? 18 : 0 }} transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
+      </span>
+      <span>{children}</span>
+    </label>
+  );
+}
 
 export default function PreviasAnimadas({ vista }: { vista: VistaPrevia }) {
   const [pano] = usePanoMesa();
@@ -122,6 +137,7 @@ function Sala({ v, abrirTutorial }: { v: VistaSala; abrirTutorial: () => void })
   const { estado, opciones, cambiar } = v;
   const reducido = useReducedMotion();
   const jugadores = estado?.jugadores ?? [];
+  const apuntado = opciones.modalidad === 'APUNTADO_101';
   return (
     <motion.main className="a-pantalla ancha" {...PANTALLA}>
       <p className="a-sobretitulo">Sala de espera</p>
@@ -165,31 +181,44 @@ function Sala({ v, abrirTutorial }: { v: VistaSala; abrirTutorial: () => void })
                 );
               })}
             </div>
-            <label className="a-interruptor">
-              <input type="checkbox" checked={opciones.robarDelDescarte}
-                onChange={(e) => cambiar({ robarDelDescarte: e.target.checked })} />
-              <span className="a-pista" aria-hidden="true">
-                <motion.span className="a-perilla" animate={{ x: opciones.robarDelDescarte ? 18 : 0 }}
-                  transition={{ type: 'spring', stiffness: 500, damping: 30 }} />
-              </span>
-              Permitir robar del pozo
+            <label className="a-campo">Tiempo por turno
+              <select value={opciones.segundosPorTurno} onChange={(e) => cambiar({ segundosPorTurno: Number(e.target.value) })}>
+                {SEGUNDOS_POR_TURNO.map((s) => <option key={s} value={s}>{s} s</option>)}
+              </select>
             </label>
-            <div className="a-numeros">
-              <label className="a-campo">Tiempo por turno
-                <select value={opciones.segundosPorTurno} onChange={(e) => cambiar({ segundosPorTurno: Number(e.target.value) })}>
-                  {SEGUNDOS_POR_TURNO.map((s) => <option key={s} value={s}>{s} s</option>)}
-                </select>
-              </label>
-              <AnimatePresence initial={false}>
-                {opciones.modalidad === 'APUNTADO_101' && (
-                  <motion.label key="umbral" className="a-campo" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                    Puntos de eliminación
+            {/* RF09: las variantes van plegadas; los extras vienen apagados (docs/reglas-obligatorias-vs-extras.md) */}
+            <details className="a-avanzadas">
+              <summary>Opciones avanzadas</summary>
+              <p className="a-tenue a-pequeno">{AYUDA_AVANZADAS}</p>
+              <Interruptor activo={opciones.robarDelDescarte} cambiar={(x) => cambiar({ robarDelDescarte: x })}>
+                Permitir robar del pozo
+              </Interruptor>
+              <Interruptor activo={opciones.comodines} cambiar={(x) => cambiar({ comodines: x })}>
+                Comodines <small>(extra)</small>
+              </Interruptor>
+              {apuntado && (
+                <Interruptor activo={opciones.cierreAPintas} cambiar={(x) => cambiar({ cierreAPintas: x })}>
+                  Cierre a pintas, −25 <small>(extra)</small>
+                </Interruptor>
+              )}
+              <Interruptor activo={opciones.segundoMazo} cambiar={(x) => cambiar({ segundoMazo: x })}>
+                Segundo mazo <small>(extra; obligatorio con 5 o 6 jugadores)</small>
+              </Interruptor>
+              {jugadores.length > 4 && !opciones.segundoMazo && <p className="a-error">{AVISO_SEGUNDO_MAZO}</p>}
+              {apuntado && (
+                <div className="a-numeros">
+                  <label className="a-campo">Residuo máximo para cerrar
+                    <select value={opciones.residuoMaximo ?? 4} onChange={(e) => cambiar({ residuoMaximo: Number(e.target.value) })}>
+                      {RESIDUOS.map((r) => <option key={r} value={r}>{textoResiduo(r)}</option>)}
+                    </select>
+                  </label>
+                  <label className="a-campo">Puntos de eliminación
                     <input type="number" min={10} max={500} value={opciones.umbral ?? 101}
                       onChange={(e) => cambiar({ umbral: Number(e.target.value) })} />
-                  </motion.label>
-                )}
-              </AnimatePresence>
-            </div>
+                  </label>
+                </div>
+              )}
+            </details>
             <motion.button type="button" className="a-boton principal ancho a-brilla" onClick={v.iniciar} disabled={!v.puedeIniciar}
               whileTap={{ scale: 0.97 }}>
               {v.puedeIniciar && !reducido && (

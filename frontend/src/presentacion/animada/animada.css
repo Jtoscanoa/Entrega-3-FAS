@@ -598,3 +598,12 @@
 .a-verificacion code { font-size: 11px; color: var(--a-tenue); overflow-wrap: anywhere; }
 .a-verificacion.verificado { border-color: rgba(127, 199, 154, .6); color: #c9f2d6; }
 .a-verificacion.no-coincide { border-color: rgba(208, 86, 78, .7); color: #f0b3ad; }
+
+/* RF09: opciones avanzadas plegadas en la sala */
+.a-avanzadas { border: 1px solid var(--a-borde); border-radius: 12px; padding: 8px 12px; }
+.a-avanzadas summary { cursor: pointer; font-weight: 600; color: var(--a-laton); padding: 4px 0; }
+.a-avanzadas[open] { display: flex; flex-direction: column; gap: 10px; padding-bottom: 12px; }
+.a-avanzadas small { color: var(--a-tenue); }
+.a-avanzadas .a-interruptor { margin: 8px 0; }
+.a-avanzadas .a-numeros { margin-top: 10px; }
+.a-avanzadas > p { margin: 4px 0 6px; }

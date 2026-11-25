@@ -30,6 +30,10 @@ h1 { margin: 0 0 4px; } h2 { font-size: 16px; margin: 16px 0 8px; }
 .modalidades { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .modalidad { text-align: left; display: flex; flex-direction: column; gap: 4px; background: #fff; }
 .modalidad span { font-size: 13px; color: var(--tenue); }
+/* RF09: opciones avanzadas plegadas */
+.avanzadas { margin: 12px 0; border: 1px solid var(--borde); border-radius: 10px; padding: 8px 12px; }
+.avanzadas summary { cursor: pointer; font-weight: 600; }
+.avanzadas label.casilla { gap: 8px; }
 .modalidad.activa { border: 2px solid var(--acento); background: #fff9ea; }
 
 .mesa { display: grid; grid-template-columns: 1fr 300px; grid-template-areas: "barra barra" "marcador marcador" "centro bitacora" "aviso bitacora" "mano bitacora"; gap: 12px; padding: 12px; max-width: 1280px; margin: 0 auto; color: #fff; }

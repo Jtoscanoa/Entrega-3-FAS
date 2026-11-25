@@ -20,9 +20,11 @@ class LobbyTest {
 
     private static final class TurnosFalsos implements ITurno {
         List<Participante> recibidos;
+        ConfiguracionReglas cfg;
 
         @Override public long iniciarPartida(String codigoSala, ConfiguracionReglas cfg, List<Participante> j) {
             recibidos = j;
+            this.cfg = cfg;
             return 7L;
         }
         @Override public void robar(long p, String j, boolean d, int n) { }
@@ -68,5 +70,33 @@ class LobbyTest {
             lobby.unirse(codigo, "j" + i, "J" + i);
         }
         assertEquals(LobbyException.Motivo.SALA_LLENA, motivo(() -> lobby.unirse(codigo, "x", "X")));
+    }
+
+    /** RF09: las opciones avanzadas llegan al motor; sin pedirlas, los extras quedan apagados. */
+    @Test
+    void opcionesAvanzadasYExtrasApagadosPorDefecto() {
+        String codigo = lobby.crearSala("a", "Ana");
+        lobby.unirse(codigo, "b", "Beto");
+        lobby.iniciar(codigo, "a", APUNTADO);
+        assertEquals(ConfiguracionReglas.RESIDUO_TOPE, turnos.cfg.residuoMaximo());
+        assertEquals(false, turnos.cfg.comodinesHabilitados());
+        assertEquals(false, turnos.cfg.cierreAPintas());
+        assertEquals(false, turnos.cfg.segundoMazo());
+
+        String otra = lobby.crearSala("a", "Ana");
+        lobby.unirse(otra, "b", "Beto");
+        lobby.iniciar(otra, "a", new OpcionesPartida("APUNTADO_101", true, true, true, false, 150, 60, 2));
+        assertEquals(2, turnos.cfg.residuoMaximo());
+        assertEquals(true, turnos.cfg.comodinesHabilitados());
+        assertEquals(true, turnos.cfg.cierreAPintas());
+        assertEquals(150, turnos.cfg.umbralEliminacion());
+    }
+
+    @Test
+    void elServidorRechazaUnResiduoFueraDeRango() {
+        String codigo = lobby.crearSala("a", "Ana");
+        lobby.unirse(codigo, "b", "Beto");
+        assertThrows(IllegalArgumentException.class, () -> lobby.iniciar(codigo, "a",
+                new OpcionesPartida("APUNTADO_101", null, null, null, null, null, null, 5)));
     }
 }

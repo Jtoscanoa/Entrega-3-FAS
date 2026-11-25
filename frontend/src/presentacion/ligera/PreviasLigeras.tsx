@@ -1,6 +1,6 @@
 // Version ligera de las pantallas previas: inicio, vestibulo y sala de espera, tal como eran.
 import type { VistaInicio, VistaPrevia, VistaSala, VistaVestibulo } from '../../estado/tipos';
-import { SEGUNDOS_POR_TURNO } from '../../mensajes';
+import { AVISO_SEGUNDO_MAZO, AYUDA_AVANZADAS, RESIDUOS, SEGUNDOS_POR_TURNO, textoResiduo } from '../../mensajes';
 
 export default function PreviasLigeras({ vista }: { vista: VistaPrevia }) {
   if (vista.pantalla === 'inicio') return <Inicio v={vista.inicio} />;
@@ -48,6 +48,7 @@ function Vestibulo({ v }: { v: VistaVestibulo }) {
 /** Sala de espera: muestra quien llego y deja al anfitrion elegir la modalidad e iniciar. */
 function Sala({ v }: { v: VistaSala }) {
   const { estado, opciones, cambiar } = v;
+  const apuntado = opciones.modalidad === 'APUNTADO_101';
   return (
     <main className="centro">
       <div className="panel ancho">
@@ -73,17 +74,37 @@ function Sala({ v }: { v: VistaSala }) {
                 </button>
               ))}
             </div>
-            <label className="casilla"><input type="checkbox" checked={opciones.robarDelDescarte}
-              onChange={(e) => cambiar({ robarDelDescarte: e.target.checked })} /> Permitir robar del pozo</label>
             <label>Tiempo por turno
               <select value={opciones.segundosPorTurno} onChange={(e) => cambiar({ segundosPorTurno: Number(e.target.value) })}>
                 {SEGUNDOS_POR_TURNO.map((s) => <option key={s} value={s}>{s} s</option>)}
               </select></label>
-            {opciones.modalidad === 'APUNTADO_101' && (
-              <label>Puntos de eliminación
-                <input type="number" min={10} max={500} value={opciones.umbral ?? 101}
-                  onChange={(e) => cambiar({ umbral: Number(e.target.value) })} /></label>
-            )}
+            {/* RF09: las variantes van plegadas; los extras vienen apagados (docs/reglas-obligatorias-vs-extras.md) */}
+            <details className="avanzadas">
+              <summary>Opciones avanzadas</summary>
+              <p className="tenue pequeno">{AYUDA_AVANZADAS}</p>
+              <label className="casilla"><input type="checkbox" checked={opciones.robarDelDescarte}
+                onChange={(e) => cambiar({ robarDelDescarte: e.target.checked })} /> Permitir robar del pozo</label>
+              <label className="casilla"><input type="checkbox" checked={opciones.comodines}
+                onChange={(e) => cambiar({ comodines: e.target.checked })} /> Comodines (extra)</label>
+              {apuntado && (
+                <label className="casilla"><input type="checkbox" checked={opciones.cierreAPintas}
+                  onChange={(e) => cambiar({ cierreAPintas: e.target.checked })} /> Cierre a pintas, −25 (extra)</label>
+              )}
+              <label className="casilla"><input type="checkbox" checked={opciones.segundoMazo}
+                onChange={(e) => cambiar({ segundoMazo: e.target.checked })} /> Segundo mazo (extra; obligatorio con 5 o 6 jugadores)</label>
+              {(v.estado?.jugadores.length ?? 0) > 4 && !opciones.segundoMazo && <p className="error">{AVISO_SEGUNDO_MAZO}</p>}
+              {apuntado && (
+                <>
+                  <label>Residuo máximo para cerrar
+                    <select value={opciones.residuoMaximo ?? 4} onChange={(e) => cambiar({ residuoMaximo: Number(e.target.value) })}>
+                      {RESIDUOS.map((r) => <option key={r} value={r}>{textoResiduo(r)}</option>)}
+                    </select></label>
+                  <label>Puntos de eliminación
+                    <input type="number" min={10} max={500} value={opciones.umbral ?? 101}
+                      onChange={(e) => cambiar({ umbral: Number(e.target.value) })} /></label>
+                </>
+              )}
+            </details>
             <button className="principal" onClick={v.iniciar} disabled={!v.puedeIniciar}>Iniciar partida</button>
           </section>
         ) : (
