@@ -607,3 +607,13 @@
 .a-avanzadas .a-interruptor { margin: 8px 0; }
 .a-avanzadas .a-numeros { margin-top: 10px; }
 .a-avanzadas > p { margin: 4px 0 6px; }
+
+/* E3-18f: barra de proyeccion "si cierran ahora" bajo la mano, con el avance RF16 */
+.a-barra-proyeccion { display: flex; align-items: center; justify-content: center; gap: 8px; flex-wrap: wrap; margin: 2px 0 6px; }
+.a-proyeccion { position: relative; overflow: hidden; margin: 0; flex: 1 1 260px; max-width: 520px; padding: 6px 12px; border-radius: 999px;
+  border: 1px solid var(--a-borde); background: rgba(255, 255, 255, .05); font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.a-proyeccion-llenado { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, rgba(201, 164, 92, .18), rgba(201, 164, 92, .42)); }
+.a-proyeccion-texto { position: relative; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: center; }
+.a-proyeccion.peligro { border-color: rgba(208, 86, 78, .8); color: #ffd9d4; font-weight: 600; }
+.a-proyeccion.peligro .a-proyeccion-llenado { background: linear-gradient(90deg, rgba(208, 86, 78, .35), rgba(208, 86, 78, .7)); }
+@media (max-width: 560px) { .a-proyeccion { font-size: 12px; padding: 5px 9px; } }

@@ -47,4 +47,16 @@ class AvanceEnVistaTest {
         assertEquals("Sobrante de 10 puntos; debe ser menor a 5.",
                 e.eventosDe(EventoDominio.CierreRechazado.class).get(0).motivo());
     }
+
+    /** E3-18f: la vista trae la proyeccion "si cierran ahora" calculada por ILiquidacion con el marcador real. */
+    @Test
+    void laVistaTraeLaProyeccionConElMarcadorDelJugador() {
+        Escenario e = nuevo();
+        long id = e.iniciar(ConfiguracionReglas.apuntado101(), 2);
+        EvaluacionMano b = e.orquestador.vistaDe(id, "sub-b").evaluacion();
+        assertTrue(b.penalizacionSiCierranAhora() > 0);
+        assertEquals(b.penalizacionSiCierranAhora(), b.marcadorProyectado(), "con marcador 0 suma solo la penalizacion");
+        assertEquals(101 - b.marcadorProyectado(), b.faltaParaUmbral());
+        assertFalse(b.quedariaEliminado());
+    }
 }

@@ -96,6 +96,24 @@ export function textoAvance(a: AvanceMano): string {
   return partes.join(' · ');
 }
 
+/**
+ * Barra de proyeccion (E3-18f): "Si cierran ahora: +17 pts → 64 / 101 (te faltan 37)". Todos los numeros vienen del
+ * servidor; el umbral es el de la mesa. Sin umbral (Clasica): "Si cierran ahora: +17 pts → 17". Al llegar al umbral:
+ * "Si cierran ahora: +37 pts → 101: quedarías eliminado" (sin "/ 101" para que quepa en una linea a 360 px).
+ */
+export function textoProyeccion(a: AvanceMano, umbral: number): string {
+  const base = `Si cierran ahora: +${a.penalizacion} pts → ${a.marcadorProyectado}`;
+  if (a.faltaParaUmbral === null) return base;
+  if (a.quedariaEliminado) return `${base}: quedarías eliminado`;
+  return `${base} / ${umbral} (te ${a.faltaParaUmbral === 1 ? 'falta 1' : `faltan ${a.faltaParaUmbral}`})`;
+}
+
+/** Relleno de la barra: marcador proyectado frente al umbral (solo presentacion). */
+export function llenadoProyeccion(a: AvanceMano, umbral: number): string {
+  if (a.marcadorProyectado === null || a.faltaParaUmbral === null || umbral <= 0) return '0%';
+  return `${Math.max(0, Math.min(100, (a.marcadorProyectado / umbral) * 100))}%`;
+}
+
 /** Pista cuando el servidor dice que la mano ya cierra. */
 export function pistaCierre(carta: string): string {
   return `¡Puedes cerrar! Elige ${carta} y pulsa Cerrar.`;

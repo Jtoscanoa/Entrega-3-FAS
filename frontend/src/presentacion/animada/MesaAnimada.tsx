@@ -3,7 +3,9 @@
 import { AnimatePresence, motion, MotionConfig, useAnimate, useReducedMotion } from 'motion/react';
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
-import { ayudaCierre, CIERRE_CORTO, NOMBRE_MODALIDAD, pistaCierre, textoAvance } from '../../mensajes';
+import {
+  ayudaCierre, CIERRE_CORTO, llenadoProyeccion, NOMBRE_MODALIDAD, pistaCierre, textoAvance, textoProyeccion,
+} from '../../mensajes';
 import type { EventoMesa, VistaMesa } from '../../estado/tipos';
 import { huellaCorta } from '../../estado/verificarReparto';
 import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, PanoMesa, useAnclas, usePanoMesa } from './comun';
@@ -564,9 +566,6 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
             </AnimatePresence>
             <div className="a-mano-cabecera">
               <h2>Tu mano <ContadorVivo valor={e.orden.length} /></h2>
-              {avance && textoAvance(avance) && (
-                <span className={['a-avance', puedeCerrar ? 'listo' : ''].join(' ')} data-tut="avance">{textoAvance(avance)}</span>
-              )}
               <div className="a-fila">
                 <button type="button" data-tut="agrupar" className="a-boton suave" onClick={agruparJuegos}>Agrupar juegos</button>
                 <button type="button" className="a-boton suave" onClick={mesa.ordenarPorPinta}>Por pinta</button>
@@ -583,6 +582,21 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
                 alSeleccionar={mesa.seleccionar} alReordenar={alReordenar}
                 alChispearCarta={(x, y) => motor.emitir(x, y, 'seleccion')} />
             </div>
+            {avance && !e.eliminados.includes(mesa.yo) && (
+              <div className="a-barra-proyeccion" role="status" data-tut="avance">
+                {avance.marcadorProyectado !== null && (
+                  <p className={['a-proyeccion', avance.quedariaEliminado ? 'peligro' : ''].join(' ')}
+                    title={textoProyeccion(avance, e.umbral)}>
+                    <motion.span className="a-proyeccion-llenado" aria-hidden="true" initial={false}
+                      animate={{ width: llenadoProyeccion(avance, e.umbral) }} transition={{ duration: 0.4 }} />
+                    <span className="a-proyeccion-texto">{textoProyeccion(avance, e.umbral)}</span>
+                  </p>
+                )}
+                {textoAvance(avance) && (
+                  <span className={['a-avance', puedeCerrar ? 'listo' : ''].join(' ')}>{textoAvance(avance)}</span>
+                )}
+              </div>
+            )}
             <div className="a-mover" aria-live="polite">
               {cartaSel ? (
                 <>
@@ -616,8 +630,8 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
           </section>
         </div>
 
-        <aside className="a-lateral" aria-label="Lo último">
-          <h2>Lo último</h2>
+        <aside className="a-lateral" aria-label="Registro">
+          <h2>Registro</h2>
           <ul className="a-bitacora">
             <AnimatePresence initial={false}>
               {mesa.bitacora.map((t, i) => {

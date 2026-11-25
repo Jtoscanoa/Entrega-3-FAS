@@ -36,7 +36,7 @@ h1 { margin: 0 0 4px; } h2 { font-size: 16px; margin: 16px 0 8px; }
 .avanzadas label.casilla { gap: 8px; }
 .modalidad.activa { border: 2px solid var(--acento); background: #fff9ea; }
 
-.mesa { display: grid; grid-template-columns: 1fr 300px; grid-template-areas: "barra barra" "marcador marcador" "centro bitacora" "aviso bitacora" "mano bitacora"; gap: 12px; padding: 12px; max-width: 1280px; margin: 0 auto; color: #fff; }
+.mesa { display: grid; grid-template-columns: minmax(0, 1fr) 300px; grid-template-areas: "barra barra" "marcador marcador" "centro bitacora" "aviso bitacora" "mano bitacora"; gap: 12px; padding: 12px; max-width: 1280px; margin: 0 auto; color: #fff; }
 .barra { grid-area: barra; display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .estado { font-size: 13px; padding: 4px 10px; border-radius: 20px; }
 .estado.ok { background: rgba(46,139,87,.35); } .estado.caido { background: var(--rojo); }
@@ -76,7 +76,15 @@ h1 { margin: 0 0 4px; } h2 { font-size: 16px; margin: 16px 0 8px; }
 .monton:disabled { opacity: .8; }
 .monton.pozo:disabled .carta { opacity: 1; }
 /* RF16: avance de la mano segun el servidor y combinaciones marcadas con una franja de color por grupo */
-.avance { font-size: 13px; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,.12); }
+/* E3-18f: barra de proyeccion bajo la mano (una linea a 360 px) y avance RF16 debajo */
+.barra-proyeccion { margin: 4px 0 6px; display: flex; flex-direction: column; gap: 4px; }
+.barra-proyeccion p { margin: 0; }
+.proyeccion { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 14px; font-variant-numeric: tabular-nums;
+  padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,.25);
+  background: linear-gradient(to right, rgba(224,165,38,.45) var(--lleno, 0%), rgba(255,255,255,.08) var(--lleno, 0%)); }
+.proyeccion.peligro { border-color: #ff8a7a; color: #fff;
+  background: linear-gradient(to right, rgba(192,57,43,.85) var(--lleno, 0%), rgba(255,255,255,.08) var(--lleno, 0%)); }
+.avance { align-self: flex-start; font-size: 13px; padding: 3px 10px; border-radius: 20px; background: rgba(255,255,255,.12); }
 .avance.listo { background: var(--ok); font-weight: 700; }
 button.cerrar.listo { background: var(--ok); border-color: #7fd6a4; box-shadow: 0 0 0 3px rgba(127,214,164,.45); }
 .pista-cierre { margin: 6px 0 0; font-weight: 600; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
@@ -116,7 +124,7 @@ tr.eliminado td { color: var(--rojo); }
   .mesa > .bitacora { width: min(300px, 100%); justify-self: start; }
 }
 @media (max-width: 860px) {
-  .mesa { grid-template-columns: 1fr; grid-template-areas: "barra" "marcador" "centro" "aviso" "mano" "bitacora"; }
+  .mesa { grid-template-columns: minmax(0, 1fr); grid-template-areas: "barra" "marcador" "centro" "aviso" "mano" "bitacora"; }
   .barra { flex-wrap: wrap; }
   .chat-boton { display: inline-flex; align-items: center; padding: 6px 12px; background: rgba(255,255,255,.12); color: #fff; border-color: rgba(255,255,255,.35); }
   .chat { display: none; }
@@ -126,6 +134,7 @@ tr.eliminado td { color: var(--rojo); }
   .chat.abierto .chat-cerrar { display: inline; color: #fff; }
   .chat.abierto .chat-lista { flex: 1; max-height: none; min-height: 90px; }
   .chat .fila input { font-size: 16px; }
+  .proyeccion { font-size: 12.5px; padding: 5px 6px; letter-spacing: -.02em; }
   .carta { width: 50px; height: 74px; }
   .carta .indice { width: 15px; } .carta .indice b { font-size: 15px; } .carta .indice span { font-size: 12px; }
   .carta .recuadro { left: 19px; right: 4px; top: 7px; bottom: 7px; font-size: 20px; }

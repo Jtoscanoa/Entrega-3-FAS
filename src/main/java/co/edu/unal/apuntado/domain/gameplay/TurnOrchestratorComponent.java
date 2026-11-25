@@ -238,7 +238,8 @@ public final class TurnOrchestratorComponent implements ITurno {
                     p.marcadorDeTodos(), p.estado.finalizada() ? null : p.asientoEnTurno().id(),
                     p.numeroTurno, p.huella, p.estado.finalizada(), p.estado.nombre(), p.cfg.modalidad(),
                     p.cfg.umbralEliminacion(), p.cfg.robarDelDescarte(), eliminados, p.conectados(),
-                    evaluador.evaluarMano(a.mano, p.cfg), List.copyOf(p.historial));
+                    liquidacion.proyectar(evaluador.evaluarMano(a.mano, p.cfg), a.marcador, p.cfg),
+                    List.copyOf(p.historial));
         });
     }
 
