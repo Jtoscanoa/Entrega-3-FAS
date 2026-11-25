@@ -37,6 +37,10 @@ class Simulador {
   evaluacion: unknown = null;
   /** Rondas liquidadas como las manda el servidor en VistaPartida.historial (RF13). */
   historial: unknown[] = [];
+  /** Commit-reveal de la ronda (RF18): orden y sal reales; "Revelar mal" cambia la sal para ver el ✗. */
+  orden = '';
+  sal = '';
+  revelarMal = false;
 
   emitir(tipo: string, datos: unknown) { this.h?.alMensaje({ tipo, datos } as Mensaje); }
   vista() {
@@ -51,10 +55,14 @@ class Simulador {
     this.turnoDe = jugador; this.fase = fase; this.turno++;
     this.emitir('TurnoAsignado', { jugadorId: jugador, numeroTurno: this.turno, venceEn: new Date(Date.now() + this.segundos * 1000).toISOString() });
   }
-  repartir() {
+  async repartir() {
     this.mazo = barajar(); this.ronda++;
+    this.orden = this.mazo.join(',');
+    this.sal = Array.from(crypto.getRandomValues(new Uint8Array(16)), (b) => b.toString(16).padStart(2, '0')).join('');
+    const bytes = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(`${this.orden}|${this.sal}`));
+    const huella = Array.from(new Uint8Array(bytes), (b) => b.toString(16).padStart(2, '0')).join('');
     this.mano = this.mazo.splice(0, 11); this.cima = this.mazo.pop() ?? null;
-    this.emitir('RondaIniciada', { numeroRonda: this.ronda, cimaDescarte: this.cima, abridor: YO, huella: 'demo' });
+    this.emitir('RondaIniciada', { numeroRonda: this.ronda, cimaDescarte: this.cima, abridor: YO, huella });
     this.emitir('ManoEntregada', { jugadorId: YO, cartas: this.mano });
     this.asignar(YO, 'ESPERANDO_DESCARTE');
   }
@@ -98,7 +106,8 @@ class Simulador {
     this.historial = [...this.historial, { numeroRonda: this.ronda, cerradorId: YO, tipoCierre: 'COMPLETO',
       puntosRonda: puntos, marcador: { ...this.marcador } }];
     this.emitir('RondaLiquidada', { numeroRonda: this.ronda, cerradorId: YO, tipoCierre: 'COMPLETO', puntosRonda: puntos,
-      marcador: this.marcador, eliminados: this.eliminados });
+      marcador: this.marcador, eliminados: this.eliminados,
+      revelacion: { clave: `demo-${this.ronda}`, huella: '', orden: this.orden, sal: this.revelarMal ? '0'.repeat(32) : this.sal } });
   }
   terminar() { this.emitir('PartidaFinalizada', { ganadorId: YO, motivo: 'TODOS_SUPERARON_UMBRAL' }); }
 }
@@ -130,10 +139,11 @@ export default function DemoMesa({ version }: { version: Version }) {
       <PielMesa version={version} mesa={mesa} />
       <div style={{ position: 'fixed', top: 6, right: 6, zIndex: 60, display: 'flex', gap: 4, flexWrap: 'wrap', maxWidth: 360,
         background: 'rgba(0,0,0,.7)', padding: 6, borderRadius: 8 }} aria-label="Controles de la demostración">
-        {boton('Repartir', () => sim.repartir())}
+        {boton('Repartir', () => { void sim.repartir(); })}
         {boton('Turno rival', () => sim.turnoRival(0))}
         {boton('Rechazo', () => sim.rechazar())}
         {boton('Mano cerrable', () => sim.manoCerrable())}
+        {boton('Revelar mal', () => { sim.revelarMal = !sim.revelarMal; })}
         {boton('Chat de Beto', () => sim.emitir('Chat', { jugadorId: 'demo-beto', texto: '¿Quién va ganando?', hora: new Date().toISOString() }))}
         {boton('Liquidar', () => sim.liquidar())}
         {boton('Fin', () => sim.terminar())}

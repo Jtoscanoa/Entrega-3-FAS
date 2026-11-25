@@ -4,7 +4,9 @@ import { FormEvent, useEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
 import {
   ayudaCierre, CIERRE_CORTO, LARGO_CHAT, MOTIVO_FIN, NOMBRE_MODALIDAD, pistaCierre, textoAvance, TIPO_CIERRE,
+  VERIFICACION_REPARTO,
 } from '../../mensajes';
+import { huellaCorta } from '../../estado/verificarReparto';
 import type { Liquidacion, VistaMesa } from '../../estado/tipos';
 
 export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
@@ -51,6 +53,10 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
             <small>{e.robarDelDescarte ? 'Robar del pozo' : 'Pozo'}</small>
           </button>
         </div>
+        {e.huella && (
+          <p className="huella" title={e.huella}>Huella del reparto: <code>{huellaCorta(e.huella)}</code>
+            <span className="tenue"> · se comprueba al liquidar</span></p>
+        )}
         <div className={miTurno ? 'instruccion mia' : 'instruccion'}>
           {mesa.instruccion}{miTurno && segundos !== null && <span className="reloj"> {segundos} s</span>}
         </div>
@@ -123,6 +129,7 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
               </tr>))}</tbody>
           </table>
           <p className="tenue pequeno">Cada perdedor suma sus cartas sueltas con la agrupación que menos puntos le deja.</p>
+          <Verificacion l={liquidacion} />
           <button className="principal" onClick={mesa.cerrarLiquidacion}>Seguir jugando</button>
         </div></div>
       )}
@@ -135,10 +142,22 @@ export default function MesaLigera({ mesa }: { mesa: VistaMesa }) {
             <thead><tr><th>Jugador</th><th>Total</th></tr></thead>
             <tbody>{Object.entries(e.marcador).map(([s, p]) => <tr key={s}><td>{nombre(s)}</td><td>{p}</td></tr>)}</tbody>
           </table>
+          {historial.length > 0 && <Verificacion l={historial[historial.length - 1]} />}
           <button className="principal" onClick={mesa.salir}>Volver al inicio</button>
         </div></div>
       )}
     </main>
+  );
+}
+
+/** RF18: SHA-256(orden + sal) recalculado en este navegador frente a la huella anunciada al iniciar la ronda. */
+function Verificacion({ l }: { l: Liquidacion }) {
+  if (!l.reparto) return null;
+  return (
+    <div className={`verificacion ${l.reparto.estado}`} role="status">
+      {VERIFICACION_REPARTO[l.reparto.estado]}
+      {l.reparto.huella && <code className="pequeno">{l.reparto.huella}</code>}
+    </div>
   );
 }
 

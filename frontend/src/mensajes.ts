@@ -58,6 +58,15 @@ export const TIPO_CIERRE: Record<string, string> = {
   A_PINTAS: 'A pintas',
 };
 
+/** RF18: resultado de verificar el reparto en el navegador. */
+export const VERIFICACION_REPARTO: Record<string, string> = {
+  verificando: 'Verificando el reparto…',
+  verificado: '✓ Reparto verificado: SHA-256(orden + sal) coincide con la huella del inicio.',
+  'no-coincide': '✗ La huella no coincide: el orden revelado no es el que se anunció al iniciar.',
+  'sin-huella': 'No se pudo verificar: no se vio la huella al iniciar esta ronda.',
+  'no-disponible': 'Este navegador no permite verificar (Web Crypto requiere https).',
+};
+
 /** Nombre corto del tipo de cierre para la tabla del historial (RF13). */
 export const CIERRE_CORTO: Record<string, string> = {
   CLASICO_433: 'Clásico', APUNTADO: 'Apuntado', COMPLETO: 'Completo', A_PINTAS: 'A pintas',

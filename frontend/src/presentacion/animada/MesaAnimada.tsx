@@ -5,6 +5,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { gruposEnOrden, infoCarta, ordenarPorGrupos } from '../../cartas';
 import { ayudaCierre, CIERRE_CORTO, NOMBRE_MODALIDAD, pistaCierre, textoAvance } from '../../mensajes';
 import type { EventoMesa, VistaMesa } from '../../estado/tipos';
+import { huellaCorta } from '../../estado/verificarReparto';
 import { Avatar, Carta, ContadorVivo, DorsoCarta, nombreCarta, PanoMesa, useAnclas, usePanoMesa } from './comun';
 import { ItemMano, itemsDe, Mano } from './Mano';
 import { PanelFin, PanelLiquidacion } from './Paneles';
@@ -628,6 +629,12 @@ function Mesa({ mesa, esTutorial = false, alAgrupar }: { mesa: VistaMesa; esTuto
               })}
             </AnimatePresence>
           </ul>
+          {e.huella && (
+            <p className="a-huella" title={e.huella}>
+              Huella del reparto (ronda {e.ronda}): <code>{huellaCorta(e.huella)}</code>
+              <small>Al liquidar, tu navegador la comprueba con SHA-256.</small>
+            </p>
+          )}
           {mesa.historial.length > 0 && (
             <details className="a-historial">
               <summary>Historial de rondas</summary>

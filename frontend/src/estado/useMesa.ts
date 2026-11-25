@@ -4,6 +4,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { api, conectarMesa, ConexionMesa, ManejadoresMesa } from '../api';
 import { infoCarta, ordenarPorPinta, ordenarPorValor, reconciliar } from '../cartas';
 import { mensajeDe, PARTIDA_INTERRUMPIDA, rondaPendiente } from '../mensajes';
+import { verificarReparto } from './verificarReparto';
 import type {
   AvanceMano, Aviso, EstadoMesa, EventoMesa, FinPartida, Liquidacion, Mensaje, MensajeChat, OrigenRobo, Sesion, VistaMesa,
 } from './tipos';
@@ -31,7 +32,7 @@ const REINTENTO_RONDA_MS = 3000;
 const INICIAL: EstadoMesa = {
   ronda: 0, orden: [], cima: null, marcador: {}, turnoDe: null, numeroTurno: 0, fase: '', modalidad: '',
   umbral: 101, robarDelDescarte: false, eliminados: [], finalizada: false, venceEn: null, nueva: null, turnoDesde: null,
-  ausentes: [], avance: null,
+  ausentes: [], avance: null, huella: null,
 };
 
 /** RF13: rondas ya liquidadas segun el servidor (VistaPartida.historial); asi sobreviven a una recarga. */
@@ -98,6 +99,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
   alSalirRef.current = alSalir;
   const reintento = useRef<ReturnType<typeof setTimeout> | null>(null);
   const modoOrden = useRef<ModoOrden>('pinta');
+  /** Huella anunciada al iniciar la ronda en curso: contra ella se verifica la revelacion (RF18). */
+  const huellaRef = useRef<string | null>(null);
 
   const nombre = useCallback((sub: string | null) =>
     !sub ? '—' : sub === sesion.sub ? 'Tú' : nombresRef.current[sub] ?? 'Jugador', [sesion.sub]);
@@ -120,9 +123,13 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
           robarDelDescarte: d.robarDelDescarte, eliminados: d.eliminados, finalizada: d.finalizada,
           ausentes: Array.isArray(d.conectados)
             ? Object.keys(d.marcador).filter((sub) => !d.conectados.includes(sub)) : s.ausentes,
-          avance: avanceDe(d.evaluacion, d.mano),
+          avance: avanceDe(d.evaluacion, d.mano), huella: d.huella ?? s.huella,
         }));
-        if (Array.isArray(d.historial)) setHistorial(historialDe(d.historial));
+        if (d.huella) huellaRef.current = d.huella;
+        if (Array.isArray(d.historial)) {
+          setHistorial((previo) => historialDe(d.historial).map((r) => ({
+            ...r, reparto: previo.find((x) => x.ronda === r.ronda)?.reparto })));
+        }
         break;
       case 'Presencia': {
         // Solo se anotan cambios reales: la primera llegada de un jugador no es un "volvió".
@@ -134,7 +141,8 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         break;
       }
       case 'RondaIniciada':
-        setE((s) => ({ ...s, ronda: d.numeroRonda, cima: d.cimaDescarte, nueva: null }));
+        huellaRef.current = d.huella ?? null;
+        setE((s) => ({ ...s, ronda: d.numeroRonda, cima: d.cimaDescarte, nueva: null, huella: d.huella ?? null }));
         setSeleccion(null);
         anotar(`Empieza la ronda ${d.numeroRonda}. ${quien(d.abridor, 'abre', 'abres')}.`);
         conexion.current?.reanudar();
@@ -176,7 +184,14 @@ export function useMesa({ sesion, codigo, partidaId, alSalir }: ParametrosMesa,
         break;
       case 'RondaLiquidada': {
         const l: Liquidacion = { ronda: d.numeroRonda, cerrador: d.cerradorId, tipoCierre: d.tipoCierre,
-          puntosRonda: d.puntosRonda, marcador: d.marcador, eliminados: d.eliminados ?? [] };
+          puntosRonda: d.puntosRonda, marcador: d.marcador, eliminados: d.eliminados ?? [],
+          reparto: { huella: huellaRef.current, estado: 'verificando' } };
+        const ronda = d.numeroRonda;
+        void verificarReparto(huellaRef.current, d.revelacion).catch(() => 'no-disponible' as const).then((estado) => {
+          const conEstado = (x: Liquidacion) => (x.ronda === ronda && x.reparto ? { ...x, reparto: { ...x.reparto, estado } } : x);
+          setLiquidacion((actual) => (actual ? conEstado(actual) : actual));
+          setHistorial((h) => h.map(conEstado));
+        });
         setLiquidacion(l);
         setHistorial((h) => (h.some((x) => x.ronda === l.ronda) ? h : [...h, l]));
         setE((s) => ({ ...s, marcador: { ...s.marcador, ...d.marcador },

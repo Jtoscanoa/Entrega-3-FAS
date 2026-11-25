@@ -1,7 +1,7 @@
 // Liquidacion (puntos que cuentan hacia arriba y barras hacia el umbral) y fin de partida (confeti y podio).
 import { animate, motion, useReducedMotion } from 'motion/react';
 import { useEffect, useMemo, useRef } from 'react';
-import { MOTIVO_FIN, TIPO_CIERRE } from '../../mensajes';
+import { MOTIVO_FIN, TIPO_CIERRE, VERIFICACION_REPARTO } from '../../mensajes';
 import type { FinPartida, Liquidacion, VistaMesa } from '../../estado/tipos';
 import { Avatar } from './comun';
 
@@ -105,10 +105,22 @@ export function PanelLiquidacion({ mesa, l }: { mesa: VistaMesa; l: Liquidacion 
         <ul className="a-liq">{subs.map((s, i) => <FilaLiquidacion key={s} mesa={mesa} sub={s} l={l} indice={i} />)}</ul>
         {mesa.e.modalidad !== 'CLASICA_433' && <p className="a-tenue a-pequeno">La barra avanza hacia {mesa.e.umbral}: quien llega queda eliminado.</p>}
         <p className="a-tenue a-pequeno">Cada perdedor suma sus cartas sueltas con la agrupación que menos puntos le deja.</p>
+        <VerificacionAnimada l={l} />
         <motion.button type="button" className="a-boton principal" autoFocus whileTap={{ scale: 0.97 }}
           onClick={mesa.cerrarLiquidacion}>Seguir jugando</motion.button>
       </motion.section>
     </motion.div>
+  );
+}
+
+/** RF18: SHA-256(orden + sal) recalculado en este navegador frente a la huella anunciada al iniciar la ronda. */
+function VerificacionAnimada({ l }: { l: Liquidacion }) {
+  if (!l.reparto) return null;
+  return (
+    <div className={['a-verificacion', l.reparto.estado].join(' ')} role="status">
+      <span>{VERIFICACION_REPARTO[l.reparto.estado]}</span>
+      {l.reparto.huella && <code title="Huella anunciada al iniciar la ronda">{l.reparto.huella}</code>}
+    </div>
   );
 }
 
@@ -184,6 +196,7 @@ export function PanelFin({ mesa, fin }: { mesa: VistaMesa; fin: FinPartida }) {
             {orden.slice(3).map((s) => <li key={s}>{mesa.nombre(s)} · {mesa.e.marcador[s] ?? 0} pts</li>)}
           </ol>
         )}
+        {mesa.historial.length > 0 && <VerificacionAnimada l={mesa.historial[mesa.historial.length - 1]} />}
         <motion.button type="button" className="a-boton principal" autoFocus whileTap={{ scale: 0.97 }}
           onClick={mesa.salir}>Volver al inicio</motion.button>
       </motion.section>

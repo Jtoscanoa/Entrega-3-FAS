@@ -98,6 +98,12 @@ button.cerrar.listo { background: var(--ok); border-color: #7fd6a4; box-shadow: 
 .bitacora th, .bitacora td { border-bottom: 1px solid rgba(255,255,255,.2); padding: 4px; text-align: center; }
 table.liquidacion th, table.liquidacion td { border-bottom: 1px solid var(--borde); padding: 6px; text-align: left; }
 tr.eliminado td { color: var(--rojo); }
+/* RF18 */
+.huella { margin: 0; font-size: 12px; opacity: .85; overflow-wrap: anywhere; text-align: center; }
+.verificacion { margin: 10px 0 0; padding: 8px 10px; border-radius: 8px; border: 1px solid var(--borde); font-size: 13px; display: flex; flex-direction: column; gap: 4px; }
+.verificacion code { color: var(--tenue); overflow-wrap: anywhere; }
+.verificacion.verificado { border-color: var(--ok); background: #eef8f2; }
+.verificacion.no-coincide { border-color: var(--rojo); background: #fdeeee; }
 .velo { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; padding: 16px; z-index: 10; }
 /* Escritorio ancho: la mesa en el centro de la pantalla y la bitacora en el margen derecho. */
 @media (min-width: 1280px) {

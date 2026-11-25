@@ -589,3 +589,12 @@
   .a-guia-tarjeta.arriba.liquidacion { top: 6px; }
   .a-guia-tarjeta h3 { font-size: 16px; }
 }
+
+/* RF18: huella del reparto y verificacion en el navegador */
+.a-huella { margin: 14px 0 0; font-size: 12.5px; color: var(--a-tenue); overflow-wrap: anywhere; }
+.a-huella code { color: var(--a-laton); }
+.a-huella small { display: block; margin-top: 2px; }
+.a-verificacion { margin: 4px 0 2px; padding: 8px 10px; border-radius: 10px; font-size: 13px; border: 1px solid var(--a-borde); display: flex; flex-direction: column; gap: 4px; }
+.a-verificacion code { font-size: 11px; color: var(--a-tenue); overflow-wrap: anywhere; }
+.a-verificacion.verificado { border-color: rgba(127, 199, 154, .6); color: #c9f2d6; }
+.a-verificacion.no-coincide { border-color: rgba(208, 86, 78, .7); color: #f0b3ad; }
