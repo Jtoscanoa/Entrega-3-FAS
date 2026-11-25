@@ -1,6 +1,7 @@
 package co.edu.unal.apuntado.domain.rules.evaluacion;
 
 import co.edu.unal.apuntado.domain.rules.ReglaJuego;
+import co.edu.unal.apuntado.infrastructure.persistence.MatchStateRepository;
 import co.edu.unal.apuntado.domain.rules.modelo.Agrupacion;
 import co.edu.unal.apuntado.domain.rules.modelo.Carta;
 import co.edu.unal.apuntado.domain.rules.modelo.ConfiguracionReglas;
@@ -17,6 +18,13 @@ public final class ReglaApuntado101 implements ReglaJuego {
     private static final int PUNTOS_A_PINTAS = -25;
     private static final int PUNTOS_COMPLETO = -10;
     private static final int TERNAS_REQUERIDAS = 3;
+
+    /**
+     * DEMO DE SUSTENTACION, NO FUSIONAR: dependencia prohibida de una regla hacia la persistencia. Debe dejar el
+     * pipeline en rojo por FF-01 (Prueba 1: domain.rules no depende de infrastructure).
+     */
+    @SuppressWarnings("unused")
+    private MatchStateRepository repositorio;
 
     @Override
     public String modalidad() {
