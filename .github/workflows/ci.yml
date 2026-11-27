@@ -2,11 +2,10 @@ name: ci
 on:
   push:
   pull_request:
-  schedule:
-    - cron: "0 8 * * *"   # 03:00 Colombia: fitness dinamicas holisticas contra staging
+  workflow_dispatch:   # fitness-nocturnas (k6 contra staging) se ejecuta a mano: sin staging no se programa
 jobs:
   fitness-estaticas-y-atomicas:
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,7 +32,7 @@ jobs:
             target/metricas-paquetes.csv
             target/pmd-demeter/
   spa:
-    if: github.event_name != 'schedule'
+    if: github.event_name != 'workflow_dispatch'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -76,7 +75,7 @@ jobs:
           scp $OPC deploy/aws/docker-compose.yml deploy/aws/Caddyfile ubuntu@"$EC2_HOST":/opt/mesa101/
           ssh $OPC ubuntu@"$EC2_HOST" "cd /opt/mesa101 && sed -i 's|^IMAGEN=.*|IMAGEN=$IMAGEN|' .env && docker compose pull app && docker compose up -d && docker image prune -f"
   fitness-nocturnas:
-    if: github.event_name == 'schedule'
+    if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
